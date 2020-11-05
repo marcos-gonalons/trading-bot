@@ -6,11 +6,8 @@ ENV APP_ENV $app_env
 ARG app_root_folder
 ENV APP_ROOT_FOLDER $app_root_folder
 
-ARG broker_username
-ENV BROKER_USERNAME $broker_username
-
-ARG broker_password
-ENV BROKER_PASSWORD $broker_password
+ARG ibroker_api_url
+ENV IBROKER_API_URL $ibroker_api_url
 
 COPY ./src /go/src/TradingBot/src
 WORKDIR /go/src/TradingBot/src
