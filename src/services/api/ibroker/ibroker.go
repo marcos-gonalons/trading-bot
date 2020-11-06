@@ -2,7 +2,7 @@ package ibroker
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"net/http"
 	"time"
 
@@ -12,8 +12,9 @@ import (
 
 // API ...
 type API struct {
-	httpclient httpclient.Interface
-	accountID  string
+	httpclient  httpclient.Interface
+	accountID   string
+	accessToken *api.AccessToken
 }
 
 // SetAccountID ...
@@ -22,7 +23,7 @@ func (s *API) SetAccountID(accountID string) {
 }
 
 // Login ...
-func (s *API) Login(username, password string) (*api.AccessToken, error) {
+func (s *API) Login(username, password string) (accessToken *api.AccessToken, err error) {
 	url := s.getURL("authorize")
 
 	rq, err := http.NewRequest(
@@ -30,34 +31,43 @@ func (s *API) Login(username, password string) (*api.AccessToken, error) {
 		url,
 		bytes.NewBuffer([]byte("locale=en&login="+username+"&password="+password)),
 	)
-	s.setHeaders(rq)
-
 	if err != nil {
-		fmt.Printf("\n\n\n%#v\n\n\n", err)
-		return nil, err
+		return
+	}
+
+	s.setHeaders(rq)
+	response, err := s.httpclient.Do(rq)
+	if err != nil {
+		return
 	}
 
 	mappedResponse := &LoginResponse{}
-	response, err := s.httpclient.Do(rq)
-
-	if err != nil {
-		fmt.Printf("\n\n\n%#v\n\n\n", err)
-		return nil, err
-	}
-
 	_, err = s.httpclient.MapJSONResponseToStruct(mappedResponse, response.Body)
 	if err != nil {
-		fmt.Printf("\n\n\n%#v\n\n\n", err)
-		return nil, err
+		return
 	}
 
-	return &api.AccessToken{
+	if mappedResponse.ErrorMsg != "" {
+		err = errors.New("Api error -> " + mappedResponse.ErrorMsg)
+		return
+	}
+
+	if mappedResponse.Data.AccessToken == "" {
+		err = errors.New("Empty access token")
+		return
+	}
+
+	accessToken = &api.AccessToken{
 		Token:      mappedResponse.Data.AccessToken,
 		Expiration: time.Unix(int64(mappedResponse.Data.Expiration), 0),
-	}, nil
+	}
+
+	s.accessToken = accessToken
+	return
 }
 
 func (s *API) getURL(endpoint string) string {
+	// todo: env var for the url?
 	return "https://www.ibroker.es/tradingview/api/" + endpoint
 }
 
