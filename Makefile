@@ -7,15 +7,6 @@ build:
 chmod:
 	docker-compose exec trading-bot-container bash -c "chmod -R 777 /go/src/TradingBot/"
 
-glide-install:
-	docker-compose exec trading-bot-container bash -c "cd /go/src/TradingBot && glide install"
-
-glide-update:
-	docker-compose exec trading-bot-container bash -c "cd /go/src/TradingBot && glide update"
-
-glide-get:
-	docker-compose exec trading-bot-container bash -c "cd /go/src/TradingBot && glide get ${package}"
-
 restart: stop up
  
 ssh:
