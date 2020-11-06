@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 )
 
 func main() {
@@ -25,6 +26,10 @@ func main() {
 
 	for {
 		bot.Execute(api)
+
+		// Why 1.66666 seconds?
+		// Tradingview sends the get quotes request once every 1.66666 seconds, so we should do the same.
+		time.Sleep(1.66666 * time.Second)
 	}
 }
 
