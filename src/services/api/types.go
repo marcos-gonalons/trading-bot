@@ -2,6 +2,13 @@ package api
 
 import "time"
 
+// Credentials ...
+type Credentials struct {
+	Username  string
+	Password  string
+	AccountID string
+}
+
 // AccessToken ...
 type AccessToken struct {
 	Token      string

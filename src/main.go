@@ -2,6 +2,7 @@ package main
 
 import (
 	"TradingBot/src/bot"
+	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
 	"errors"
 	"fmt"
@@ -10,26 +11,27 @@ import (
 )
 
 func main() {
-	user, password, _, err := getArgs(os.Args[1:])
+	user, password, accountID, err := getArgs(os.Args[1:])
 
 	if err != nil {
 		fmt.Printf("%#v", err.Error())
 		return
 	}
 
-	api := ibroker.CreateAPIServiceInstance()
-	_, err = api.Login(user, password)
-	if err != nil {
-		fmt.Printf("Error while logging in\n" + err.Error())
-		return
-	}
+	ibrokerAPI := ibroker.CreateAPIServiceInstance(
+		&api.Credentials{
+			Username:  user,
+			Password:  password,
+			AccountID: accountID,
+		},
+	)
 
 	for {
-		bot.Execute(api)
+		bot.Execute(ibrokerAPI)
 
 		// Why 1.66666 seconds?
 		// Tradingview sends the get quotes request once every 1.66666 seconds, so we should do the same.
-		time.Sleep(1.66666 * time.Second)
+		time.Sleep(1666666 * time.Microsecond)
 	}
 }
 
