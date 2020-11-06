@@ -68,7 +68,7 @@ func (s *API) Login() (accessToken *api.AccessToken, err error) {
 
 func (s *API) getURL(endpoint string) string {
 	// todo: env var for the url?
-	return "https://marcos.free.beeceptor.com/" + endpoint
+	return "https://www.ibroker.es/tradingview/api/" + endpoint
 }
 
 func (s *API) setHeaders(rq *http.Request, isOptionsRequest bool, method string) {

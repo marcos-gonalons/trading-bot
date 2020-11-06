@@ -25,6 +25,11 @@ func main() {
 			AccountID: accountID,
 		},
 	)
+	_, err = ibrokerAPI.Login()
+	if err != nil {
+		fmt.Printf("%#v", "Login error -> "+err.Error())
+		return
+	}
 
 	for {
 		bot.Execute(ibrokerAPI)
