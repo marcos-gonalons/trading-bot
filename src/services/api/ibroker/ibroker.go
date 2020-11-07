@@ -1,6 +1,7 @@
 package ibroker
 
 import (
+	"TradingBot/src/services/api/ibroker/getquote"
 	"TradingBot/src/services/api/ibroker/login"
 	"TradingBot/src/services/logger"
 	"encoding/json"
@@ -35,16 +36,35 @@ func (s *API) Login() (accessToken *api.AccessToken, err error) {
 			s.setHeaders(rq, false, "")
 		},
 		func() error {
-			return s.doOptionsRequest(url, "GET", logger.LoginRequest)
+			return s.doOptionsRequest(url, "POST", logger.LoginRequest)
 		},
 	)
-	s.accessToken = accessToken
 
+	s.accessToken = accessToken
 	return
 }
 
 // GetQuote ...
 func (s *API) GetQuote(symbol string) (quote *api.Quote, err error) {
+	defer func() {
+		s.logAPIResult(quote, err, logger.GetQuoteRequest)
+	}()
+
+	url := s.getURL("quotes")
+	quote, err = getquote.Request(
+		url,
+		s.httpclient,
+		s.accessToken.Token,
+		s.credentials.AccountID,
+		symbol,
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func() error {
+			return s.doOptionsRequest(url, "GET", logger.GetQuoteRequest)
+		},
+	)
+
 	return
 }
 
@@ -105,8 +125,12 @@ func (s *API) logAPIResult(response interface{}, err error, logType logger.LogTy
 	if err != nil {
 		s.logger.Log("ERROR -> "+err.Error(), logType)
 	} else {
-		str, _ := json.Marshal(response)
-		s.logger.Log("RESULT -> "+string(str), logType)
+		str, err := json.Marshal(response)
+		if err != nil {
+			s.logger.Log("ERROR -> "+err.Error(), logType)
+		} else {
+			s.logger.Log("RESULT -> "+string(str), logType)
+		}
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
+	"encoding/json"
 
 	"bytes"
 	"errors"
@@ -55,13 +56,19 @@ func Request(
 		return
 	}
 
+	str, err := json.Marshal(mappedResponse)
+	if err != nil {
+		return
+	}
+	responseAsString := string(str)
+
 	if mappedResponse.ErrorMsg != "" {
 		err = errors.New("Api error -> " + mappedResponse.ErrorMsg)
 		return
 	}
 
 	if mappedResponse.Data.AccessToken == "" {
-		err = errors.New("Empty access token")
+		err = errors.New("Empty access token - Response was " + responseAsString)
 		return
 	}
 
