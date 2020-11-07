@@ -1,21 +1,25 @@
 package httpclient
 
 import (
+	"TradingBot/src/services/logger"
 	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 )
 
 // Service wrapper of the original net/http. So it can be used with the interface and easily mocked for unit testing.
 type Service struct {
 	http.Client
+	Logger logger.Interface
 }
 
 // Do ...
-func (s *Service) Do(rq *http.Request) (*http.Response, error) {
+func (s *Service) Do(rq *http.Request, logType logger.LogType) (*http.Response, error) {
+	s.Logger.Log("REQUEST -> "+s.getRQStringRepresentation(rq), logType)
 	return s.Client.Do(rq)
 }
 
@@ -32,4 +36,28 @@ func (s *Service) MapJSONResponseToStruct(targetStruct interface{}, responseBody
 	err := json.NewDecoder(responseBody).Decode(&targetStruct)
 
 	return rawBody, err
+}
+
+func (s *Service) getRQStringRepresentation(rq *http.Request) string {
+	var bodyAsStr string
+	if rq.Body != nil {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(rq.Body)
+		bodyAsStr = buf.String()
+	} else {
+		bodyAsStr = ""
+	}
+
+	idk := struct {
+		Method string
+		URL    *url.URL
+		Body   string
+	}{
+		Method: rq.Method,
+		URL:    rq.URL,
+		Body:   bodyAsStr,
+	}
+
+	str, _ := json.Marshal(idk)
+	return string(str)
 }

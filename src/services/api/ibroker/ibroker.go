@@ -1,8 +1,10 @@
 package ibroker
 
 import (
+	"TradingBot/src/services/logger"
 	"bytes"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -12,16 +14,22 @@ import (
 
 // API ...
 type API struct {
-	httpclient  httpclient.Interface
+	httpclient httpclient.Interface
+	logger     logger.Interface
+
 	accessToken *api.AccessToken
 	credentials *api.Credentials
 }
 
 // Login ...
 func (s *API) Login() (accessToken *api.AccessToken, err error) {
+	var mappedResponse = &LoginResponse{}
+
+	defer s.logAPIResult(mappedResponse, err, logger.LoginRequest)
+
 	url := s.getURL("authorize")
 
-	err = s.doOptionsRequest(url, "GET")
+	err = s.doOptionsRequest(url, "GET", logger.LoginRequest)
 	if err != nil {
 		return
 	}
@@ -36,12 +44,11 @@ func (s *API) Login() (accessToken *api.AccessToken, err error) {
 	}
 
 	s.setHeaders(rq, false, "")
-	response, err := s.httpclient.Do(rq)
+	response, err := s.httpclient.Do(rq, logger.LoginRequest)
 	if err != nil {
 		return
 	}
 
-	mappedResponse := &LoginResponse{}
 	_, err = s.httpclient.MapJSONResponseToStruct(mappedResponse, response.Body)
 	if err != nil {
 		return
@@ -63,6 +70,11 @@ func (s *API) Login() (accessToken *api.AccessToken, err error) {
 	}
 
 	s.accessToken = accessToken
+	return
+}
+
+// GetQuote ...
+func (s *API) GetQuote(symbol string) (quote *api.Quote, err error) {
 	return
 }
 
@@ -94,7 +106,7 @@ func (s *API) setHeaders(rq *http.Request, isOptionsRequest bool, method string)
 	rq.Header.Set("Accept-Language", "en-US,en;q=0.9,es;q=0.8")
 }
 
-func (s *API) doOptionsRequest(url string, method string) (err error) {
+func (s *API) doOptionsRequest(url string, method string, logType logger.LogType) (err error) {
 	// The OPTIONS request is, of course, not really needed outside a browser's context.
 	// But since we want to simulate we are in the browser, we send the options request anyway.
 	rq, err := http.NewRequest(
@@ -107,7 +119,7 @@ func (s *API) doOptionsRequest(url string, method string) (err error) {
 	}
 
 	s.setHeaders(rq, true, method)
-	_, err = s.httpclient.Do(rq)
+	_, err = s.httpclient.Do(rq, logType)
 	if err != nil {
 		return
 	}
@@ -119,13 +131,23 @@ func (s *API) setCredentials(credentials *api.Credentials) {
 	s.credentials = credentials
 }
 
+func (s *API) logAPIResult(response interface{}, err error, logType logger.LogType) {
+	if err != nil {
+		s.logger.Log("ERROR -> "+err.Error(), logType)
+	}
+	s.logger.Log("RESULT ->"+fmt.Sprintf("%v", response), logType)
+}
+
 // CreateAPIServiceInstance ...
 func CreateAPIServiceInstance(credentials *api.Credentials) api.Interface {
-	httpclient := &httpclient.Service{}
+	httpclient := &httpclient.Service{
+		Logger: logger.GetInstance(),
+	}
 	httpclient.SetTimeout(time.Second * 5)
 
 	instance := &API{
 		httpclient: httpclient,
+		logger:     logger.GetInstance(),
 	}
 	instance.setCredentials(credentials)
 

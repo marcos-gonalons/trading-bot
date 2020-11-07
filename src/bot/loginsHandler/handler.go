@@ -6,19 +6,8 @@ import (
 )
 
 // HandleLogins ...
-func HandleLogins(
-	loginFunc func() (*api.AccessToken, error),
-	now time.Time,
-	previousExecutionTime time.Time,
-) {
-	var err error
-
-	if now.Format("15") != "02" || previousExecutionTime.Format("15") != "01" {
-		return
-	}
-
-	// Login every day at 02:00 to refresh the access token.
-	_, err = loginFunc()
+func HandleLogins(loginFunc func() (*api.AccessToken, error)) {
+	_, err := loginFunc()
 	if err != nil {
 		go loginRetries(loginFunc)
 	}

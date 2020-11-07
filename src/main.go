@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	_ "TradingBot/src/services/logger"
 )
 
 func main() {
 	user, password, accountID, err := getArgs(os.Args[1:])
-
 	if err != nil {
 		fmt.Printf("%#v", err.Error())
 		return

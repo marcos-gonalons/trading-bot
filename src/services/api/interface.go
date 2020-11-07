@@ -3,7 +3,7 @@ package api
 // Interface implemented by the broker APIs
 type Interface interface {
 	Login() (*AccessToken, error)
-	//GetQuote(symbol string) (*Quote, error)
+	GetQuote(symbol string) (*Quote, error)
 	//CreateOrder(order *Order) error
 	//GetOrders() ([]*Order, error)
 	//ModifyOrder(order *Order) error
