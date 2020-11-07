@@ -134,8 +134,9 @@ func (s *API) setCredentials(credentials *api.Credentials) {
 func (s *API) logAPIResult(response interface{}, err error, logType logger.LogType) {
 	if err != nil {
 		s.logger.Log("ERROR -> "+err.Error(), logType)
+	} else {
+		s.logger.Log("RESULT ->"+fmt.Sprintf("%v", response), logType)
 	}
-	s.logger.Log("RESULT ->"+fmt.Sprintf("%v", response), logType)
 }
 
 // CreateAPIServiceInstance ...
