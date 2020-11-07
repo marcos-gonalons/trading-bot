@@ -32,11 +32,11 @@ type Order struct {
 	Instrument   string
 	Qty          float32
 	Side         string
-	StopLoss     float32
-	TakeProfit   float32
+	StopLoss     *float32
+	TakeProfit   *float32
 	Type         string
-	LimitPrice   float32
-	StopPrice    float32
+	LimitPrice   *float32
+	StopPrice    *float32
 	Status       string
 	ParentID     int64
 }

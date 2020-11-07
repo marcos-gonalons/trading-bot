@@ -1,6 +1,7 @@
 package ibroker
 
 import (
+	"TradingBot/src/services/api/ibroker/createorder"
 	"TradingBot/src/services/api/ibroker/getquote"
 	"TradingBot/src/services/api/ibroker/login"
 	"TradingBot/src/services/logger"
@@ -62,6 +63,29 @@ func (s *API) GetQuote(symbol string) (quote *api.Quote, err error) {
 		},
 		func() error {
 			return s.doOptionsRequest(url, "GET", logger.GetQuoteRequest)
+		},
+	)
+
+	return
+}
+
+// CreateOrder ...
+func (s *API) CreateOrder(order *api.Order) (err error) {
+	defer func() {
+		s.logAPIResult("", err, logger.CreateOrderRequest)
+	}()
+
+	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders"
+	err = createorder.Request(
+		url,
+		s.httpclient,
+		s.accessToken.Token,
+		order,
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func() error {
+			return s.doOptionsRequest(url, "POST", logger.CreateOrderRequest)
 		},
 	)
 

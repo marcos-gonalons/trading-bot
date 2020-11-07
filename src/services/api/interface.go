@@ -4,7 +4,7 @@ package api
 type Interface interface {
 	Login() (*AccessToken, error)
 	GetQuote(symbol string) (*Quote, error)
-	//CreateOrder(order *Order) error
+	CreateOrder(order *Order) error
 	//GetOrders() ([]*Order, error)
 	//ModifyOrder(order *Order) error
 	//CloseOrder(orderID int64) error
