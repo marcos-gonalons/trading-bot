@@ -1,10 +1,9 @@
 package ibroker
 
 import (
+	"TradingBot/src/services/api/ibroker/login"
 	"TradingBot/src/services/logger"
-	"bytes"
-	"errors"
-	"fmt"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -23,53 +22,24 @@ type API struct {
 
 // Login ...
 func (s *API) Login() (accessToken *api.AccessToken, err error) {
-	var mappedResponse = &LoginResponse{}
-
-	defer s.logAPIResult(mappedResponse, err, logger.LoginRequest)
+	defer func() {
+		s.logAPIResult(accessToken, err, logger.LoginRequest)
+	}()
 
 	url := s.getURL("authorize")
-
-	err = s.doOptionsRequest(url, "GET", logger.LoginRequest)
-	if err != nil {
-		return
-	}
-
-	rq, err := http.NewRequest(
-		http.MethodPost,
+	accessToken, err = login.Request(
 		url,
-		bytes.NewBuffer([]byte("locale=en&login="+s.credentials.Username+"&password="+s.credentials.Password)),
+		s.credentials,
+		s.httpclient,
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func() error {
+			return s.doOptionsRequest(url, "GET", logger.LoginRequest)
+		},
 	)
-	if err != nil {
-		return
-	}
-
-	s.setHeaders(rq, false, "")
-	response, err := s.httpclient.Do(rq, logger.LoginRequest)
-	if err != nil {
-		return
-	}
-
-	_, err = s.httpclient.MapJSONResponseToStruct(mappedResponse, response.Body)
-	if err != nil {
-		return
-	}
-
-	if mappedResponse.ErrorMsg != "" {
-		err = errors.New("Api error -> " + mappedResponse.ErrorMsg)
-		return
-	}
-
-	if mappedResponse.Data.AccessToken == "" {
-		err = errors.New("Empty access token")
-		return
-	}
-
-	accessToken = &api.AccessToken{
-		Token:      mappedResponse.Data.AccessToken,
-		Expiration: time.Unix(int64(mappedResponse.Data.Expiration), 0),
-	}
-
 	s.accessToken = accessToken
+
 	return
 }
 
@@ -135,7 +105,8 @@ func (s *API) logAPIResult(response interface{}, err error, logType logger.LogTy
 	if err != nil {
 		s.logger.Log("ERROR -> "+err.Error(), logType)
 	} else {
-		s.logger.Log("RESULT ->"+fmt.Sprintf("%v", response), logType)
+		str, _ := json.Marshal(response)
+		s.logger.Log("RESULT -> "+string(str), logType)
 	}
 }
 
