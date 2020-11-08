@@ -1,31 +1,32 @@
 package loginshandler
 
 import (
+	"TradingBot/src/services/api"
 	"time"
 )
 
 // Login ...
-func Login(loginFunc func() error) {
-	err := loginFunc()
-	if err != nil {
-		go loginRetries(loginFunc)
+func Login(API api.Interface, maxRetries uint, timeBetweenRetries time.Duration) {
+	_, err := API.Login()
+	if err == nil {
+		return
 	}
-}
 
-func loginRetries(loginFunc func() error) {
-	var err error
-	for {
-		now := time.Now()
+	go func() {
+		var err error
+		var retriesAmount uint = 0
+		for {
+			if retriesAmount == maxRetries {
+				panic("Too many failed login attempts. Last error was " + err.Error())
+			}
+			_, err = API.Login()
 
-		if now.Format("15") == "03" {
-			panic("Too many failed login attempts. Last error was " + err.Error())
+			if err == nil {
+				break
+			}
+
+			retriesAmount++
+			time.Sleep(timeBetweenRetries)
 		}
-		err = loginFunc()
-
-		if err == nil {
-			break
-		}
-
-		time.Sleep(1 * time.Minute)
-	}
+	}()
 }
