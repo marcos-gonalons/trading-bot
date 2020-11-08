@@ -161,7 +161,28 @@ func (s *API) ClosePosition(symbol string) (err error) {
 	)
 
 	return
+}
 
+// CloseOrder ...
+func (s *API) CloseOrder(orderID int64) (err error) {
+	defer func() {
+		s.logAPIResult("", err, logger.CloseOrderRequest)
+	}()
+
+	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + utils.IntToString(orderID)
+	err = closeposition.Request(
+		url,
+		s.httpclient,
+		s.accessToken.Token,
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func() error {
+			return s.doOptionsRequest(url, http.MethodDelete, logger.CloseOrderRequest)
+		},
+	)
+
+	return
 }
 
 func (s *API) getURL(endpoint string) string {

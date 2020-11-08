@@ -1,4 +1,4 @@
-package closeposition
+package closeorder
 
 import (
 	"TradingBot/src/services/httpclient"
@@ -34,7 +34,7 @@ func Request(
 
 	setHeaders(rq)
 	rq.Header.Set("Authorization", "Bearer "+accessToken)
-	response, err := httpClient.Do(rq, logger.ClosePositionRequest)
+	response, err := httpClient.Do(rq, logger.CloseOrderRequest)
 	if err != nil {
 		return
 	}
