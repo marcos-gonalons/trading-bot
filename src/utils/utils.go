@@ -4,7 +4,7 @@ import "strconv"
 
 // FloatToString ...
 func FloatToString(v float64) string {
-	return strconv.FormatFloat(v, 'f', -1, 32)
+	return strconv.FormatFloat(v, 'f', -1, 64)
 }
 
 // IntToString ...

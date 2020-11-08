@@ -64,7 +64,7 @@ func (logger *Logger) Log(message string, logType ...LogType) {
 	}
 
 	var now = time.Now()
-	var folderPath = logger.rootPath + strconv.Itoa(now.Year()) + "_" + now.Month().String()
+	var folderPath = logger.rootPath
 	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
 		logger.mtx.Lock()
 		err = os.Mkdir(folderPath, os.ModePerm)

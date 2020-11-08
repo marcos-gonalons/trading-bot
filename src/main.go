@@ -14,6 +14,8 @@ import (
 )
 
 func main() {
+	defer panicCatcher()
+
 	user, password, accountID, err := getArgs(os.Args[1:])
 	if err != nil {
 		fmt.Printf("%#v", err.Error())
@@ -33,9 +35,8 @@ func main() {
 		return
 	}
 
-	defer panicCatcher()
 	for {
-		bot.Execute(ibrokerAPI)
+		bot.Execute(ibrokerAPI, logger.GetInstance())
 
 		// Why 1.66666 seconds?
 		// Tradingview sends the get quotes request once every 1.66666 seconds, so we should do the same.
