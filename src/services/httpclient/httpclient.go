@@ -49,13 +49,15 @@ func (s *Service) getRQStringRepresentation(rq *http.Request) string {
 	}
 
 	idk := struct {
-		Method string
-		URL    *url.URL
-		Body   string
+		Method  string
+		URL     *url.URL
+		Body    string
+		Headers http.Header
 	}{
-		Method: rq.Method,
-		URL:    rq.URL,
-		Body:   bodyAsStr,
+		Method:  rq.Method,
+		URL:     rq.URL,
+		Body:    bodyAsStr,
+		Headers: rq.Header,
 	}
 
 	str, _ := json.Marshal(idk)
