@@ -9,5 +9,5 @@ type Interface interface {
 	//ModifyOrder(order *Order) error
 	//CloseOrder(orderID int64) error
 	//GetPositions() ([]*Position, error)
-	//ClosePosition() error
+	ClosePosition(symbol string) error
 }

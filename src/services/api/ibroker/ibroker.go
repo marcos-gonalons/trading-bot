@@ -1,6 +1,7 @@
 package ibroker
 
 import (
+	closeposition "TradingBot/src/services/api/ibroker/closePosition"
 	"TradingBot/src/services/api/ibroker/createorder"
 	getorders "TradingBot/src/services/api/ibroker/getOrders"
 	"TradingBot/src/services/api/ibroker/getquote"
@@ -38,7 +39,7 @@ func (s *API) Login() (accessToken *api.AccessToken, err error) {
 			s.setHeaders(rq, false, "")
 		},
 		func() error {
-			return s.doOptionsRequest(url, "POST", logger.LoginRequest)
+			return s.doOptionsRequest(url, http.MethodPost, logger.LoginRequest)
 		},
 	)
 
@@ -63,7 +64,7 @@ func (s *API) GetQuote(symbol string) (quote *api.Quote, err error) {
 			s.setHeaders(rq, false, "")
 		},
 		func() error {
-			return s.doOptionsRequest(url, "GET", logger.GetQuoteRequest)
+			return s.doOptionsRequest(url, http.MethodGet, logger.GetQuoteRequest)
 		},
 	)
 
@@ -86,7 +87,7 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 			s.setHeaders(rq, false, "")
 		},
 		func() error {
-			return s.doOptionsRequest(url, "POST", logger.CreateOrderRequest)
+			return s.doOptionsRequest(url, http.MethodPost, logger.CreateOrderRequest)
 		},
 	)
 
@@ -108,11 +109,34 @@ func (s *API) GetOrders() (orders []*api.Order, err error) {
 			s.setHeaders(rq, false, "")
 		},
 		func() error {
-			return s.doOptionsRequest(url, "GET", logger.GetOrdersRequest)
+			return s.doOptionsRequest(url, http.MethodGet, logger.GetOrdersRequest)
 		},
 	)
 
 	return
+}
+
+// ClosePosition ...
+func (s *API) ClosePosition(symbol string) (err error) {
+	defer func() {
+		s.logAPIResult("", err, logger.ClosePositionRequest)
+	}()
+
+	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + symbol
+	err = closeposition.Request(
+		url,
+		s.httpclient,
+		s.accessToken.Token,
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func() error {
+			return s.doOptionsRequest(url, http.MethodDelete, logger.ClosePositionRequest)
+		},
+	)
+
+	return
+
 }
 
 func (s *API) getURL(endpoint string) string {

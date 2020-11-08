@@ -35,7 +35,7 @@ func Request(
 
 	setHeaders(rq)
 	rq.Header.Set("Authorization", "Bearer "+accessToken)
-	response, err := httpClient.Do(rq, logger.CreateOrderRequest)
+	response, err := httpClient.Do(rq, logger.GetOrdersRequest)
 	if err != nil {
 		return
 	}
@@ -62,7 +62,9 @@ func Request(
 	}
 
 	for _, responseOrder := range mappedResponse.Data {
-		orders = append(orders, &api.Order{
+		limitPrice := responseOrder.LimitPrice
+		stopPrice := responseOrder.StopPrice
+		order := &api.Order{
 			ID:         responseOrder.ID,
 			Instrument: responseOrder.Instrument,
 			Qty:        responseOrder.Qty,
@@ -70,9 +72,10 @@ func Request(
 			Type:       responseOrder.Type,
 			Status:     responseOrder.Status,
 			ParentID:   responseOrder.ParentID,
-			LimitPrice: &responseOrder.LimitPrice,
-			StopPrice:  &responseOrder.StopPrice,
-		})
+			LimitPrice: &limitPrice,
+			StopPrice:  &stopPrice,
+		}
+		orders = append(orders, order)
 	}
 
 	return

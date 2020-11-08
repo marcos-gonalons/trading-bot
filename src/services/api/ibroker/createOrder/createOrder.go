@@ -96,8 +96,8 @@ func getRandomRequestID(length uint) string {
 
 func getRequestBody(order *api.Order) io.Reader {
 	body := "" +
-		"currentAsk=" + getFloatAsString(float64(order.CurrentAsk)) + "&" +
-		"currentBid=" + getFloatAsString(float64(order.CurrentBid)) + "&" +
+		"currentAsk=" + getFloatAsString(float64(*order.CurrentAsk)) + "&" +
+		"currentBid=" + getFloatAsString(float64(*order.CurrentBid)) + "&" +
 		"durationType=DAY&" +
 		"instrument=" + order.Instrument + "&" +
 		"side=" + order.Side + "&" +
