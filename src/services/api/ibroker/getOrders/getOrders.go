@@ -64,6 +64,7 @@ func Request(
 	for _, responseOrder := range mappedResponse.Data {
 		limitPrice := responseOrder.LimitPrice
 		stopPrice := responseOrder.StopPrice
+		parentID := responseOrder.ParentID
 		order := &api.Order{
 			ID:         responseOrder.ID,
 			Instrument: responseOrder.Instrument,
@@ -71,7 +72,7 @@ func Request(
 			Side:       responseOrder.Side,
 			Type:       responseOrder.Type,
 			Status:     responseOrder.Status,
-			ParentID:   responseOrder.ParentID,
+			ParentID:   parentID,
 			LimitPrice: &limitPrice,
 			StopPrice:  &stopPrice,
 		}

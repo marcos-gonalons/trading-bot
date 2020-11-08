@@ -18,8 +18,8 @@ type APIResponse struct {
 			Type     string  `json:"type"`
 			Datetime float64 `json:"datetime"`
 		} `json:"duration"`
-		Status     string `json:"status"`
-		ParentID   int64  `json:"parentId"`
-		ParentType string `json:"parentType"`
+		Status     string  `json:"status"`
+		ParentID   *int64  `json:"parentId"`
+		ParentType *string `json:"parentType"`
 	} `json:"d"`
 }

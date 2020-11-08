@@ -38,7 +38,7 @@ type Order struct {
 	LimitPrice   *float32
 	StopPrice    *float32
 	Status       string
-	ParentID     int64
+	ParentID     *int64
 }
 
 // Position ...

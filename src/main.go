@@ -14,7 +14,10 @@ import (
 )
 
 func main() {
-	defer panicCatcher()
+	var ibrokerAPI api.Interface
+	defer func() {
+		panicCatcher(ibrokerAPI)
+	}()
 
 	user, password, accountID, err := getArgs(os.Args[1:])
 	if err != nil {
@@ -22,7 +25,7 @@ func main() {
 		return
 	}
 
-	ibrokerAPI := ibroker.CreateAPIServiceInstance(
+	ibrokerAPI = ibroker.CreateAPIServiceInstance(
 		&api.Credentials{
 			Username:  user,
 			Password:  password,
@@ -55,7 +58,7 @@ func getArgs(args []string) (user, password, accountID string, err error) {
 	return
 }
 
-func panicCatcher() {
+func panicCatcher(API api.Interface) {
 	err := recover()
 
 	if err == nil {
@@ -63,4 +66,5 @@ func panicCatcher() {
 	}
 
 	logger.GetInstance().Log("PANIC - "+fmt.Sprintf("%#v", err), logger.Default)
+	API.CloseEverything()
 }

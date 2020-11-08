@@ -10,4 +10,5 @@ type Interface interface {
 	CloseOrder(orderID int64) error
 	GetPositions() ([]*Position, error)
 	ClosePosition(symbol string) error
+	CloseEverything() error
 }

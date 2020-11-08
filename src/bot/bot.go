@@ -86,7 +86,6 @@ func getQuote(
 	logger logger.Interface,
 ) *api.Quote {
 	if failedGetQuoteRequestsInARow == 100 {
-		// TODO: Close all limit/stop orders here
 		panic("There is something wrong when fetching the quotes")
 	}
 
@@ -104,11 +103,11 @@ func getQuote(
 func resetLogs() {
 	directory := "logs"
 
-	dirRead, _ := os.Open(directory)
-	dirFiles, _ := dirRead.Readdir(0)
+	osDir, _ := os.Open(directory)
+	files, _ := osDir.Readdir(0)
 
-	for index := range dirFiles {
-		file := dirFiles[index]
+	for index := range files {
+		file := files[index]
 		os.Remove(directory + "/" + file.Name())
 	}
 }

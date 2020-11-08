@@ -25,6 +25,8 @@ type API struct {
 
 	accessToken *api.AccessToken
 	credentials *api.Credentials
+	orders      []*api.Order
+	positions   []*api.Position
 }
 
 // Login ...
@@ -116,6 +118,7 @@ func (s *API) GetOrders() (orders []*api.Order, err error) {
 		},
 	)
 
+	s.orders = orders
 	return
 }
 
@@ -205,6 +208,35 @@ func (s *API) GetPositions() (positions []*api.Position, err error) {
 		},
 	)
 
+	s.positions = positions
+	return
+}
+
+// CloseEverything ...
+func (s *API) CloseEverything() (err error) {
+	if len(s.positions) > 0 {
+		for _, position := range s.positions {
+			s.ClosePosition(position.Instrument)
+		}
+	}
+	if len(s.orders) > 0 {
+		workingOrders := getWorkingOrders(s.orders)
+		for _, order := range workingOrders {
+			if order.ParentID == nil {
+				s.CloseOrder(order.ID)
+			}
+		}
+
+		orders, err := s.GetOrders()
+		if err != nil {
+			return err
+		}
+
+		workingOrders = getWorkingOrders(orders)
+		for _, order := range workingOrders {
+			s.CloseOrder(order.ID)
+		}
+	}
 	return
 }
 
@@ -271,6 +303,16 @@ func (s *API) logAPIResult(response interface{}, err error, logType logger.LogTy
 			s.logger.Log("RESULT -> "+string(str), logType)
 		}
 	}
+}
+
+func getWorkingOrders(orders []*api.Order) []*api.Order {
+	var workingOrders []*api.Order
+	for _, order := range orders {
+		if order.Status == "working" {
+			workingOrders = append(workingOrders, order)
+		}
+	}
+	return workingOrders
 }
 
 // CreateAPIServiceInstance ...
