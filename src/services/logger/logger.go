@@ -50,10 +50,6 @@ type Logger struct {
 
 // Log logs a message
 func (logger *Logger) Log(message string, logType ...LogType) {
-	logger.doLog(message, logType...)
-}
-
-func (logger *Logger) doLog(message string, logType ...LogType) {
 	var ioWriter io.Writer
 
 	ioWriter = os.Stdout
@@ -107,7 +103,7 @@ var logger *Logger
 
 func init() {
 	filePathsMap := make(map[LogType]string)
-	filePathsMap[Default] = "log"
+	filePathsMap[Default] = "bot"
 	filePathsMap[LoginRequest] = "loginRequest"
 	filePathsMap[GetQuoteRequest] = "getQuoteRequest"
 	filePathsMap[CreateOrderRequest] = "createOrderRequest"

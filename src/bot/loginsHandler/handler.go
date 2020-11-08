@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Login ...
+// Login - Refresh the API access token
 func Login(API api.Interface, maxRetries uint, timeBetweenRetries time.Duration) {
 	_, err := API.Login()
 	if err == nil {

@@ -4,6 +4,7 @@ import (
 	"TradingBot/src/bot"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
+	"TradingBot/src/services/logger"
 	"errors"
 	"fmt"
 	"os"
@@ -32,6 +33,7 @@ func main() {
 		return
 	}
 
+	defer panicCatcher()
 	for {
 		bot.Execute(ibrokerAPI)
 
@@ -49,6 +51,15 @@ func getArgs(args []string) (user, password, accountID string, err error) {
 	} else {
 		err = errors.New("Need 3 arguments: username, password and accountID")
 	}
-
 	return
+}
+
+func panicCatcher() {
+	err := recover()
+
+	if err == nil {
+		return
+	}
+
+	logger.GetInstance().Log("PANIC - "+fmt.Sprintf("%#v", err), logger.Default)
 }
