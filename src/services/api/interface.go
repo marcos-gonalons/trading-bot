@@ -8,6 +8,6 @@ type Interface interface {
 	GetOrders() ([]*Order, error)
 	ModifyOrder(order *Order) error
 	CloseOrder(orderID int64) error
-	//GetPositions() ([]*Position, error)
+	GetPositions() ([]*Position, error)
 	ClosePosition(symbol string) error
 }

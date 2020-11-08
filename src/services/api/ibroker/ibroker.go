@@ -4,6 +4,7 @@ import (
 	closeposition "TradingBot/src/services/api/ibroker/closePosition"
 	"TradingBot/src/services/api/ibroker/createorder"
 	getorders "TradingBot/src/services/api/ibroker/getOrders"
+	getpositions "TradingBot/src/services/api/ibroker/getPositions"
 	"TradingBot/src/services/api/ibroker/getquote"
 	"TradingBot/src/services/api/ibroker/login"
 	"TradingBot/src/services/logger"
@@ -185,8 +186,29 @@ func (s *API) CloseOrder(orderID int64) (err error) {
 	return
 }
 
+// GetPositions ...
+func (s *API) GetPositions() (positions []*api.Position, err error) {
+	defer func() {
+		s.logAPIResult(positions, err, logger.GetPositionsRequest)
+	}()
+
+	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions"
+	positions, err = getpositions.Request(
+		url,
+		s.httpclient,
+		s.accessToken.Token,
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func() error {
+			return s.doOptionsRequest(url, http.MethodGet, logger.GetPositionsRequest)
+		},
+	)
+
+	return
+}
+
 func (s *API) getURL(endpoint string) string {
-	// todo: env var for the url?
 	return "https://www.ibroker.es/tradingview/api/" + endpoint
 }
 

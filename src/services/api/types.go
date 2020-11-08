@@ -47,5 +47,5 @@ type Position struct {
 	Qty          float32
 	Side         string
 	AvgPrice     float32
-	UnrealizedPl float32
+	UnrealizedPl float64
 }
