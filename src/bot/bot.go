@@ -19,7 +19,7 @@ func Execute(API api.Interface) {
 	previousHour, _ := strconv.Atoi(previousExecutionTime.Format("15"))
 
 	if currentHour == 2 && previousHour == 1 {
-		loginshandler.HandleLogins(API.Login)
+		loginshandler.Login(API.Login)
 	}
 
 	if currentHour < 6 || currentHour > 21 {
