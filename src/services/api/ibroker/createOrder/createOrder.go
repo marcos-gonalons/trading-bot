@@ -14,14 +14,6 @@ import (
 	"time"
 )
 
-type response struct {
-	Status   string `json:"s"`
-	ErrorMsg string `json:"errmsg"`
-	Data     struct {
-		OrderID int64 `json:"orderId"`
-	} `json:"d"`
-}
-
 // Request ...
 func Request(
 	url string,
@@ -31,7 +23,7 @@ func Request(
 	setHeaders func(rq *http.Request),
 	optionsRequest func() error,
 ) (err error) {
-	var mappedResponse = &response{}
+	var mappedResponse = &APIResponse{}
 
 	err = optionsRequest()
 	if err != nil {

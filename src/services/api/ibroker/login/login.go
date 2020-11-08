@@ -12,15 +12,6 @@ import (
 	"time"
 )
 
-type response struct {
-	Status   string `json:"s"`
-	ErrorMsg string `json:"errmsg"`
-	Data     struct {
-		AccessToken string  `json:"access_token"`
-		Expiration  float64 `json:"expiration"`
-	} `json:"d"`
-}
-
 // Request ...
 func Request(
 	url string,
@@ -29,7 +20,7 @@ func Request(
 	setHeaders func(rq *http.Request),
 	optionsRequest func() error,
 ) (accessToken *api.AccessToken, err error) {
-	var mappedResponse = &response{}
+	var mappedResponse = &APIResponse{}
 
 	err = optionsRequest()
 	if err != nil {

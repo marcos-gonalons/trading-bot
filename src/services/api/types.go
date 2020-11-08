@@ -26,8 +26,8 @@ type Quote struct {
 // Order ...
 type Order struct {
 	ID           int64
-	CurrentAsk   float32
-	CurrentBid   float32
+	CurrentAsk   *float32
+	CurrentBid   *float32
 	DurationType string
 	Instrument   string
 	Qty          float32

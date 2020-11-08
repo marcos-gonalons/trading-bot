@@ -2,6 +2,7 @@ package ibroker
 
 import (
 	"TradingBot/src/services/api/ibroker/createorder"
+	getorders "TradingBot/src/services/api/ibroker/getOrders"
 	"TradingBot/src/services/api/ibroker/getquote"
 	"TradingBot/src/services/api/ibroker/login"
 	"TradingBot/src/services/logger"
@@ -86,6 +87,28 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 		},
 		func() error {
 			return s.doOptionsRequest(url, "POST", logger.CreateOrderRequest)
+		},
+	)
+
+	return
+}
+
+// GetOrders ...
+func (s *API) GetOrders() (orders []*api.Order, err error) {
+	defer func() {
+		s.logAPIResult(orders, err, logger.GetOrdersRequest)
+	}()
+
+	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders"
+	orders, err = getorders.Request(
+		url,
+		s.httpclient,
+		s.accessToken.Token,
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func() error {
+			return s.doOptionsRequest(url, "GET", logger.GetOrdersRequest)
 		},
 	)
 

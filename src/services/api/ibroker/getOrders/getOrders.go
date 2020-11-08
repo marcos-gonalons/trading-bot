@@ -1,4 +1,4 @@
-package getquote
+package getorders
 
 import (
 	"TradingBot/src/services/api"
@@ -14,11 +14,9 @@ func Request(
 	url string,
 	httpClient httpclient.Interface,
 	accessToken string,
-	accountID string,
-	symbol string,
 	setHeaders func(rq *http.Request),
 	optionsRequest func() error,
-) (quote *api.Quote, err error) {
+) (orders []*api.Order, err error) {
 	var mappedResponse = &APIResponse{}
 
 	err = optionsRequest()
@@ -26,7 +24,6 @@ func Request(
 		return
 	}
 
-	url = url + "?symbols=" + symbol + "&accountId=" + accountID
 	rq, err := http.NewRequest(
 		http.MethodGet,
 		url,
@@ -38,7 +35,7 @@ func Request(
 
 	setHeaders(rq)
 	rq.Header.Set("Authorization", "Bearer "+accessToken)
-	response, err := httpClient.Do(rq, logger.GetQuoteRequest)
+	response, err := httpClient.Do(rq, logger.CreateOrderRequest)
 	if err != nil {
 		return
 	}
@@ -59,27 +56,24 @@ func Request(
 		return
 	}
 
-	if len(mappedResponse.Data) == 0 {
-		err = errors.New("Empty quotes array - Response was " + responseAsString)
-		return
-	}
-
-	if mappedResponse.Data[0].Status != "ok" {
+	if mappedResponse.Status != "ok" {
 		err = errors.New("Bad status - Response was " + responseAsString)
 		return
 	}
 
-	emptyValueStruct := QuoteValue{}
-	if mappedResponse.Data[0].Value == emptyValueStruct {
-		err = errors.New("Response does not contain the quote - Response was " + responseAsString)
-		return
+	for _, responseOrder := range mappedResponse.Data {
+		orders = append(orders, &api.Order{
+			ID:         responseOrder.ID,
+			Instrument: responseOrder.Instrument,
+			Qty:        responseOrder.Qty,
+			Side:       responseOrder.Side,
+			Type:       responseOrder.Type,
+			Status:     responseOrder.Status,
+			ParentID:   responseOrder.ParentID,
+			LimitPrice: &responseOrder.LimitPrice,
+			StopPrice:  &responseOrder.StopPrice,
+		})
 	}
 
-	quote = &api.Quote{
-		Ask:    mappedResponse.Data[0].Value.Ask,
-		Bid:    mappedResponse.Data[0].Value.Bid,
-		Price:  mappedResponse.Data[0].Value.CurrentPrice,
-		Volume: mappedResponse.Data[0].Value.Volume,
-	}
 	return
 }
