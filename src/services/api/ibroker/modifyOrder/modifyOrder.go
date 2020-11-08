@@ -1,4 +1,4 @@
-package createorder
+package modifyorder
 
 import (
 	"TradingBot/src/services/api"
@@ -9,9 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"math/rand"
 	"net/http"
-	"time"
 )
 
 // Request ...
@@ -30,9 +28,8 @@ func Request(
 		return
 	}
 
-	url = url + "?requestId=" + getRandomRequestID(10)
 	rq, err := http.NewRequest(
-		http.MethodPost,
+		http.MethodPut,
 		url,
 		getRequestBody(order),
 	)
@@ -42,7 +39,7 @@ func Request(
 
 	setHeaders(rq)
 	rq.Header.Set("Authorization", "Bearer "+accessToken)
-	response, err := httpClient.Do(rq, logger.CreateOrderRequest)
+	response, err := httpClient.Do(rq, logger.ModifyOrderRequest)
 	if err != nil {
 		return
 	}
@@ -71,45 +68,22 @@ func Request(
 	return
 }
 
-func getRandomRequestID(length uint) string {
-	var src = rand.NewSource(time.Now().UnixNano())
-	var letterIdxBits uint = 6
-	var letterIdxMask int64 = 1<<letterIdxBits - 1
-	var letterIdxMax = 63 / letterIdxBits
-	var characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-	requestID := make([]byte, length)
-	for i, cache, remain := length-1, src.Int63(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = src.Int63(), letterIdxMax
-		}
-		if idx := int(cache & letterIdxMask); idx < len(characters) {
-			requestID[i] = characters[idx]
-			i--
-		}
-		cache >>= letterIdxBits
-		remain--
-	}
-
-	return string(requestID)
-}
-
 func getRequestBody(order *api.Order) io.Reader {
 	body := "" +
 		"currentAsk=" + utils.FloatToString(float64(*order.CurrentAsk)) + "&" +
 		"currentBid=" + utils.FloatToString(float64(*order.CurrentBid)) + "&" +
 		"durationType=DAY&" +
-		"instrument=" + order.Instrument + "&" +
-		"side=" + order.Side + "&" +
-		"type=" + order.Type + "&" +
-		"qty=" + utils.FloatToString(float64(order.Qty))
+		"qty=" + utils.FloatToString(float64(order.Qty)) +
+		"id=" + utils.IntToString(order.ID)
 
-	if order.StopPrice != nil {
-		body = body + "&" + "stopPrice=" + utils.FloatToString(float64(*order.StopPrice))
+	if order.Type == "limit" {
+		body = body + "&" + "limitPrice=" + utils.FloatToString(float64(*order.LimitPrice))
+		body = body + "&" + "stopPrice=0"
 	}
 
-	if order.LimitPrice != nil {
-		body = body + "&" + "limitPrice=" + utils.FloatToString(float64(*order.LimitPrice))
+	if order.Type == "stop" {
+		body = body + "&" + "stopPrice=" + utils.FloatToString(float64(*order.StopPrice))
+		body = body + "&" + "limitPrice=0"
 	}
 
 	if order.StopLoss != nil {

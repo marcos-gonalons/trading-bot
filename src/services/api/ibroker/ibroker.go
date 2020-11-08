@@ -7,6 +7,8 @@ import (
 	"TradingBot/src/services/api/ibroker/getquote"
 	"TradingBot/src/services/api/ibroker/login"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/utils"
+
 	"encoding/json"
 	"net/http"
 	"time"
@@ -110,6 +112,29 @@ func (s *API) GetOrders() (orders []*api.Order, err error) {
 		},
 		func() error {
 			return s.doOptionsRequest(url, http.MethodGet, logger.GetOrdersRequest)
+		},
+	)
+
+	return
+}
+
+// ModifyOrder ...
+func (s *API) ModifyOrder(order *api.Order) (err error) {
+	defer func() {
+		s.logAPIResult("", err, logger.ModifyOrderRequest)
+	}()
+
+	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + utils.IntToString(order.ID)
+	err = createorder.Request(
+		url,
+		s.httpclient,
+		s.accessToken.Token,
+		order,
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func() error {
+			return s.doOptionsRequest(url, http.MethodPut, logger.ModifyOrderRequest)
 		},
 	)
 
