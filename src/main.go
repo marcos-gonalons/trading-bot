@@ -16,7 +16,7 @@ import (
 func main() {
 	var ibrokerAPI api.Interface
 	defer func() {
-		panicCatcher(ibrokerAPI)
+		panicCatcher(recover(), ibrokerAPI)
 	}()
 
 	user, password, accountID, err := getArgs(os.Args[1:])
@@ -58,9 +58,7 @@ func getArgs(args []string) (user, password, accountID string, err error) {
 	return
 }
 
-func panicCatcher(API api.Interface) {
-	err := recover()
-
+func panicCatcher(err interface{}, API api.Interface) {
 	if err == nil {
 		return
 	}
