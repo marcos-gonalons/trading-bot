@@ -70,8 +70,7 @@ func (logger *Logger) Log(message string, logType ...LogType) {
 		err = os.Mkdir(folderPath, os.ModePerm)
 		logger.mtx.Unlock()
 		if err != nil {
-			fmt.Printf("%v", err)
-			return
+			panic("Error while creating the log folder - " + folderPath)
 		}
 	}
 
@@ -85,8 +84,7 @@ func (logger *Logger) Log(message string, logType ...LogType) {
 		logger.mtx.Unlock()
 		defer logFile.Close()
 		if err != nil {
-			fmt.Printf("%v", err)
-			return
+			panic("Error while creating the log file - " + fullLogFilePath)
 		}
 	}
 
@@ -95,7 +93,7 @@ func (logger *Logger) Log(message string, logType ...LogType) {
 	logger.mtx.Unlock()
 
 	if err != nil {
-		fmt.Printf("%v", err)
+		panic("Error while writting to log file - " + logFile.Name())
 	}
 }
 
