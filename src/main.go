@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	_ "TradingBot/src/services/logger"
@@ -15,6 +17,7 @@ import (
 
 func main() {
 	var ibrokerAPI api.Interface
+
 	defer func() {
 		panicCatcher(recover(), ibrokerAPI)
 	}()
@@ -32,6 +35,8 @@ func main() {
 			AccountID: accountID,
 		},
 	)
+	setupOSSignalsNotifications(ibrokerAPI)
+
 	_, err = ibrokerAPI.Login()
 	if err != nil {
 		fmt.Printf("%#v", "Login error -> "+err.Error())
@@ -65,4 +70,16 @@ func panicCatcher(err interface{}, API api.Interface) {
 
 	logger.GetInstance().Log("PANIC - "+fmt.Sprintf("%#v", err), logger.Default)
 	API.CloseEverything()
+}
+
+func setupOSSignalsNotifications(API api.Interface) {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+		fmt.Printf("%#v", sig)
+		API.CloseEverything()
+		os.Exit(0)
+	}()
 }
