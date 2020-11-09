@@ -1,4 +1,4 @@
-package bot
+package mainstrategy
 
 import (
 	"TradingBot/src/services/api"
@@ -11,24 +11,39 @@ import (
 var previousExecutionTime time.Time
 var failedGetQuoteRequestsInARow int = 0
 
-// Execute - This is the code that is executed every 1.66666 seconds in an infinite loop
-func Execute(API api.Interface, logger logger.Interface) {
+// Strategy ...
+type Strategy struct {
+	API    api.Interface
+	Logger logger.Interface
+}
+
+// Execute ...
+func (s *Strategy) Execute() {
+	for {
+		s.execute()
+		// Why 1.66666 seconds?
+		// Tradingview sends the get quotes request once every 1.66666 seconds, so we should do the same.
+		time.Sleep(1666666 * time.Microsecond)
+	}
+}
+
+func (s *Strategy) execute() {
 	now := time.Now()
 
-	currentHour, previousHour := getCurrentAndPreviousHour(now, previousExecutionTime)
+	currentHour, previousHour := s.getCurrentAndPreviousHour(now, previousExecutionTime)
 	if currentHour == 2 && previousHour == 1 {
-		logger.ResetLogs()
+		s.Logger.ResetLogs()
 
-		logger.Log("Refreshing access token by calling API.Login")
-		login(API, 60, 1*time.Minute)
+		s.Logger.Log("Refreshing access token by calling API.Login")
+		s.login(60, 1*time.Minute)
 	}
 
 	if currentHour < 6 || currentHour > 21 {
-		logger.Log("Doing nothing - Now it's not the time.")
+		s.Logger.Log("Doing nothing - Now it's not the time.")
 		return
 	}
 
-	quote := getQuote("GER30", API, logger)
+	quote := s.getQuote("GER30")
 	if quote == nil {
 		return
 	}
@@ -61,7 +76,7 @@ func Execute(API api.Interface, logger logger.Interface) {
 	previousExecutionTime = now
 }
 
-func getCurrentAndPreviousHour(
+func (s *Strategy) getCurrentAndPreviousHour(
 	now time.Time,
 	previous time.Time,
 ) (int, int) {
@@ -70,8 +85,8 @@ func getCurrentAndPreviousHour(
 	return currentHour, previousHour
 }
 
-func login(API api.Interface, maxRetries uint, timeBetweenRetries time.Duration) {
-	_, err := API.Login()
+func (s *Strategy) login(maxRetries uint, timeBetweenRetries time.Duration) {
+	_, err := s.API.Login()
 	if err == nil {
 		return
 	}
@@ -83,7 +98,7 @@ func login(API api.Interface, maxRetries uint, timeBetweenRetries time.Duration)
 			if retriesAmount == maxRetries {
 				panic("Too many failed login attempts. Last error was " + err.Error())
 			}
-			_, err = API.Login()
+			_, err = s.API.Login()
 
 			if err == nil {
 				break
@@ -95,19 +110,15 @@ func login(API api.Interface, maxRetries uint, timeBetweenRetries time.Duration)
 	}()
 }
 
-func getQuote(
-	symbol string,
-	API api.Interface,
-	logger logger.Interface,
-) *api.Quote {
+func (s *Strategy) getQuote(symbol string) *api.Quote {
 	if failedGetQuoteRequestsInARow == 100 {
 		panic("There is something wrong when fetching the quotes")
 	}
 
-	quote, err := API.GetQuote(symbol)
+	quote, err := s.API.GetQuote(symbol)
 	if err != nil {
 		failedGetQuoteRequestsInARow++
-		logger.Log("Error when fetching the quote - Fails in a row -> " + utils.IntToString(int64(failedGetQuoteRequestsInARow)))
+		s.Logger.Log("Error when fetching the quote - Fails in a row -> " + utils.IntToString(int64(failedGetQuoteRequestsInARow)))
 		return nil
 	}
 

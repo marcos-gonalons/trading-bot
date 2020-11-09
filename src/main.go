@@ -1,16 +1,15 @@
 package main
 
 import (
-	"TradingBot/src/bot"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/strategies"
 	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	_ "TradingBot/src/services/logger"
 )
@@ -43,24 +42,11 @@ func main() {
 		return
 	}
 
+	for _, strategy := range strategies.GetStrategies(ibrokerAPI, logger.GetInstance()) {
+		go strategy.Execute()
+	}
+
 	for {
-		/**
-			Remove the bot/ folder, that should be called strategies
-
-
-			for _, strategy := range strategies {
-				// each strategy will have it's own sleep.
-				go strategy()
-			}
-
-
-		**/
-
-		bot.Execute(ibrokerAPI, logger.GetInstance())
-
-		// Why 1.66666 seconds?
-		// Tradingview sends the get quotes request once every 1.66666 seconds, so we should do the same.
-		time.Sleep(1666666 * time.Microsecond)
 	}
 }
 
