@@ -45,15 +45,14 @@ func (s *Strategy) execute() {
 		return
 	}
 
-	quote, orders, position, state := s.fetchData()
+	quote, _, positions, state := s.fetchData()
 
 	if quote == nil {
 		return
 	}
 
 	fmt.Printf("\n%#v\n", quote)
-	fmt.Printf("\n%#v\n", orders)
-	fmt.Printf("\n%#v\n", position)
+	fmt.Printf("\n%#v\n", positions)
 	fmt.Printf("\n%#v\n", state)
 
 	/***
@@ -121,17 +120,17 @@ func (s *Strategy) fetchData() (
 
 	go func() {
 		defer waitingGroup.Done()
-		// orders = s.getOrders()
+		orders = s.getOrders()
 	}()
 
 	go func() {
 		defer waitingGroup.Done()
-		//positions = s.getPositions()
+		positions = s.getPositions()
 	}()
 
 	go func() {
 		defer waitingGroup.Done()
-		//state = s.getState()
+		state = s.getState()
 	}()
 
 	waitingGroup.Wait()
