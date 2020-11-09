@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/utils"
-	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -45,15 +44,11 @@ func (s *Strategy) execute() {
 		return
 	}
 
-	quote, _, positions, state := s.fetchData()
+	quote, _, _, _ := s.fetchData()
 
 	if quote == nil {
 		return
 	}
-
-	fmt.Printf("\n%#v\n", quote)
-	fmt.Printf("\n%#v\n", positions)
-	fmt.Printf("\n%#v\n", state)
 
 	/***
 		When creating an order, I need to save the 3 created orders somewhere (the limit/stop order, it's sl and it's tp)
@@ -112,74 +107,51 @@ func (s *Strategy) fetchData() (
 	}
 
 	var waitingGroup sync.WaitGroup
-	waitingGroup.Add(4)
-	go func() {
-		defer waitingGroup.Done()
-		quote = s.getQuote("GER30")
-	}()
+	fetchFuncs := []func(){
+		func() {
+			defer waitingGroup.Done()
+			quote = s.fetch(func() (interface{}, error) {
+				return s.API.GetQuote("GER30")
+			}).(*api.Quote)
+		},
+		func() {
+			defer waitingGroup.Done()
+			orders = s.fetch(func() (interface{}, error) {
+				return s.API.GetOrders()
+			}).([]*api.Order)
+		},
+		func() {
+			defer waitingGroup.Done()
+			positions = s.fetch(func() (interface{}, error) {
+				return s.API.GetPositions()
+			}).([]*api.Position)
+		},
+		func() {
+			defer waitingGroup.Done()
+			state = s.fetch(func() (interface{}, error) {
+				return s.API.GetState()
+			}).(*api.State)
+		},
+	}
 
-	go func() {
-		defer waitingGroup.Done()
-		orders = s.getOrders()
-	}()
-
-	go func() {
-		defer waitingGroup.Done()
-		positions = s.getPositions()
-	}()
-
-	go func() {
-		defer waitingGroup.Done()
-		state = s.getState()
-	}()
-
+	waitingGroup.Add(len(fetchFuncs))
+	for _, fetchFunc := range fetchFuncs {
+		go fetchFunc()
+	}
 	waitingGroup.Wait()
 	s.failedAPIRequestsInARow = 0
 	return
 }
 
-func (s *Strategy) getQuote(symbol string) (quote *api.Quote) {
-	quote, err := s.API.GetQuote(symbol)
+func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interface{}) {
+	result, err := fetchFunc()
+
 	if err != nil {
-		s.handleFetchError(err)
+		s.failedAPIRequestsInARow++
+		s.Logger.Log("Error when fetching - Fails in a row -> " + utils.IntToString(int64(s.failedAPIRequestsInARow)))
+		s.Logger.Log("Error was " + err.Error())
 		return
 	}
 
 	return
-}
-
-func (s *Strategy) getOrders() (orders []*api.Order) {
-	orders, err := s.API.GetOrders()
-	if err != nil {
-		s.handleFetchError(err)
-		return
-	}
-
-	return
-}
-
-func (s *Strategy) getPositions() (positions []*api.Position) {
-	positions, err := s.API.GetPositions()
-	if err != nil {
-		s.handleFetchError(err)
-		return
-	}
-
-	return
-}
-
-func (s *Strategy) getState() (state *api.State) {
-	state, err := s.API.GetState()
-	if err != nil {
-		s.handleFetchError(err)
-		return
-	}
-
-	return
-}
-
-func (s *Strategy) handleFetchError(err error) {
-	s.failedAPIRequestsInARow++
-	s.Logger.Log("Error when fetching - Fails in a row -> " + utils.IntToString(int64(s.failedAPIRequestsInARow)))
-	s.Logger.Log("Error was " + err.Error())
 }
