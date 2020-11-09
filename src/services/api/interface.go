@@ -7,7 +7,7 @@ type Interface interface {
 	CreateOrder(order *Order) error
 	GetOrders() ([]*Order, error)
 	ModifyOrder(order *Order) error
-	CloseOrder(orderID int64) error
+	CloseOrder(orderID string) error
 	GetPositions() ([]*Position, error)
 	ClosePosition(symbol string) error
 	CloseEverything() error

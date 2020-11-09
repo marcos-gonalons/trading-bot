@@ -5,7 +5,7 @@ type APIResponse struct {
 	Status   string `json:"s"`
 	ErrorMsg string `json:"errmsg"`
 	Data     []struct {
-		ID         int64   `json:"id"`
+		ID         string  `json:"id"`
 		Instrument string  `json:"instrument"`
 		Qty        float32 `json:"qty"`
 		Side       string  `json:"side"`
@@ -19,7 +19,7 @@ type APIResponse struct {
 			Datetime float64 `json:"datetime"`
 		} `json:"duration"`
 		Status     string  `json:"status"`
-		ParentID   *int64  `json:"parentId"`
+		ParentID   *string `json:"parentId"`
 		ParentType *string `json:"parentType"`
 	} `json:"d"`
 }

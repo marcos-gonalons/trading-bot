@@ -9,7 +9,6 @@ import (
 	"TradingBot/src/services/api/ibroker/getquote"
 	"TradingBot/src/services/api/ibroker/login"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/utils"
 
 	"encoding/json"
 	"net/http"
@@ -129,7 +128,7 @@ func (s *API) ModifyOrder(order *api.Order) (err error) {
 		s.logAPIResult("", err, logger.ModifyOrderRequest)
 	}()
 
-	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + utils.IntToString(order.ID)
+	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + order.ID
 	err = createorder.Request(
 		url,
 		s.httpclient,
@@ -169,12 +168,12 @@ func (s *API) ClosePosition(symbol string) (err error) {
 }
 
 // CloseOrder ...
-func (s *API) CloseOrder(orderID int64) (err error) {
+func (s *API) CloseOrder(orderID string) (err error) {
 	defer func() {
 		s.logAPIResult("", err, logger.CloseOrderRequest)
 	}()
 
-	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + utils.IntToString(orderID)
+	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + orderID
 	err = closeposition.Request(
 		url,
 		s.httpclient,

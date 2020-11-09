@@ -25,7 +25,7 @@ type Quote struct {
 
 // Order ...
 type Order struct {
-	ID           int64
+	ID           string
 	CurrentAsk   *float32
 	CurrentBid   *float32
 	DurationType string
@@ -38,7 +38,7 @@ type Order struct {
 	LimitPrice   *float32
 	StopPrice    *float32
 	Status       string
-	ParentID     *int64
+	ParentID     *string
 }
 
 // Position ...
