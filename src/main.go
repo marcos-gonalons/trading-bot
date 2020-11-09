@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	_ "TradingBot/src/services/logger"
@@ -42,12 +43,12 @@ func main() {
 		return
 	}
 
+	var waitingGroup sync.WaitGroup
+	waitingGroup.Add(1)
 	for _, strategy := range strategies.GetStrategies(ibrokerAPI, logger.GetInstance()) {
 		go strategy.Execute()
 	}
-
-	for {
-	}
+	waitingGroup.Wait() // Wait forever, this script must never die
 }
 
 func getArgs(args []string) (user, password, accountID string, err error) {
