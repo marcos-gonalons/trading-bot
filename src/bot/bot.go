@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/utils"
-	"os"
 	"strconv"
 	"time"
 )
@@ -18,7 +17,7 @@ func Execute(API api.Interface, logger logger.Interface) {
 
 	currentHour, previousHour := getCurrentAndPreviousHour(now, previousExecutionTime)
 	if currentHour == 2 && previousHour == 1 {
-		resetLogs()
+		logger.ResetLogs()
 
 		logger.Log("Refreshing access token by calling API.Login")
 		login(API, 60, 1*time.Minute)
@@ -98,16 +97,4 @@ func getQuote(
 
 	failedGetQuoteRequestsInARow = 0
 	return quote
-}
-
-func resetLogs() {
-	directory := "logs"
-
-	osDir, _ := os.Open(directory)
-	files, _ := osDir.Readdir(0)
-
-	for index := range files {
-		file := files[index]
-		os.Remove(directory + "/" + file.Name())
-	}
 }

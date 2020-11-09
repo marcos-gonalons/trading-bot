@@ -99,6 +99,28 @@ func (logger *Logger) Log(message string, logType ...LogType) {
 	}
 }
 
+// ResetLogs ...
+func (logger *Logger) ResetLogs() {
+	directory := logger.rootPath
+
+	osDir, err := os.Open(directory)
+	if err != nil {
+		panic("Error opening the directory" + directory + " -> " + err.Error())
+	}
+	files, err := osDir.Readdir(0)
+	if err != nil {
+		panic("Error reading the directory" + directory + " -> " + err.Error())
+	}
+
+	for index := range files {
+		file := files[index]
+		err = os.Remove(directory + "/" + file.Name())
+		if err != nil {
+			panic("Error removing the log file" + file.Name() + " -> " + err.Error())
+		}
+	}
+}
+
 var logger *Logger
 
 func init() {
