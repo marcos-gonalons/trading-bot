@@ -40,6 +40,22 @@ func Execute(API api.Interface, logger logger.Interface) {
 
 		When modifying an order that hasn't been filled yet, I can use the ID of the main order to change it's sl, tp, or it's limit/stop price.
 		When modifying the sl/tp of a position, I need to use the ID of the sl/tp order.
+
+
+
+
+		Trading view does this API calls every time
+		get quote
+		get orders
+		get state
+		get positions
+
+		So I should do the same
+
+		Use goroutines + waiting group
+		When all the requests are done; execute script code
+
+		log something when it's time to execute the script code, so I can see how much time it takes to finish all 4 requests
 	***/
 
 	previousExecutionTime = now
@@ -90,8 +106,8 @@ func getQuote(
 
 	quote, err := API.GetQuote(symbol)
 	if err != nil {
-		logger.Log("Error when fetchin the quote - Fails in a row -> " + utils.IntToString(int64(failedGetQuoteRequestsInARow)))
 		failedGetQuoteRequestsInARow++
+		logger.Log("Error when fetching the quote - Fails in a row -> " + utils.IntToString(int64(failedGetQuoteRequestsInARow)))
 		return nil
 	}
 

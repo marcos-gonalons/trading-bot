@@ -44,6 +44,18 @@ func main() {
 	}
 
 	for {
+		/**
+			Remove the bot/ folder, that should be called strategies
+
+
+			for _, strategy := range strategies {
+				// each strategy will have it's own sleep.
+				go strategy()
+			}
+
+
+		**/
+
 		bot.Execute(ibrokerAPI, logger.GetInstance())
 
 		// Why 1.66666 seconds?

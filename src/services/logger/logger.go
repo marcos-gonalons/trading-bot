@@ -39,6 +39,9 @@ const (
 
 	// ClosePositionRequest 9
 	ClosePositionRequest LogType = 9
+
+	// GetStateRequest 10
+	GetStateRequest LogType = 10
 )
 
 // Logger ...
@@ -132,6 +135,7 @@ func init() {
 	filePathsMap[CloseOrderRequest] = "closeOrderRequest"
 	filePathsMap[GetPositionsRequest] = "getPositionsRequest"
 	filePathsMap[ClosePositionRequest] = "closePositionRequest"
+	filePathsMap[GetStateRequest] = "getStateRequest"
 
 	logger = &Logger{
 		"logs/",

@@ -49,3 +49,10 @@ type Position struct {
 	AvgPrice     float32
 	UnrealizedPl float64
 }
+
+// State ...
+type State struct {
+	Balance      float64
+	UnrealizedPL float64
+	Equity       float64
+}

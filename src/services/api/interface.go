@@ -11,4 +11,5 @@ type Interface interface {
 	GetPositions() ([]*Position, error)
 	ClosePosition(symbol string) error
 	CloseEverything() error
+	GetState() (*State, error)
 }

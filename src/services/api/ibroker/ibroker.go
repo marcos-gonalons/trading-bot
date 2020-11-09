@@ -5,6 +5,7 @@ import (
 	"TradingBot/src/services/api/ibroker/createorder"
 	getorders "TradingBot/src/services/api/ibroker/getOrders"
 	getpositions "TradingBot/src/services/api/ibroker/getPositions"
+	getstate "TradingBot/src/services/api/ibroker/getState"
 	"TradingBot/src/services/api/ibroker/getquote"
 	"TradingBot/src/services/api/ibroker/login"
 	"TradingBot/src/services/logger"
@@ -237,6 +238,28 @@ func (s *API) CloseEverything() (err error) {
 			s.CloseOrder(order.ID)
 		}
 	}
+	return
+}
+
+// GetState ...
+func (s *API) GetState() (state *api.State, err error) {
+	defer func() {
+		s.logAPIResult(state, err, logger.GetStateRequest)
+	}()
+
+	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/state?locale=en"
+	state, err = getstate.Request(
+		url,
+		s.httpclient,
+		s.accessToken.Token,
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func() error {
+			return s.doOptionsRequest(url, http.MethodGet, logger.GetStateRequest)
+		},
+	)
+
 	return
 }
 
