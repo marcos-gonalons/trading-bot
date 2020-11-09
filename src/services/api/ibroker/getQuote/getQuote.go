@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/utils"
 	"errors"
 	"net/http"
 )
@@ -43,12 +42,11 @@ func Request(
 		return
 	}
 
-	responseAsString := utils.GetBodyAsString(response.Body)
-	_, err = httpClient.MapJSONResponseToStruct(mappedResponse, response.Body)
+	rawBody, err := httpClient.MapJSONResponseToStruct(mappedResponse, response.Body)
 	if err != nil {
 		errorMessage := "" +
 			"Error while mapping JSON - " + err.Error() +
-			"\n Response was - " + responseAsString
+			"\n Response was - " + rawBody
 		err = errors.New(errorMessage)
 		return
 	}
@@ -59,18 +57,18 @@ func Request(
 	}
 
 	if len(mappedResponse.Data) == 0 {
-		err = errors.New("Empty quotes array - Response was " + responseAsString)
+		err = errors.New("Empty quotes array - Response was " + rawBody)
 		return
 	}
 
 	if mappedResponse.Data[0].Status != "ok" {
-		err = errors.New("Bad status - Response was " + responseAsString)
+		err = errors.New("Bad status - Response was " + rawBody)
 		return
 	}
 
 	emptyValueStruct := QuoteValue{}
 	if mappedResponse.Data[0].Value == emptyValueStruct {
-		err = errors.New("Response does not contain the quote - Response was " + responseAsString)
+		err = errors.New("Response does not contain the quote - Response was " + rawBody)
 		return
 	}
 

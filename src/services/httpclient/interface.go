@@ -11,5 +11,5 @@ import (
 type Interface interface {
 	Do(rq *http.Request, logType logger.LogType) (*http.Response, error)
 	SetTimeout(timeout time.Duration)
-	MapJSONResponseToStruct(targetStruct interface{}, responseBody io.Reader) ([]byte, error)
+	MapJSONResponseToStruct(targetStruct interface{}, responseBody io.Reader) (string, error)
 }

@@ -29,13 +29,13 @@ func (s *Service) SetTimeout(timeout time.Duration) {
 }
 
 // MapJSONResponseToStruct does what it says
-func (s *Service) MapJSONResponseToStruct(targetStruct interface{}, responseBody io.Reader) ([]byte, error) {
+func (s *Service) MapJSONResponseToStruct(targetStruct interface{}, responseBody io.Reader) (string, error) {
 	rawBody, _ := ioutil.ReadAll(responseBody)
 	responseBody = ioutil.NopCloser(bytes.NewBuffer(rawBody))
 
 	err := json.NewDecoder(responseBody).Decode(&targetStruct)
 
-	return rawBody, err
+	return string(rawBody), err
 }
 
 func (s *Service) getRQStringRepresentation(rq *http.Request) string {

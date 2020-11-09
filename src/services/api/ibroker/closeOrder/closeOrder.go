@@ -3,7 +3,6 @@ package closeorder
 import (
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/utils"
 	"errors"
 	"net/http"
 )
@@ -39,12 +38,11 @@ func Request(
 		return
 	}
 
-	responseAsString := utils.GetBodyAsString(response.Body)
-	_, err = httpClient.MapJSONResponseToStruct(mappedResponse, response.Body)
+	rawBody, err := httpClient.MapJSONResponseToStruct(mappedResponse, response.Body)
 	if err != nil {
 		errorMessage := "" +
 			"Error while mapping JSON - " + err.Error() +
-			"\n Response was - " + responseAsString
+			"\n Response was - " + rawBody
 		err = errors.New(errorMessage)
 		return
 	}
@@ -55,7 +53,7 @@ func Request(
 	}
 
 	if mappedResponse.Status != "ok" {
-		err = errors.New("Bad status - Response was " + responseAsString)
+		err = errors.New("Bad status - Response was " + rawBody)
 		return
 	}
 

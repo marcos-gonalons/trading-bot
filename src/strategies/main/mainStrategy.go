@@ -4,17 +4,19 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/utils"
+	"fmt"
 	"strconv"
+	"sync"
 	"time"
 )
-
-var previousExecutionTime time.Time
-var failedGetQuoteRequestsInARow int = 0
 
 // Strategy ...
 type Strategy struct {
 	API    api.Interface
 	Logger logger.Interface
+
+	previousExecutionTime   time.Time
+	failedAPIRequestsInARow int
 }
 
 // Execute ...
@@ -22,7 +24,7 @@ func (s *Strategy) Execute() {
 	for {
 		s.execute()
 		// Why 1.66666 seconds?
-		// Tradingview sends the get quotes request once every 1.66666 seconds, so we should do the same.
+		// Tradingview sends the get requests every 1.66666 seconds, so we should do the same.
 		time.Sleep(1666666 * time.Microsecond)
 	}
 }
@@ -30,12 +32,12 @@ func (s *Strategy) Execute() {
 func (s *Strategy) execute() {
 	now := time.Now()
 
-	currentHour, previousHour := s.getCurrentAndPreviousHour(now, previousExecutionTime)
+	currentHour, previousHour := s.getCurrentAndPreviousHour(now, s.previousExecutionTime)
 	if currentHour == 2 && previousHour == 1 {
 		s.Logger.ResetLogs()
 
 		s.Logger.Log("Refreshing access token by calling API.Login")
-		s.login(60, 1*time.Minute)
+		s.login(120, 30*time.Second)
 	}
 
 	if currentHour < 6 || currentHour > 21 {
@@ -43,10 +45,16 @@ func (s *Strategy) execute() {
 		return
 	}
 
-	quote := s.getQuote("GER30")
+	quote, orders, position, state := s.fetchData()
+
 	if quote == nil {
 		return
 	}
+
+	fmt.Printf("\n%#v\n", quote)
+	fmt.Printf("\n%#v\n", orders)
+	fmt.Printf("\n%#v\n", position)
+	fmt.Printf("\n%#v\n", state)
 
 	/***
 		When creating an order, I need to save the 3 created orders somewhere (the limit/stop order, it's sl and it's tp)
@@ -55,25 +63,9 @@ func (s *Strategy) execute() {
 
 		When modifying an order that hasn't been filled yet, I can use the ID of the main order to change it's sl, tp, or it's limit/stop price.
 		When modifying the sl/tp of a position, I need to use the ID of the sl/tp order.
-
-
-
-
-		Trading view does this API calls every time
-		get quote
-		get orders
-		get state
-		get positions
-
-		So I should do the same
-
-		Use goroutines + waiting group
-		When all the requests are done; execute script code
-
-		log something when it's time to execute the script code, so I can see how much time it takes to finish all 4 requests
 	***/
 
-	previousExecutionTime = now
+	s.previousExecutionTime = now
 }
 
 func (s *Strategy) getCurrentAndPreviousHour(
@@ -110,18 +102,85 @@ func (s *Strategy) login(maxRetries uint, timeBetweenRetries time.Duration) {
 	}()
 }
 
-func (s *Strategy) getQuote(symbol string) *api.Quote {
-	if failedGetQuoteRequestsInARow == 100 {
-		panic("There is something wrong when fetching the quotes")
+func (s *Strategy) fetchData() (
+	quote *api.Quote,
+	orders []*api.Order,
+	positions []*api.Position,
+	state *api.State,
+) {
+	if s.failedAPIRequestsInARow == 100 {
+		panic("There is something wrong when fetching the data")
 	}
 
+	var waitingGroup sync.WaitGroup
+	waitingGroup.Add(4)
+	go func() {
+		defer waitingGroup.Done()
+		quote = s.getQuote("GER30")
+	}()
+
+	go func() {
+		defer waitingGroup.Done()
+		// orders = s.getOrders()
+	}()
+
+	go func() {
+		defer waitingGroup.Done()
+		//positions = s.getPositions()
+	}()
+
+	go func() {
+		defer waitingGroup.Done()
+		//state = s.getState()
+	}()
+
+	waitingGroup.Wait()
+	s.failedAPIRequestsInARow = 0
+	return
+}
+
+func (s *Strategy) getQuote(symbol string) (quote *api.Quote) {
 	quote, err := s.API.GetQuote(symbol)
 	if err != nil {
-		failedGetQuoteRequestsInARow++
-		s.Logger.Log("Error when fetching the quote - Fails in a row -> " + utils.IntToString(int64(failedGetQuoteRequestsInARow)))
-		return nil
+		s.handleFetchError(err)
+		return
 	}
 
-	failedGetQuoteRequestsInARow = 0
-	return quote
+	return
+}
+
+func (s *Strategy) getOrders() (orders []*api.Order) {
+	orders, err := s.API.GetOrders()
+	if err != nil {
+		s.handleFetchError(err)
+		return
+	}
+
+	return
+}
+
+func (s *Strategy) getPositions() (positions []*api.Position) {
+	positions, err := s.API.GetPositions()
+	if err != nil {
+		s.handleFetchError(err)
+		return
+	}
+
+	return
+}
+
+func (s *Strategy) getState() (state *api.State) {
+	state, err := s.API.GetState()
+	if err != nil {
+		s.handleFetchError(err)
+		return
+	}
+
+	return
+}
+
+func (s *Strategy) handleFetchError(err error) {
+	s.failedAPIRequestsInARow++
+	s.Logger.Log("Error when fetching - Fails in a row -> " + utils.IntToString(int64(s.failedAPIRequestsInARow)))
+	s.Logger.Log("Error was " + err.Error())
 }

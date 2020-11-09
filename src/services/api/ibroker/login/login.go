@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/utils"
 
 	"bytes"
 	"errors"
@@ -42,12 +41,11 @@ func Request(
 		return
 	}
 
-	responseAsString := utils.GetBodyAsString(response.Body)
-	_, err = httpClient.MapJSONResponseToStruct(mappedResponse, response.Body)
+	rawBody, err := httpClient.MapJSONResponseToStruct(mappedResponse, response.Body)
 	if err != nil {
 		errorMessage := "" +
 			"Error while mapping JSON - " + err.Error() +
-			"\n Response was - " + responseAsString
+			"\n Response was - " + rawBody
 		err = errors.New(errorMessage)
 		return
 	}
@@ -58,7 +56,7 @@ func Request(
 	}
 
 	if mappedResponse.Data.AccessToken == "" {
-		err = errors.New("Empty access token - Response was " + responseAsString)
+		err = errors.New("Empty access token - Response was " + rawBody)
 		return
 	}
 
