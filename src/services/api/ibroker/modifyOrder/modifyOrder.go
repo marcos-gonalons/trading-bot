@@ -6,7 +6,6 @@ import (
 	"TradingBot/src/services/logger"
 	"TradingBot/src/utils"
 	"bytes"
-	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -44,16 +43,15 @@ func Request(
 		return
 	}
 
+	responseAsString := utils.GetBodyAsString(response.Body)
 	_, err = httpClient.MapJSONResponseToStruct(mappedResponse, response.Body)
 	if err != nil {
+		errorMessage := "" +
+			"Error while mapping JSON - " + err.Error() +
+			"\n Response was - " + responseAsString
+		err = errors.New(errorMessage)
 		return
 	}
-
-	str, err := json.Marshal(mappedResponse)
-	if err != nil {
-		return
-	}
-	responseAsString := string(str)
 
 	if mappedResponse.ErrorMsg != "" {
 		err = errors.New("Api error -> " + mappedResponse.ErrorMsg)
