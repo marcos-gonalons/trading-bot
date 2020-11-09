@@ -1,6 +1,11 @@
 package utils
 
-import "strconv"
+import (
+	"bytes"
+	"io"
+	"io/ioutil"
+	"strconv"
+)
 
 // FloatToString ...
 func FloatToString(v float64) string {
@@ -10,4 +15,17 @@ func FloatToString(v float64) string {
 // IntToString ...
 func IntToString(v int64) string {
 	return strconv.FormatInt(v, 10)
+}
+
+// GetBodyAsString ...
+func GetBodyAsString(body io.ReadCloser) string {
+	return ""
+	if body == nil {
+		return ""
+	}
+
+	rawBody, _ := ioutil.ReadAll(body)
+	body = ioutil.NopCloser(bytes.NewBuffer(rawBody))
+
+	return string(rawBody)
 }
