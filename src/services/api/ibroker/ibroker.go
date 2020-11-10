@@ -1,6 +1,7 @@
 package ibroker
 
 import (
+	closeorder "TradingBot/src/services/api/ibroker/closeOrder"
 	closeposition "TradingBot/src/services/api/ibroker/closePosition"
 	"TradingBot/src/services/api/ibroker/createorder"
 	getorders "TradingBot/src/services/api/ibroker/getOrders"
@@ -8,6 +9,7 @@ import (
 	getstate "TradingBot/src/services/api/ibroker/getState"
 	"TradingBot/src/services/api/ibroker/getquote"
 	"TradingBot/src/services/api/ibroker/login"
+	modifyorder "TradingBot/src/services/api/ibroker/modifyOrder"
 	"TradingBot/src/services/logger"
 
 	"encoding/json"
@@ -129,7 +131,7 @@ func (s *API) ModifyOrder(order *api.Order) (err error) {
 	}()
 
 	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + order.ID
-	err = createorder.Request(
+	err = modifyorder.Request(
 		url,
 		s.httpclient,
 		s.accessToken.Token,
@@ -174,7 +176,7 @@ func (s *API) CloseOrder(orderID string) (err error) {
 	}()
 
 	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + orderID
-	err = closeposition.Request(
+	err = closeorder.Request(
 		url,
 		s.httpclient,
 		s.accessToken.Token,

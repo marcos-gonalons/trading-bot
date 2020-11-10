@@ -3,7 +3,6 @@ package mainstrategy
 import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/utils"
 	"strconv"
 	"sync"
 	"time"
@@ -14,12 +13,13 @@ type Strategy struct {
 	API    api.Interface
 	Logger logger.Interface
 
-	previousExecutionTime   time.Time
-	failedAPIRequestsInARow int
+	previousExecutionTime time.Time
+	failedAPIRequests     int
 }
 
 // Execute ...
 func (s *Strategy) Execute() {
+	go s.panicIfTooManyAPIFails()
 	for {
 		s.execute()
 		// Why 1.66666 seconds?
@@ -57,6 +57,24 @@ func (s *Strategy) execute() {
 
 		When modifying an order that hasn't been filled yet, I can use the ID of the main order to change it's sl, tp, or it's limit/stop price.
 		When modifying the sl/tp of a position, I need to use the ID of the sl/tp order.
+
+
+
+		Take into consideration
+		Let's say the bot dies, for whatever reason, at 15:00pm
+		I revive him at 15:05
+		It will have lost all the candles[]
+
+		To mitigate this
+		As I add a candle to the candles[]
+		Save the candles to the csv file
+		When booting the bot; initialize the candles array with those in the csv file
+
+
+		When booting {
+			if !csv file, create the csv file
+			else, load candles[] from the file
+		}
 	***/
 
 	s.previousExecutionTime = now
@@ -102,10 +120,6 @@ func (s *Strategy) fetchData() (
 	positions []*api.Position,
 	state *api.State,
 ) {
-	if s.failedAPIRequestsInARow == 100 {
-		panic("There is something wrong when fetching the data")
-	}
-
 	var waitingGroup sync.WaitGroup
 	fetchFuncs := []func(){
 		func() {
@@ -139,7 +153,6 @@ func (s *Strategy) fetchData() (
 		go fetchFunc()
 	}
 	waitingGroup.Wait()
-	s.failedAPIRequestsInARow = 0
 	return
 }
 
@@ -147,11 +160,20 @@ func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interfac
 	result, err := fetchFunc()
 
 	if err != nil {
-		s.failedAPIRequestsInARow++
-		s.Logger.Log("Error when fetching - Fails in a row -> " + utils.IntToString(int64(s.failedAPIRequestsInARow)))
-		s.Logger.Log("Error was " + err.Error())
+		s.failedAPIRequests++
+		s.Logger.Log("Error while fetching data -> " + err.Error())
 		return
 	}
 
 	return
+}
+
+func (s *Strategy) panicIfTooManyAPIFails() {
+	for {
+		if s.failedAPIRequests >= 15 {
+			panic("There is something wrong with the API - Check logs - Stopping bot")
+		}
+		s.failedAPIRequests = 0
+		time.Sleep(1 * time.Minute)
+	}
 }

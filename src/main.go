@@ -67,7 +67,7 @@ func panicCatcher(err interface{}, API api.Interface) {
 		return
 	}
 
-	logger.GetInstance().Log("PANIC - "+fmt.Sprintf("%#v", err), logger.Default)
+	logger.GetInstance().Log("PANIC - " + fmt.Sprintf("%#v", err))
 	API.CloseEverything()
 }
 
