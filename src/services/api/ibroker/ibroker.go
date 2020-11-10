@@ -266,7 +266,7 @@ func (s *API) GetState() (state *api.State, err error) {
 }
 
 // ModifyPosition ...
-func (s *API) ModifyPosition(symbol string, takeProfit *float32, stopLoss *float32) (err error) {
+func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string) (err error) {
 	defer func() {
 		s.logAPIResult("", err, logger.ModifyPositionRequest)
 	}()

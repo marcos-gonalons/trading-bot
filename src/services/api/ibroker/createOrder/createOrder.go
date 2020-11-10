@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/utils"
 	"bytes"
 	"errors"
 	"io"
@@ -93,28 +92,28 @@ func getRandomRequestID(length int) string {
 
 func getRequestBody(order *api.Order) io.Reader {
 	body := "" +
-		"currentAsk=" + utils.FloatToString(float64(*order.CurrentAsk)) + "&" +
-		"currentBid=" + utils.FloatToString(float64(*order.CurrentBid)) + "&" +
+		"currentAsk=" + *order.StringValues.CurrentAsk + "&" +
+		"currentBid=" + *order.StringValues.CurrentBid + "&" +
 		"durationType=DAY&" +
 		"instrument=" + order.Instrument + "&" +
 		"side=" + order.Side + "&" +
 		"type=" + order.Type + "&" +
-		"qty=" + utils.FloatToString(float64(order.Qty))
+		"qty=" + *order.StringValues.Qty
 
 	if order.StopPrice != nil {
-		body = body + "&" + "stopPrice=" + utils.FloatToString(float64(*order.StopPrice))
+		body = body + "&" + "stopPrice=" + *order.StringValues.StopPrice
 	}
 
 	if order.LimitPrice != nil {
-		body = body + "&" + "limitPrice=" + utils.FloatToString(float64(*order.LimitPrice))
+		body = body + "&" + "limitPrice=" + *order.StringValues.LimitPrice
 	}
 
 	if order.StopLoss != nil {
-		body = body + "&" + "stopLoss=" + utils.FloatToString(float64(*order.StopLoss))
+		body = body + "&" + "stopLoss=" + *order.StringValues.StopLoss
 	}
 
 	if order.TakeProfit != nil {
-		body = body + "&" + "takeProfit=" + utils.FloatToString(float64(*order.TakeProfit))
+		body = body + "&" + "takeProfit=" + *order.StringValues.TakeProfit
 	}
 
 	return bytes.NewBuffer([]byte(body))

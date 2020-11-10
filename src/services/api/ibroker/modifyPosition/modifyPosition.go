@@ -3,7 +3,6 @@ package modifyposition
 import (
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/utils"
 	"bytes"
 	"errors"
 	"io"
@@ -15,8 +14,8 @@ func Request(
 	url string,
 	httpClient httpclient.Interface,
 	accessToken string,
-	takeProfit *float32,
-	stopLoss *float32,
+	takeProfit *string,
+	stopLoss *string,
 	setHeaders func(rq *http.Request),
 	optionsRequest func() error,
 ) (err error) {
@@ -65,19 +64,19 @@ func Request(
 	return
 }
 
-func getRequestBody(takeProfit *float32, stopLoss *float32) io.Reader {
+func getRequestBody(takeProfit *string, stopLoss *string) io.Reader {
 	body := ""
 
 	if takeProfit != nil && stopLoss != nil {
 		body = "" +
-			"stopLoss=" + utils.FloatToString(float64(*stopLoss)) + "&" +
-			"takeProfit=" + utils.FloatToString(float64(*takeProfit))
+			"stopLoss=" + *stopLoss + "&" +
+			"takeProfit=" + *takeProfit
 	} else {
 		if takeProfit != nil {
-			body = "takeProfit=" + utils.FloatToString(float64(*takeProfit))
+			body = "takeProfit=" + *takeProfit
 		}
 		if stopLoss != nil {
-			body = "stopLoss=" + utils.FloatToString(float64(*stopLoss))
+			body = "stopLoss=" + *stopLoss
 		}
 	}
 
