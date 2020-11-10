@@ -56,17 +56,19 @@ type Logger struct {
 
 // Log logs a message
 func (logger *Logger) Log(message string, logType ...LogType) {
-	var ioWriter io.Writer
-
-	ioWriter = os.Stdout
-	fmt.Fprintf(ioWriter, message)
-	fmt.Fprintf(ioWriter, "\n\n")
 
 	var logFileName string
 	if len(logType) > 0 {
 		logFileName = logger.fileNames[logType[0]]
 	} else {
 		logFileName = logger.fileNames[Default]
+	}
+
+	if logFileName == logger.fileNames[Default] {
+		var ioWriter io.Writer
+		ioWriter = os.Stdout
+		fmt.Fprintf(ioWriter, message)
+		fmt.Fprintf(ioWriter, "\n\n")
 	}
 
 	var now = time.Now()
