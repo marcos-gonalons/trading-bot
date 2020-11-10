@@ -70,8 +70,8 @@ func getRequestBody(order *api.Order) io.Reader {
 		"currentAsk=" + utils.FloatToString(float64(*order.CurrentAsk)) + "&" +
 		"currentBid=" + utils.FloatToString(float64(*order.CurrentBid)) + "&" +
 		"durationType=DAY&" +
-		"qty=" + utils.FloatToString(float64(order.Qty)) +
-		"id=" + utils.IntToString(order.ID)
+		"qty=" + utils.FloatToString(float64(order.Qty)) + "&" +
+		"id=" + order.ID
 
 	if order.Type == "limit" {
 		body = body + "&" + "limitPrice=" + utils.FloatToString(float64(*order.LimitPrice))
