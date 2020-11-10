@@ -12,4 +12,5 @@ type Interface interface {
 	ClosePosition(symbol string) error
 	CloseEverything() error
 	GetState() (*State, error)
+	ModifyPosition(symbol string, takeProfit *float32, stopLoss *float32) error
 }

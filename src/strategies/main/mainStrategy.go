@@ -51,13 +51,16 @@ func (s *Strategy) execute() {
 	}
 
 	/***
+		Very, very important
+		Round ALL the prices used in ALL the calls to 2 decimals. Otherwise it won't work.
+
 		When creating an order, I need to save the 3 created orders somewhere (the limit/stop order, it's sl and it's tp)
 		The SL and the TP will have the parentID of the main one. The main one will have the parentID null
 		All 3 orders will have the status "working".
 
 		When modifying an order that hasn't been filled yet, I can use the ID of the main order to change it's sl, tp, or it's limit/stop price.
 		When modifying the sl/tp of a position, I need to use the ID of the sl/tp order.
-
+		Or I can just use the modifyposition api
 
 
 		Take into consideration

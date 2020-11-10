@@ -42,6 +42,9 @@ const (
 
 	// GetStateRequest 10
 	GetStateRequest LogType = 10
+
+	// ModifyPositionRequest 11
+	ModifyPositionRequest LogType = 11
 )
 
 // Logger ...
@@ -136,6 +139,7 @@ func init() {
 	filePathsMap[GetPositionsRequest] = "getPositionsRequest"
 	filePathsMap[ClosePositionRequest] = "closePositionRequest"
 	filePathsMap[GetStateRequest] = "getStateRequest"
+	filePathsMap[ModifyPositionRequest] = "modifyPositionRequest"
 
 	logger = &Logger{
 		"logs/",

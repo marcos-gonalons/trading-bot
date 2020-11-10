@@ -10,6 +10,7 @@ import (
 	"TradingBot/src/services/api/ibroker/getquote"
 	"TradingBot/src/services/api/ibroker/login"
 	modifyorder "TradingBot/src/services/api/ibroker/modifyOrder"
+	modifyposition "TradingBot/src/services/api/ibroker/modifyPosition"
 	"TradingBot/src/services/logger"
 
 	"encoding/json"
@@ -264,6 +265,30 @@ func (s *API) GetState() (state *api.State, err error) {
 	return
 }
 
+// ModifyPosition ...
+func (s *API) ModifyPosition(symbol string, takeProfit *float32, stopLoss *float32) (err error) {
+	defer func() {
+		s.logAPIResult("", err, logger.ModifyPositionRequest)
+	}()
+
+	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + symbol
+	err = modifyposition.Request(
+		url,
+		s.httpclient,
+		s.accessToken.Token,
+		takeProfit,
+		stopLoss,
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func() error {
+			return s.doOptionsRequest(url, http.MethodPut, logger.ModifyPositionRequest)
+		},
+	)
+
+	return
+}
+
 func (s *API) getURL(endpoint string) string {
 	return "https://www.ibroker.es/tradingview/api/" + endpoint
 }
@@ -344,7 +369,7 @@ func CreateAPIServiceInstance(credentials *api.Credentials) api.Interface {
 	httpclient := &httpclient.Service{
 		Logger: logger.GetInstance(),
 	}
-	httpclient.SetTimeout(time.Second * 5)
+	httpclient.SetTimeout(time.Second * 10)
 
 	instance := &API{
 		httpclient: httpclient,
