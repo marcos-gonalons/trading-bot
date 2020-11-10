@@ -48,7 +48,7 @@ func main() {
 	for _, strategy := range strategies.GetStrategies(ibrokerAPI, logger.GetInstance()) {
 		go strategy.Execute()
 	}
-	waitingGroup.Wait() // Wait forever, this script must never die
+	waitingGroup.Wait() // Wait forever, this script should never die
 }
 
 func getArgs(args []string) (user, password, accountID string, err error) {

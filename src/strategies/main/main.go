@@ -3,7 +3,9 @@ package mainstrategy
 import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/logger"
+	"os"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -20,13 +22,16 @@ type Strategy struct {
 	positions []*api.Position
 	state     *api.State
 	candles   []*Candle
+
+	csvFile    *os.File
+	csvFileMtx sync.Mutex
 }
 
 // Execute ...
 func (s *Strategy) Execute() {
 	go s.panicIfTooManyAPIFails()
 
-	s.candles = []*Candle{&Candle{}}
+	s.initCandles()
 	go func() {
 		for {
 			s.quote = s.fetch(func() (interface{}, error) {
@@ -52,8 +57,7 @@ func (s *Strategy) onReceiveMarketData() {
 
 	currentHour, previousHour := s.getCurrentAndPreviousHour(now, s.previousExecutionTime)
 	if currentHour == 2 && previousHour == 1 {
-		s.candles = nil
-		s.candles = []*Candle{&Candle{}}
+		s.initCandles()
 		s.Logger.ResetLogs()
 
 		s.Logger.Log("Refreshing access token by calling API.Login")

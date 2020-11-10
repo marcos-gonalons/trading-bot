@@ -2,6 +2,9 @@ package mainstrategy
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -12,6 +15,7 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time) {
 	currentPrice := s.quote.Price
 
 	if currentMinutes != previousMinutes {
+		s.updateCSVWithLastCandle()
 		lastCandle, _ := json.Marshal(s.candles[len(s.candles)-1])
 		s.Logger.Log("Adding new candle to the candles array - Last candle was " + string(lastCandle))
 		s.candles = append(s.candles, &Candle{
@@ -68,6 +72,49 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time) {
 		}
 	***/
 
+}
+
+func (s *Strategy) initCandles() {
+	s.candles = nil
+	s.candles = []*Candle{&Candle{}}
+
+	var err error
+
+	now := time.Now()
+	fileName := now.Format("2006-01-02")
+	s.csvFile, err = os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	defer s.csvFile.Close()
+	if err != nil {
+		s.csvFileMtx.Lock()
+		s.csvFile, err = os.Create(fileName)
+		defer s.csvFile.Close()
+		if err != nil {
+			s.csvFileMtx.Unlock()
+			panic("Error while creating the csv file")
+		} else {
+			s.csvFile.Write([]byte("Time,Open,High,Low,Close,Volume\n"))
+			s.csvFileMtx.Unlock()
+		}
+	}
+
+}
+
+func (s *Strategy) updateCSVWithLastCandle() {
+	lastCandle := s.candles[len(s.candles)-1]
+	row := "" +
+		strconv.FormatInt(lastCandle.Timestamp, 10) + "," +
+		fmt.Sprintf("%f", lastCandle.Open) + "," +
+		fmt.Sprintf("%f", lastCandle.High) + "," +
+		fmt.Sprintf("%f", lastCandle.Low) + "," +
+		fmt.Sprintf("%f", lastCandle.Close) + "," +
+		fmt.Sprintf("%f", lastCandle.Volume)
+
+	s.csvFileMtx.Lock()
+	_, err := s.csvFile.Write([]byte(row))
+	if err != nil {
+		s.Logger.Log("Error when writting the last candle in the csv file -> " + err.Error())
+	}
+	s.csvFileMtx.Unlock()
 }
 
 func getTimestampWith0Seconds(t time.Time) int64 {
