@@ -30,22 +30,18 @@ type Strategy struct {
 func (s *Strategy) Execute() {
 	go s.panicIfTooManyAPIFails()
 
+	// init socket, pass onReceiveMarketData as callback, will receive the quote
+
 	s.initCandles()
-	go func() {
-		for {
-			s.quote = s.fetch(func() (interface{}, error) {
-				return s.API.GetQuote("EUR%2FUSD")
-			}).(*api.Quote)
-			if s.quote != nil {
-				s.onReceiveMarketData()
-			}
-			time.Sleep(500 * time.Millisecond)
-		}
-	}()
+	s.initSocket()
 
 	go func() {
 		for {
-			s.fetchData()
+			now := time.Now()
+			currentHour, _ := strconv.Atoi(now.Format("15"))
+			if currentHour >= 6 && currentHour <= 21 {
+				s.fetchData()
+			}
 			time.Sleep(2 * time.Second)
 		}
 	}()
@@ -63,10 +59,10 @@ func (s *Strategy) onReceiveMarketData() {
 		s.login(120, 30*time.Second)
 	}
 
-	/*if currentHour < 6 || currentHour > 21 {
+	if currentHour < 6 || currentHour > 21 {
 		s.Logger.Log("Doing nothing - Now it's not the time.")
 		return
-	}*/
+	}
 
 	s.updateCandles(now)
 	s.previousExecutionTime = now
@@ -151,4 +147,8 @@ func (s *Strategy) panicIfTooManyAPIFails() {
 		s.failedAPIRequests = 0
 		time.Sleep(1 * time.Minute)
 	}
+}
+
+func (*Strategy) initSocket() {
+
 }

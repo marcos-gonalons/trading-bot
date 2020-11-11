@@ -2,3 +2,4 @@ src/__debug_bin
 .vscode/
 vendor/
 logs/
+*.csv

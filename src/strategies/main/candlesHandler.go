@@ -70,6 +70,13 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time) {
 			if !csv file, create the csv file
 			else, load candles[] from the file
 		}
+
+
+
+		Very important as well
+		When closing a position, and the position has TP and SL; IBROKER WILL NOT LET YOU
+		CLOSE THE POSITION UNTIL YOU CLOSE THE TP AND SL FIRST
+		So; if the script needs to close a position, CLOSE THE SL AND TP FIRST.
 	***/
 
 }
@@ -78,6 +85,9 @@ func (s *Strategy) initCandles() {
 	s.candles = nil
 	s.candles = []*Candle{&Candle{}}
 
+	/**
+		todo: use go routine to save the candles csv file??
+	**/
 	now := time.Now()
 	s.csvFileName = now.Format("2006-01-02") + "-candles.csv"
 	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
@@ -99,6 +109,9 @@ func (s *Strategy) initCandles() {
 
 func (s *Strategy) updateCSVWithLastCandle() {
 	lastCandle := s.candles[len(s.candles)-1]
+	if lastCandle.Timestamp == 0 {
+		return
+	}
 	row := "" +
 		strconv.FormatInt(lastCandle.Timestamp, 10) + "," +
 		utils.FloatToString(float64(lastCandle.Open), 5) + "," +

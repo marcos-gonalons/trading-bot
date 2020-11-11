@@ -5,6 +5,7 @@ import (
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/strategies"
+	"TradingBot/src/tradingviewsocket"
 	"errors"
 	"fmt"
 	"os"
@@ -17,6 +18,21 @@ import (
 
 func main() {
 	var ibrokerAPI api.Interface
+
+	var waitingGroupX sync.WaitGroup
+	waitingGroupX.Add(1)
+	socket := tradingviewsocket.TradingviewSocket{
+		OnReceiveMarketDataCallback: func(data *tradingviewsocket.MarketData) {
+			fmt.Printf("\n%#v\n", "received data")
+			fmt.Printf("\n%#v\n", data)
+		},
+		OnErrorCallback: func(err error) {
+			fmt.Printf("\n%#v\n", "error"+err.Error())
+		},
+	}
+	socket.AddSymbol("FX:EURUSD")
+	socket.Init()
+	waitingGroupX.Wait() // Wait forever, this script should never die
 
 	defer func() {
 		panicCatcher(recover(), ibrokerAPI)
