@@ -3,7 +3,6 @@ package mainstrategy
 import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/logger"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -23,8 +22,8 @@ type Strategy struct {
 	state     *api.State
 	candles   []*Candle
 
-	csvFile    *os.File
-	csvFileMtx sync.Mutex
+	csvFileName string
+	csvFileMtx  sync.Mutex
 }
 
 // Execute ...
@@ -35,7 +34,7 @@ func (s *Strategy) Execute() {
 	go func() {
 		for {
 			s.quote = s.fetch(func() (interface{}, error) {
-				return s.API.GetQuote("GER30")
+				return s.API.GetQuote("EUR%2FUSD")
 			}).(*api.Quote)
 			if s.quote != nil {
 				s.onReceiveMarketData()
@@ -64,10 +63,10 @@ func (s *Strategy) onReceiveMarketData() {
 		s.login(120, 30*time.Second)
 	}
 
-	if currentHour < 6 || currentHour > 21 {
+	/*if currentHour < 6 || currentHour > 21 {
 		s.Logger.Log("Doing nothing - Now it's not the time.")
 		return
-	}
+	}*/
 
 	s.updateCandles(now)
 	s.previousExecutionTime = now

@@ -1,8 +1,8 @@
 package mainstrategy
 
 import (
+	"TradingBot/src/utils"
 	"encoding/json"
-	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -17,7 +17,7 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time) {
 	if currentMinutes != previousMinutes {
 		s.updateCSVWithLastCandle()
 		lastCandle, _ := json.Marshal(s.candles[len(s.candles)-1])
-		s.Logger.Log("Adding new candle to the candles array - Last candle was " + string(lastCandle))
+		s.Logger.Log("Adding new candle to the candles array -> " + string(lastCandle))
 		s.candles = append(s.candles, &Candle{
 			Open:      currentPrice,
 			Low:       currentPrice,
@@ -78,21 +78,19 @@ func (s *Strategy) initCandles() {
 	s.candles = nil
 	s.candles = []*Candle{&Candle{}}
 
-	var err error
-
 	now := time.Now()
-	fileName := now.Format("2006-01-02")
-	s.csvFile, err = os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	defer s.csvFile.Close()
+	s.csvFileName = now.Format("2006-01-02") + "-candles.csv"
+	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	defer csvFile.Close()
 	if err != nil {
 		s.csvFileMtx.Lock()
-		s.csvFile, err = os.Create(fileName)
-		defer s.csvFile.Close()
+		csvFile, err = os.Create(s.csvFileName)
+		defer csvFile.Close()
 		if err != nil {
 			s.csvFileMtx.Unlock()
 			panic("Error while creating the csv file")
 		} else {
-			s.csvFile.Write([]byte("Time,Open,High,Low,Close,Volume\n"))
+			csvFile.Write([]byte("Time,Open,High,Low,Close,Volume\n"))
 			s.csvFileMtx.Unlock()
 		}
 	}
@@ -103,14 +101,19 @@ func (s *Strategy) updateCSVWithLastCandle() {
 	lastCandle := s.candles[len(s.candles)-1]
 	row := "" +
 		strconv.FormatInt(lastCandle.Timestamp, 10) + "," +
-		fmt.Sprintf("%f", lastCandle.Open) + "," +
-		fmt.Sprintf("%f", lastCandle.High) + "," +
-		fmt.Sprintf("%f", lastCandle.Low) + "," +
-		fmt.Sprintf("%f", lastCandle.Close) + "," +
-		fmt.Sprintf("%f", lastCandle.Volume)
+		utils.FloatToString(float64(lastCandle.Open), 5) + "," +
+		utils.FloatToString(float64(lastCandle.High), 5) + "," +
+		utils.FloatToString(float64(lastCandle.Low), 5) + "," +
+		utils.FloatToString(float64(lastCandle.Close), 5) + "," +
+		utils.FloatToString(lastCandle.Volume, 5) + "\n"
+
+	var err error
+
+	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	defer csvFile.Close()
 
 	s.csvFileMtx.Lock()
-	_, err := s.csvFile.Write([]byte(row))
+	_, err = csvFile.Write([]byte(row))
 	if err != nil {
 		s.Logger.Log("Error when writting the last candle in the csv file -> " + err.Error())
 	}

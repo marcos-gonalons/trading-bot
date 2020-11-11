@@ -1,12 +1,14 @@
 package utils
 
 import (
+	"fmt"
 	"strconv"
 )
 
 // FloatToString ...
-func FloatToString(v float64) string {
-	return strconv.FormatFloat(v, 'f', -1, 64)
+func FloatToString(v float64, decimals int64) string {
+	decimalsAsString := IntToString(decimals)
+	return fmt.Sprintf("%."+decimalsAsString+"f", v)
 }
 
 // IntToString ...
