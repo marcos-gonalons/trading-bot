@@ -4,16 +4,37 @@ import (
 	"TradingBot/src/utils"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/websocket"
 )
 
+// SocketMessage ...
+type SocketMessage struct {
+	Message string      `json:"m"`
+	Payload interface{} `json:"p"`
+}
+
 // TradingviewSocket ...
 type TradingviewSocket struct {
-	OnReceiveMarketDataCallback func(data *MarketData)
+	/**
+		data["bid"] = 123.2
+		data["ask"] = 123.2
+		data["lp"] = 123.2
+		data["volume"] = 123.2
+
+		send whatever is received, event If in a message I don´t receive the 4 parameters, which is often.
+		then, just check what´s setted in order to update the candles
+
+		if data["lp"] update candle price
+		if data["volume"] update candle price
+
+		Maybe use a struct with pointers so they can be nil
+
+		use bid and ask to save the spread, so I can later check the avg spread in order to make better decissions
+	**/
+	OnReceiveMarketDataCallback func(symbol string, data map[string]interface{})
 	OnErrorCallback             func(error)
 
 	conn      *websocket.Conn
@@ -32,15 +53,9 @@ func (s *TradingviewSocket) AddSymbol(symbol string) (err error) {
 
 // Init connects to the tradingview web socket
 func (s *TradingviewSocket) Init() {
-	dialer := &websocket.Dialer{}
-
-	headers := http.Header{}
-	headers.Set("Host", "data.tradingview.com")
-	headers.Set("Origin", "https://www.tradingview.com")
-
 	var err error
 
-	s.conn, _, err = dialer.Dial("wss://data.tradingview.com/socket.io/websocket", headers)
+	s.conn, _, err = (&websocket.Dialer{}).Dial("wss://data.tradingview.com/socket.io/websocket", getHeaders())
 	if err != nil {
 		s.onError(err)
 		return
@@ -63,6 +78,11 @@ func (s *TradingviewSocket) Init() {
 	go s.connectionLoop()
 }
 
+// Close ...
+func (s *TradingviewSocket) Close() (err error) {
+	return s.conn.Close()
+}
+
 func (s *TradingviewSocket) checkFirstReceivedMessage() (err error) {
 	var msg []byte
 
@@ -72,7 +92,7 @@ func (s *TradingviewSocket) checkFirstReceivedMessage() (err error) {
 		return
 	}
 
-	payload := getPayload(msg)
+	payload := msg[getPayloadStartingIndex(msg):]
 	var p map[string]interface{}
 
 	err = json.Unmarshal(payload, &p)
@@ -163,11 +183,12 @@ func (s *TradingviewSocket) connectionLoop() {
 			err := s.conn.WriteMessage(msgType, msg)
 			if err != nil {
 				s.onError(err)
+				return
 			}
 			continue
 		}
 
-		s.parseMessage(msg)
+		s.parsePacket(msg)
 	}
 
 	s.onError(readMsgError)
@@ -175,10 +196,6 @@ func (s *TradingviewSocket) connectionLoop() {
 
 func isKeepAliveMsg(msg []byte) bool {
 	return string(msg[getPayloadStartingIndex(msg)]) == "~"
-}
-
-func getPayload(msg []byte) []byte {
-	return msg[getPayloadStartingIndex(msg):]
 }
 
 func getPayloadStartingIndex(msg []byte) int {
@@ -193,7 +210,9 @@ func getPayloadStartingIndex(msg []byte) int {
 }
 
 func (s *TradingviewSocket) onError(err error) {
-	s.conn.Close()
+	if s.conn != nil {
+		s.conn.Close()
+	}
 	s.OnErrorCallback(err)
 }
 
@@ -202,13 +221,85 @@ func prependHeader(payload []byte) []byte {
 	return []byte("~m~" + lengthAsString + "~m~" + string(payload))
 }
 
-func (s *TradingviewSocket) parseMessage(msg []byte) {
-	/**
-		I can receive 2 or more messages in the same packet, like so
+func (s *TradingviewSocket) parsePacket(packet []byte) {
+	index := 0
+	for index < len(packet) {
+		payloadLength, err := getPayloadLength(packet[index:])
+		if err != nil {
+			s.onError(err)
+			return
+		}
 
-		"~m~97~m~{\"m\":\"qsd\",\"p\":[\"qs_scpSwsLPuGzA\",{\"n\":\"FX:EURUSD\",\"s\":\"ok\",\"v\":{\"volume\":242063,\"lp\":1.17821}}]}~m~96~m~{\"m\":\"qsd\",\"p\":[\"qs_scpSwsLPuGzA\",{\"n\":\"FX:EURUSD\",\"s\":\"ok\",\"v\":{\"bid\":1.17821,\"ask\":1.17821}}]}~m~59~m~{\"m\":\"quote_completed\",\"p\":[\"qs_scpSwsLPuGzA\",\"FX:EURUSD\"]}"
+		headerLength := 6 + len(strconv.Itoa(payloadLength))
+		payload := packet[index+headerLength : index+headerLength+payloadLength]
+		index = index + headerLength + len(payload)
 
-		So handle that carefully.
-	**/
-	fmt.Printf("%#v\n\n", string(msg))
+		s.parseJSON(payload)
+	}
+}
+
+func getPayloadLength(msg []byte) (length int, err error) {
+	char := ""
+	index := 3
+	lengthAsString := ""
+	for char != "~" {
+		char = string(msg[index])
+		if char != "~" {
+			lengthAsString += char
+		}
+		index++
+	}
+	length, err = strconv.Atoi(lengthAsString)
+	return
+}
+
+func (s *TradingviewSocket) parseJSON(msg []byte) {
+	var decodedJSON map[string]interface{}
+
+	json.Unmarshal(msg, &decodedJSON)
+
+	if decodedJSON["m"] != "qsd" {
+		return
+	}
+
+	if decodedJSON["p"] == nil {
+		s.onError(errors.New("Msg does not include 'p' -> " + string(msg)))
+		return
+	}
+
+	p, isPOk := decodedJSON["p"].([]interface{})
+	if !isPOk || len(p) != 2 {
+		s.onError(errors.New("There is something wrong with the payload - can't be parsed -> " + string(msg)))
+		return
+	}
+
+	messageThatMatters, isMessageThatMattersOk := p[1].(map[string]interface{})
+	if !isMessageThatMattersOk || messageThatMatters["n"] == nil || messageThatMatters["s"] != "ok" || messageThatMatters["v"] == nil {
+		s.onError(errors.New("There is something wrong with the payload - can't be parsed -> " + string(msg)))
+		return
+	}
+
+	symbol, isSymbolOK := messageThatMatters["n"].(string)
+	data, isDataOK := messageThatMatters["v"].(map[string]interface{})
+
+	if !isSymbolOK || !isDataOK {
+		s.onError(errors.New("Can't parse message -> " + string(msg)))
+		return
+	}
+
+	s.OnReceiveMarketDataCallback(symbol, data)
+}
+
+func getHeaders() http.Header {
+	headers := http.Header{}
+
+	headers.Set("Accept-Encoding", "gzip, deflate, br")
+	headers.Set("Accept-Language", "en-US,en;q=0.9,es;q=0.8")
+	headers.Set("Cache-Control", "no-cache")
+	headers.Set("Host", "data.tradingview.com")
+	headers.Set("Origin", "https://www.tradingview.com")
+	headers.Set("Pragma", "no-cache")
+	headers.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36")
+
+	return headers
 }
