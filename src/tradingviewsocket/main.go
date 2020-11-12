@@ -18,22 +18,32 @@ type TradingviewSocket struct {
 
 	conn      *websocket.Conn
 	sessionID string
-	symbols   []string
 }
 
 // AddSymbol ...
 func (s *TradingviewSocket) AddSymbol(symbol string) (err error) {
-	s.symbols = append(s.symbols, symbol)
-	if s.conn != nil {
-		err = s.addSymbolsToSocketSession()
+	if s.conn == nil {
+		return errors.New("Init must be called first")
 	}
+	err = s.sendPayload(
+		getSocketMessage("quote_add_symbols", []interface{}{s.sessionID, symbol, getFlags()}),
+	)
+	return
+}
+
+// RemoveSymbol ...
+func (s *TradingviewSocket) RemoveSymbol(symbol string) (err error) {
+	if s.conn == nil {
+		return errors.New("Init must be called first")
+	}
+	err = s.sendPayload(
+		getSocketMessage("quote_remove_symbols", []interface{}{s.sessionID, symbol, getFlags()}),
+	)
 	return
 }
 
 // Init connects to the tradingview web socket
-func (s *TradingviewSocket) Init() {
-	var err error
-
+func (s *TradingviewSocket) Init() (err error) {
 	s.conn, _, err = (&websocket.Dialer{}).Dial("wss://data.tradingview.com/socket.io/websocket", getHeaders())
 	if err != nil {
 		s.onError(err)
@@ -55,6 +65,8 @@ func (s *TradingviewSocket) Init() {
 	}
 
 	go s.connectionLoop()
+
+	return
 }
 
 // Close ...
@@ -93,18 +105,9 @@ func (s *TradingviewSocket) generateSessionID() {
 
 func (s *TradingviewSocket) sendFirstMessages() (err error) {
 	messages := []*SocketMessage{
-		&SocketMessage{
-			Message: "set_auth_token",
-			Payload: []string{"unauthorized_user_token"},
-		},
-		&SocketMessage{
-			Message: "quote_create_session",
-			Payload: []string{s.sessionID},
-		},
-		&SocketMessage{
-			Message: "quote_set_fields",
-			Payload: []string{s.sessionID, "lp", "volume", "bid", "ask"},
-		},
+		getSocketMessage("set_auth_token", []string{"unauthorized_user_token"}),
+		getSocketMessage("quote_create_session", []string{s.sessionID}),
+		getSocketMessage("quote_set_fields", []string{s.sessionID, "lp", "volume", "bid", "ask"}),
 	}
 
 	for _, msg := range messages {
@@ -114,27 +117,20 @@ func (s *TradingviewSocket) sendFirstMessages() (err error) {
 		}
 	}
 
-	err = s.addSymbolsToSocketSession()
 	return
 }
 
-func (s *TradingviewSocket) addSymbolsToSocketSession() (err error) {
-	for _, symbol := range s.symbols {
-		flags := struct {
-			Flags []string `json:"flags"`
-		}{
-			Flags: []string{"force_permission"},
-		}
-		msg := &SocketMessage{
-			Message: "quote_add_symbols",
-			Payload: []interface{}{s.sessionID, symbol, flags},
-		}
-		err = s.sendPayload(msg)
-		if err != nil {
-			return
-		}
+func getSocketMessage(m string, p interface{}) *SocketMessage {
+	return &SocketMessage{
+		Message: m,
+		Payload: p,
 	}
-	return
+}
+
+func getFlags() *Flags {
+	return &Flags{
+		Flags: []string{"force_permission"},
+	}
 }
 
 func (s *TradingviewSocket) sendPayload(p *SocketMessage) (err error) {
@@ -239,6 +235,11 @@ func (s *TradingviewSocket) parseJSON(msg []byte) {
 	err = json.Unmarshal(msg, &decodedMessage)
 	if err != nil {
 		s.onError(err)
+		return
+	}
+
+	if decodedMessage.Message == "critical_error" || decodedMessage.Message == "error" {
+		s.onError(errors.New("Error -> " + string(msg)))
 		return
 	}
 

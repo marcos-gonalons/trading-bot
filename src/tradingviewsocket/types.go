@@ -1,5 +1,13 @@
 package tradingviewsocket
 
+// SocketInterface ...
+type SocketInterface interface {
+	AddSymbol(symbol string) error
+	RemoveSymbol(symbol string) error
+	Init() error
+	Close() error
+}
+
 // SocketMessage ...
 type SocketMessage struct {
 	Message string      `json:"m"`
@@ -19,4 +27,9 @@ type QuoteData struct {
 	Volume *float64 `mapstructure:"volume"`
 	Bid    *float64 `mapstructure:"bid"`
 	Ask    *float64 `mapstructure:"ask"`
+}
+
+// Flags ...
+type Flags struct {
+	Flags []string `json:"flags"`
 }
