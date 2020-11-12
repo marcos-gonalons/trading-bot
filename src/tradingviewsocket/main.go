@@ -25,7 +25,7 @@ func (s *TradingviewSocket) AddSymbol(symbol string) (err error) {
 	if s.conn == nil {
 		return errors.New("Init must be called first")
 	}
-	err = s.sendPayload(
+	err = s.sendSocketMessage(
 		getSocketMessage("quote_add_symbols", []interface{}{s.sessionID, symbol, getFlags()}),
 	)
 	return
@@ -36,7 +36,7 @@ func (s *TradingviewSocket) RemoveSymbol(symbol string) (err error) {
 	if s.conn == nil {
 		return errors.New("Init must be called first")
 	}
-	err = s.sendPayload(
+	err = s.sendSocketMessage(
 		getSocketMessage("quote_remove_symbols", []interface{}{s.sessionID, symbol}),
 	)
 	return
@@ -111,7 +111,7 @@ func (s *TradingviewSocket) sendFirstMessages() (err error) {
 	}
 
 	for _, msg := range messages {
-		err = s.sendPayload(msg)
+		err = s.sendSocketMessage(msg)
 		if err != nil {
 			return
 		}
@@ -120,22 +120,13 @@ func (s *TradingviewSocket) sendFirstMessages() (err error) {
 	return
 }
 
-func getSocketMessage(m string, p interface{}) *SocketMessage {
-	return &SocketMessage{
-		Message: m,
-		Payload: p,
-	}
-}
-
-func getFlags() *Flags {
-	return &Flags{
-		Flags: []string{"force_permission"},
-	}
-}
-
-func (s *TradingviewSocket) sendPayload(p *SocketMessage) (err error) {
+func (s *TradingviewSocket) sendSocketMessage(p *SocketMessage) (err error) {
 	payload, _ := json.Marshal(p)
-	err = s.conn.WriteMessage(websocket.TextMessage, prependHeader(payload))
+
+	lengthAsString := strconv.Itoa(len(payload))
+	payloadWithHeader := "~m~" + lengthAsString + "~m~" + string(payload)
+
+	err = s.conn.WriteMessage(websocket.TextMessage, []byte(payloadWithHeader))
 	if err != nil {
 		return
 	}
@@ -169,33 +160,6 @@ func (s *TradingviewSocket) connectionLoop() {
 	s.onError(readMsgError)
 }
 
-func isKeepAliveMsg(msg []byte) bool {
-	return string(msg[getPayloadStartingIndex(msg)]) == "~"
-}
-
-func getPayloadStartingIndex(msg []byte) int {
-	char := ""
-	index := 3
-	for char != "~" {
-		char = string(msg[index])
-		index++
-	}
-	index += 2
-	return index
-}
-
-func (s *TradingviewSocket) onError(err error) {
-	if s.conn != nil {
-		s.conn.Close()
-	}
-	s.OnErrorCallback(err)
-}
-
-func prependHeader(payload []byte) []byte {
-	lengthAsString := strconv.Itoa(len(payload))
-	return []byte("~m~" + lengthAsString + "~m~" + string(payload))
-}
-
 func (s *TradingviewSocket) parsePacket(packet []byte) {
 	index := 0
 	for index < len(packet) {
@@ -211,21 +175,6 @@ func (s *TradingviewSocket) parsePacket(packet []byte) {
 
 		s.parseJSON(payload)
 	}
-}
-
-func getPayloadLength(msg []byte) (length int, err error) {
-	char := ""
-	index := 3
-	lengthAsString := ""
-	for char != "~" {
-		char = string(msg[index])
-		if char != "~" {
-			lengthAsString += char
-		}
-		index++
-	}
-	length, err = strconv.Atoi(lengthAsString)
-	return
 }
 
 func (s *TradingviewSocket) parseJSON(msg []byte) {
@@ -271,6 +220,56 @@ func (s *TradingviewSocket) parseJSON(msg []byte) {
 	}
 
 	s.OnReceiveMarketDataCallback(decodedQuoteMessage.Symbol, decodedQuoteMessage.Data)
+}
+
+func (s *TradingviewSocket) onError(err error) {
+	if s.conn != nil {
+		s.conn.Close()
+	}
+	s.OnErrorCallback(err)
+}
+
+func getSocketMessage(m string, p interface{}) *SocketMessage {
+	return &SocketMessage{
+		Message: m,
+		Payload: p,
+	}
+}
+
+func getFlags() *Flags {
+	return &Flags{
+		Flags: []string{"force_permission"},
+	}
+}
+
+func isKeepAliveMsg(msg []byte) bool {
+	return string(msg[getPayloadStartingIndex(msg)]) == "~"
+}
+
+func getPayloadStartingIndex(msg []byte) int {
+	char := ""
+	index := 3
+	for char != "~" {
+		char = string(msg[index])
+		index++
+	}
+	index += 2
+	return index
+}
+
+func getPayloadLength(msg []byte) (length int, err error) {
+	char := ""
+	index := 3
+	lengthAsString := ""
+	for char != "~" {
+		char = string(msg[index])
+		if char != "~" {
+			lengthAsString += char
+		}
+		index++
+	}
+	length, err = strconv.Atoi(lengthAsString)
+	return
 }
 
 func getHeaders() http.Header {
