@@ -8,17 +8,12 @@ import (
 	"strconv"
 
 	"github.com/gorilla/websocket"
+	"github.com/mitchellh/mapstructure"
 )
-
-// SocketMessage ...
-type SocketMessage struct {
-	Message string      `json:"m"`
-	Payload interface{} `json:"p"`
-}
 
 // TradingviewSocket ...
 type TradingviewSocket struct {
-	OnReceiveMarketDataCallback func(symbol string, data map[string]interface{})
+	OnReceiveMarketDataCallback func(symbol string, data *QuoteData)
 	OnErrorCallback             func(error)
 
 	conn      *websocket.Conn
@@ -238,40 +233,43 @@ func getPayloadLength(msg []byte) (length int, err error) {
 }
 
 func (s *TradingviewSocket) parseJSON(msg []byte) {
-	var decodedJSON map[string]interface{}
+	var decodedMessage *SocketMessage
+	var err error
 
-	json.Unmarshal(msg, &decodedJSON)
-
-	if decodedJSON["m"] != "qsd" {
+	err = json.Unmarshal(msg, &decodedMessage)
+	if err != nil {
+		s.onError(err)
 		return
 	}
 
-	if decodedJSON["p"] == nil {
+	if decodedMessage.Message != "qsd" {
+		return
+	}
+
+	if decodedMessage.Payload == nil {
 		s.onError(errors.New("Msg does not include 'p' -> " + string(msg)))
 		return
 	}
 
-	p, isPOk := decodedJSON["p"].([]interface{})
+	p, isPOk := decodedMessage.Payload.([]interface{})
 	if !isPOk || len(p) != 2 {
 		s.onError(errors.New("There is something wrong with the payload - can't be parsed -> " + string(msg)))
 		return
 	}
 
-	messageThatMatters, isMessageThatMattersOk := p[1].(map[string]interface{})
-	if !isMessageThatMattersOk || messageThatMatters["n"] == nil || messageThatMatters["s"] != "ok" || messageThatMatters["v"] == nil {
-		s.onError(errors.New("There is something wrong with the payload - can't be parsed -> " + string(msg)))
+	var decodedQuoteMessage *QuoteMessage
+	err = mapstructure.Decode(p[1].(map[string]interface{}), &decodedQuoteMessage)
+	if err != nil {
+		s.onError(err)
 		return
 	}
 
-	symbol, isSymbolOK := messageThatMatters["n"].(string)
-	data, isDataOK := messageThatMatters["v"].(map[string]interface{})
-
-	if !isSymbolOK || !isDataOK {
-		s.onError(errors.New("Can't parse message -> " + string(msg)))
+	if decodedQuoteMessage.Status != "ok" || decodedQuoteMessage.Symbol == "" || decodedQuoteMessage.Data == nil {
+		s.onError(errors.New("There is something wrong with the payload - couldn't be parsed -> " + string(msg)))
 		return
 	}
 
-	s.OnReceiveMarketDataCallback(symbol, data)
+	s.OnReceiveMarketDataCallback(decodedQuoteMessage.Symbol, decodedQuoteMessage.Data)
 }
 
 func getHeaders() http.Header {

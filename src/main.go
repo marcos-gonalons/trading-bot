@@ -29,8 +29,7 @@ func main() {
 	var waitingGroupX sync.WaitGroup
 	waitingGroupX.Add(1)
 	socket := tradingviewsocket.TradingviewSocket{
-		OnReceiveMarketDataCallback: func(symbol string, data map[string]interface{}) {
-			fmt.Printf("\n%#v\n", "received data")
+		OnReceiveMarketDataCallback: func(symbol string, data *tradingviewsocket.QuoteData) {
 			fmt.Printf("\n%#v\n", data)
 		},
 		OnErrorCallback: func(err error) {
