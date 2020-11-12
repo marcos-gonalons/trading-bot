@@ -37,7 +37,7 @@ func (s *TradingviewSocket) RemoveSymbol(symbol string) (err error) {
 		return errors.New("Init must be called first")
 	}
 	err = s.sendPayload(
-		getSocketMessage("quote_remove_symbols", []interface{}{s.sessionID, symbol, getFlags()}),
+		getSocketMessage("quote_remove_symbols", []interface{}{s.sessionID, symbol}),
 	)
 	return
 }
