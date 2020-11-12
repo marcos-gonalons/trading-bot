@@ -18,22 +18,6 @@ type SocketMessage struct {
 
 // TradingviewSocket ...
 type TradingviewSocket struct {
-	/**
-		data["bid"] = 123.2
-		data["ask"] = 123.2
-		data["lp"] = 123.2
-		data["volume"] = 123.2
-
-		send whatever is received, event If in a message I don´t receive the 4 parameters, which is often.
-		then, just check what´s setted in order to update the candles
-
-		if data["lp"] update candle price
-		if data["volume"] update candle price
-
-		Maybe use a struct with pointers so they can be nil
-
-		use bid and ask to save the spread, so I can later check the avg spread in order to make better decissions
-	**/
 	OnReceiveMarketDataCallback func(symbol string, data map[string]interface{})
 	OnErrorCallback             func(error)
 
