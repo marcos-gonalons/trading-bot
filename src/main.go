@@ -5,7 +5,7 @@ import (
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/strategies"
-	"TradingBot/src/tradingviewsocket"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -14,40 +14,18 @@ import (
 	"syscall"
 
 	_ "TradingBot/src/services/logger"
+
+	socket "github.com/marcos-gonalons/tradingview-scraper"
 )
 
 func main() {
 	var ibrokerAPI api.Interface
 
-	/**
-		fx va 1 pip por detras
-		si fx:ger30 dice 13149.4, en ibroker es 13150.5
-
-		leer con unauthorized de fx:ger30
-		y tener en cuenta que va 1 por detras
-	**/
-	var waitingGroupX sync.WaitGroup
-	waitingGroupX.Add(1)
-	socket := tradingviewsocket.TradingviewSocket{
-		OnReceiveMarketDataCallback: func(symbol string, data *tradingviewsocket.QuoteData) {
-			fmt.Printf("\n%#v\n", data)
-		},
-		OnErrorCallback: func(err error) {
-			fmt.Printf("\n%#v\n", "error"+err.Error())
-		},
-	}
-
-	/**
-		El volumen se resetea cada dia a las 23:00 hora de espanya (al menos en eurusd)
-		Y cuando se recibe el volumen se recibe el volumen acumulado desde el reseteo hasta ese momento.
-	**/
-	socket.AddSymbol("FX:GER30")
-	socket.Init()
-	waitingGroupX.Wait() // Wait forever, this script should never die
-
 	defer func() {
 		panicCatcher(recover(), ibrokerAPI)
 	}()
+
+	initSocket()
 
 	user, password, accountID, err := getArgs(os.Args[1:])
 	if err != nil {
@@ -108,4 +86,34 @@ func setupOSSignalsNotifications(API api.Interface) {
 		API.CloseEverything()
 		os.Exit(0)
 	}()
+}
+
+func initSocket() {
+	/**
+		fx va 1 pip por detras
+		si fx:ger30 dice 13149.4, en ibroker es 13150.5
+
+		leer con unauthorized de fx:ger30
+		y tener en cuenta que va 1 por detras
+
+		El volumen se resetea cada dia a las 23:00 hora de espanya (al menos en eurusd)
+		Y cuando se recibe el volumen se recibe el volumen acumulado desde el reseteo hasta ese momento.
+	**/
+
+	socket, err := socket.Connect(
+		func(symbol string, data *socket.QuoteData) {
+			a, _ := json.Marshal(data)
+			fmt.Printf("\n%#v\n", symbol)
+			fmt.Printf("\n%#v\n", string(a))
+		},
+		func(err error) {
+			fmt.Printf("\n%#v\n", "error"+err.Error())
+		},
+	)
+	if err != nil {
+		panic("Error while initializing the trading view socket -> " + err.Error())
+	}
+
+	socket.AddSymbol("FX:GER30")
+
 }

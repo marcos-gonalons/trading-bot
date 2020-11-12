@@ -33,7 +33,6 @@ func (s *Strategy) Execute() {
 	// init socket, pass onReceiveMarketData as callback, will receive the quote
 
 	s.initCandles()
-	s.initSocket()
 
 	go func() {
 		for {
@@ -147,8 +146,4 @@ func (s *Strategy) panicIfTooManyAPIFails() {
 		s.failedAPIRequests = 0
 		time.Sleep(1 * time.Minute)
 	}
-}
-
-func (*Strategy) initSocket() {
-
 }
