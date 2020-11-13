@@ -141,8 +141,13 @@ func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interfac
 	result, err := fetchFunc()
 
 	if err != nil {
-		s.failedAPIRequests++
-		s.Logger.Log("Error while fetching data -> " + err.Error())
+		if err.Error() == "Your session is disconnected. Please login again to initialize a new valid session." {
+			s.Logger.Log("Session is disconnected. Loggin in again ... ")
+			s.login(0, 0)
+		} else {
+			s.failedAPIRequests++
+			s.Logger.Log("Error while fetching data -> " + err.Error())
+		}
 		return
 	}
 
