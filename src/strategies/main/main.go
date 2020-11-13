@@ -69,6 +69,8 @@ func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		s.lastVolume = *data.Volume
 	}
 
+	// Important; the script should ignore candles[0], since it does not contain proper data.
+
 	s.previousExecutionTime = now
 	if currentHour < 6 || currentHour > 21 {
 		s.Logger.Log("Doing nothing - Now it's not the time.")
@@ -190,7 +192,7 @@ func (s *Strategy) initSocket() {
 	s.socket = tradingviewsocket
 }
 
-func getStringRepresentation(data *tradingviewsocket.QuoteData) string {
+func getStringRepresentation(data interface{}) string {
 	str, _ := json.Marshal(data)
 	return string(str)
 }

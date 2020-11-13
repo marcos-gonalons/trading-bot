@@ -45,6 +45,15 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time, data *tradingvi
 	} else {
 		index := len(s.candles) - 1
 		if data.Price != nil {
+			if s.candles[index].Open == 0 {
+				s.candles[index].Open = currentPrice
+			}
+			if s.candles[index].High == 0 {
+				s.candles[index].High = currentPrice
+			}
+			if s.candles[index].Low == 0 {
+				s.candles[index].Low = currentPrice
+			}
 			if currentPrice <= s.candles[index].Low {
 				s.candles[index].Low = currentPrice
 			}
