@@ -6,13 +6,24 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper"
 )
 
-func (s *Strategy) updateCandles(currentExecutionTime time.Time) {
+func (s *Strategy) updateCandles(currentExecutionTime time.Time, data *tradingviewsocket.QuoteData) {
+	if data.Price == nil && data.Volume == nil {
+		return
+	}
+
 	currentMinutes := currentExecutionTime.Format("04")
 	previousMinutes := s.previousExecutionTime.Format("04")
 
-	currentPrice := s.quote.Price
+	var currentPrice float64
+	if data.Price != nil {
+		currentPrice = *data.Price
+	} else {
+		currentPrice = 0
+	}
 
 	if currentMinutes != previousMinutes {
 		s.updateCSVWithLastCandle()
@@ -22,27 +33,27 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time) {
 			Open:      currentPrice,
 			Low:       currentPrice,
 			High:      currentPrice,
-			Volume:    s.quote.Volume,
+			Volume:    *data.Volume - s.currentVolume,
 			Timestamp: getTimestampWith0Seconds(currentExecutionTime),
 		})
 	} else {
 		index := len(s.candles) - 1
-		if currentPrice <= s.candles[index].Low {
-			s.candles[index].Low = currentPrice
+		if data.Price != nil {
+			if currentPrice <= s.candles[index].Low {
+				s.candles[index].Low = currentPrice
+			}
+			if currentPrice >= s.candles[index].High {
+				s.candles[index].High = currentPrice
+			}
+			s.candles[index].Close = currentPrice
 		}
-		if currentPrice >= s.candles[index].High {
-			s.candles[index].High = currentPrice
-		}
-		s.candles[index].Close = currentPrice
-		s.candles[index].Volume = s.quote.Volume
+		s.candles[index].Volume += *data.Volume - s.currentVolume
 		if s.candles[index].Timestamp == 0 {
 			s.candles[index].Timestamp = getTimestampWith0Seconds(currentExecutionTime)
 		}
 	}
 
 	/***
-		Remember to add logs
-
 		Very, very important
 		Round ALL the prices used in ALL the calls to 2 decimals. Otherwise it won't work.
 
@@ -70,8 +81,6 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time) {
 			if !csv file, create the csv file
 			else, load candles[] from the file
 		}
-
-
 
 		Very important as well
 		When closing a position, and the position has TP and SL; IBROKER WILL NOT LET YOU

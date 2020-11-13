@@ -3,9 +3,12 @@ package mainstrategy
 import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/logger"
+	"encoding/json"
 	"strconv"
 	"sync"
 	"time"
+
+	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper"
 )
 
 // Strategy ...
@@ -16,7 +19,6 @@ type Strategy struct {
 	previousExecutionTime time.Time
 	failedAPIRequests     int
 
-	quote     *api.Quote
 	orders    []*api.Order
 	positions []*api.Position
 	state     *api.State
@@ -24,16 +26,17 @@ type Strategy struct {
 
 	csvFileName string
 	csvFileMtx  sync.Mutex
+
+	socket        tradingviewsocket.SocketInterface
+	currentVolume float64
 }
 
 // Execute ...
 func (s *Strategy) Execute() {
 	go s.panicIfTooManyAPIFails()
 
-	// init socket, pass onReceiveMarketData as callback, will receive the quote
-
+	s.initSocket()
 	s.initCandles()
-
 	go func() {
 		for {
 			now := time.Now()
@@ -46,8 +49,14 @@ func (s *Strategy) Execute() {
 	}()
 }
 
-func (s *Strategy) onReceiveMarketData() {
+func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
+	s.Logger.Log("Received data -> " + symbol + " -> " + getStringRepresentation(data))
+
 	now := time.Now()
+
+	if data.Volume != nil {
+		s.currentVolume = *data.Volume
+	}
 
 	currentHour, previousHour := s.getCurrentAndPreviousHour(now, s.previousExecutionTime)
 	if currentHour == 2 && previousHour == 1 {
@@ -58,13 +67,13 @@ func (s *Strategy) onReceiveMarketData() {
 		s.login(120, 30*time.Second)
 	}
 
+	s.updateCandles(now, data)
+
+	s.previousExecutionTime = now
 	if currentHour < 6 || currentHour > 21 {
 		s.Logger.Log("Doing nothing - Now it's not the time.")
 		return
 	}
-
-	s.updateCandles(now)
-	s.previousExecutionTime = now
 }
 
 func (s *Strategy) getCurrentAndPreviousHour(
@@ -146,4 +155,42 @@ func (s *Strategy) panicIfTooManyAPIFails() {
 		s.failedAPIRequests = 0
 		time.Sleep(1 * time.Minute)
 	}
+}
+
+func (s *Strategy) onSocketError(err error) {
+	// TODO: Probably reset the socket connection
+	panic("Socket error " + err.Error())
+}
+
+func (s *Strategy) initSocket() {
+	/**
+		fx va 1 pip por detras
+		si fx:ger30 dice 13149.4, en ibroker es 13150.5
+
+		leer con unauthorized de fx:ger30
+		y tener en cuenta que va 1 por detras
+
+		El volumen se resetea cada dia a las 23:00 hora de espanya (al menos en eurusd)
+		Y cuando se recibe el volumen se recibe el volumen acumulado desde el reseteo hasta ese momento.
+	**/
+
+	tradingviewsocket, err := tradingviewsocket.Connect(
+		s.onReceiveMarketData,
+		s.onSocketError,
+	)
+	if err != nil {
+		panic("Error while initializing the trading view socket -> " + err.Error())
+	}
+
+	err = tradingviewsocket.AddSymbol("FX:EURUSD")
+	if err != nil {
+		panic("Error while adding the symbol -> " + err.Error())
+	}
+
+	s.socket = tradingviewsocket
+}
+
+func getStringRepresentation(data *tradingviewsocket.QuoteData) string {
+	str, _ := json.Marshal(data)
+	return string(str)
 }
