@@ -111,9 +111,6 @@ func (s *Strategy) initCandles() {
 	s.candles = nil
 	s.candles = []*Candle{&Candle{}}
 
-	/**
-		todo: use go routine to save the candles csv file??
-	**/
 	now := time.Now()
 	s.csvFileName = now.Format("2006-01-02") + "-candles.csv"
 	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)

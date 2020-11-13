@@ -53,6 +53,13 @@ func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	s.Logger.Log("Received data -> " + symbol + " -> " + getStringRepresentation(data))
 
 	now := time.Now()
+	defer func() {
+		s.previousExecutionTime = now
+
+		if data.Volume != nil {
+			s.lastVolume = *data.Volume
+		}
+	}()
 
 	currentHour, previousHour := s.getCurrentAndPreviousHour(now, s.previousExecutionTime)
 	if currentHour == 2 && previousHour == 1 {
@@ -65,13 +72,8 @@ func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 	s.updateCandles(now, data)
 
-	if data.Volume != nil {
-		s.lastVolume = *data.Volume
-	}
-
 	// Important; the script should ignore candles[0], since it does not contain proper data.
 
-	s.previousExecutionTime = now
 	if currentHour < 6 || currentHour > 21 {
 		s.Logger.Log("Doing nothing - Now it's not the time.")
 		return
@@ -90,6 +92,10 @@ func (s *Strategy) getCurrentAndPreviousHour(
 func (s *Strategy) login(maxRetries uint, timeBetweenRetries time.Duration) {
 	_, err := s.API.Login()
 	if err == nil {
+		return
+	}
+
+	if maxRetries == 0 {
 		return
 	}
 
@@ -145,9 +151,9 @@ func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interfac
 			s.Logger.Log("Session is disconnected. Loggin in again ... ")
 			s.login(0, 0)
 		} else {
-			s.failedAPIRequests++
 			s.Logger.Log("Error while fetching data -> " + err.Error())
 		}
+		s.failedAPIRequests++
 		return
 	}
 
@@ -189,7 +195,7 @@ func (s *Strategy) initSocket() {
 		panic("Error while initializing the trading view socket -> " + err.Error())
 	}
 
-	err = tradingviewsocket.AddSymbol("FX:EURUSD")
+	err = tradingviewsocket.AddSymbol("FX:GER30")
 	if err != nil {
 		panic("Error while adding the symbol -> " + err.Error())
 	}
