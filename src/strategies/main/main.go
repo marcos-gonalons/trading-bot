@@ -29,6 +29,9 @@ type Strategy struct {
 
 	socket     tradingviewsocket.SocketInterface
 	lastVolume float64
+	avgSpread  float32
+
+	fetchError error
 }
 
 // Execute ...
@@ -45,6 +48,17 @@ func (s *Strategy) Execute() {
 				s.fetchData()
 			}
 			time.Sleep(2 * time.Second)
+		}
+	}()
+
+	go func() {
+		for {
+			if s.fetchError != nil && s.fetchError.Error() == "Api error -> Your session is disconnected. Please login again to initialize a new valid session." {
+				s.Logger.Log("Session is disconnected. Loggin in again ... ")
+				s.login(0, 0)
+			}
+			s.fetchError = nil
+			time.Sleep(5 * time.Second)
 		}
 	}()
 }
@@ -147,22 +161,18 @@ func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interfac
 	result, err := fetchFunc()
 
 	if err != nil {
-		if err.Error() == "Your session is disconnected. Please login again to initialize a new valid session." {
-			s.Logger.Log("Session is disconnected. Loggin in again ... ")
-			s.login(0, 0)
-		} else {
-			s.Logger.Log("Error while fetching data -> " + err.Error())
-		}
+		s.fetchError = err
+		s.Logger.Log("Error while fetching data -> " + err.Error())
 		s.failedAPIRequests++
 		return
 	}
-
+	s.fetchError = nil
 	return
 }
 
 func (s *Strategy) panicIfTooManyAPIFails() {
 	for {
-		if s.failedAPIRequests >= 15 {
+		if s.failedAPIRequests >= 30 {
 			panic("There is something wrong with the API - Check logs - Stopping bot")
 		}
 		s.failedAPIRequests = 0
