@@ -11,10 +11,6 @@ import (
 )
 
 func (s *Strategy) updateCandles(currentExecutionTime time.Time, data *tradingviewsocket.QuoteData) {
-	if data.Price == nil && data.Volume == nil {
-		return
-	}
-
 	currentMinutes := currentExecutionTime.Format("04")
 	previousMinutes := s.previousExecutionTime.Format("04")
 
@@ -25,6 +21,16 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time, data *tradingvi
 		currentPrice = 0
 	}
 
+	var volume float64
+	if data.Volume != nil {
+		volume = *data.Volume - s.lastVolume
+		if volume < 0 {
+			volume = *data.Volume
+		}
+	} else {
+		volume = 0
+	}
+
 	if currentMinutes != previousMinutes {
 		s.updateCSVWithLastCandle()
 		lastCandle, _ := json.Marshal(s.candles[len(s.candles)-1])
@@ -33,7 +39,7 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time, data *tradingvi
 			Open:      currentPrice,
 			Low:       currentPrice,
 			High:      currentPrice,
-			Volume:    *data.Volume - s.currentVolume,
+			Volume:    volume,
 			Timestamp: getTimestampWith0Seconds(currentExecutionTime),
 		})
 	} else {
@@ -47,7 +53,9 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time, data *tradingvi
 			}
 			s.candles[index].Close = currentPrice
 		}
-		s.candles[index].Volume += *data.Volume - s.currentVolume
+		if data.Volume != nil {
+			s.candles[index].Volume += volume
+		}
 		if s.candles[index].Timestamp == 0 {
 			s.candles[index].Timestamp = getTimestampWith0Seconds(currentExecutionTime)
 		}

@@ -27,8 +27,8 @@ type Strategy struct {
 	csvFileName string
 	csvFileMtx  sync.Mutex
 
-	socket        tradingviewsocket.SocketInterface
-	currentVolume float64
+	socket     tradingviewsocket.SocketInterface
+	lastVolume float64
 }
 
 // Execute ...
@@ -54,10 +54,6 @@ func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 	now := time.Now()
 
-	if data.Volume != nil {
-		s.currentVolume = *data.Volume
-	}
-
 	currentHour, previousHour := s.getCurrentAndPreviousHour(now, s.previousExecutionTime)
 	if currentHour == 2 && previousHour == 1 {
 		s.initCandles()
@@ -68,6 +64,10 @@ func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}
 
 	s.updateCandles(now, data)
+
+	if data.Volume != nil {
+		s.lastVolume = *data.Volume
+	}
 
 	s.previousExecutionTime = now
 	if currentHour < 6 || currentHour > 21 {
