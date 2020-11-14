@@ -30,9 +30,9 @@ func (s *Strategy) breakoutAnticipationStrategy() {
 
 func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 	isValidTime := s.isExecutionTimeValid(
-		[]string{"January", "March", "April", "May", "June", "August", "September", "October", "November", "December"},
+		[]string{"January", "March", "April", "May", "June", "August", "September", "October"},
 		[]string{"Monday", "Tuesday", "Wednesday", "Friday"},
-		[]string{"9:00", "9:30", "10:00", "11:30", "12:00", "12:30", "20:30"},
+		[]string{"9:00", "10:00", "11:30", "12:00", "12:30", "20:30"},
 	)
 
 	if !isValidTime {
@@ -47,7 +47,21 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 }
 
 func (s *Strategy) supportBreakoutAnticipationStrategy() {
+	isValidTime := s.isExecutionTimeValid(
+		[]string{"March", "April", "June", "September", "December"},
+		[]string{"Monday", "Tuesday", "Thursday", "Friday"},
+		[]string{"08:30", "9:00", "12:00", "13:00", "14:30", "15:30", "18:00"},
+	)
 
+	if !isValidTime {
+		s.savePendingOrder("sell")
+	} else {
+		if s.pendingOrder != nil {
+			s.createPendingOrder("sell")
+			return
+		}
+		s.pendingOrder = nil
+	}
 }
 
 func (s *Strategy) isExecutionTimeValid(
@@ -86,32 +100,23 @@ func (s *Strategy) getCurrentTimeHourAndMinutes() (int, int) {
 
 func (s *Strategy) savePendingOrder(side string) {
 	workingOrders := utils.GetWorkingOrders(s.orders)
+
 	if len(workingOrders) == 0 {
 		return
 	}
 
 	var mainOrder *api.Order
 	for _, workingOrder := range workingOrders {
-		if workingOrder.Side == "buy" && workingOrder.ParentID == nil {
+		if workingOrder.Side == side && workingOrder.ParentID == nil {
 			mainOrder = workingOrder
 		}
 	}
 	if mainOrder != nil {
 		s.Logger.Log("Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
-		s.API.CloseEverything()
+		s.Logger.Log("This is the current order -> " + utils.GetStringRepresentation(mainOrder))
 
-		var slOrder *api.Order
-		var tpOrder *api.Order
-		for _, workingOrder := range workingOrders {
-			if workingOrder.ParentID != nil && *workingOrder.ParentID == mainOrder.ID {
-				if workingOrder.Type == "limit" {
-					tpOrder = workingOrder
-				}
-				if workingOrder.Type == "stop" {
-					slOrder = workingOrder
-				}
-			}
-		}
+		slOrder, tpOrder := s.getSlAndTpOrders(mainOrder.ID, workingOrders)
+
 		if slOrder != nil {
 			mainOrder.StopLoss = slOrder.StopPrice
 		}
@@ -125,8 +130,15 @@ func (s *Strategy) savePendingOrder(side string) {
 		if mainOrder.Type == "stop" {
 			mainOrder.LimitPrice = nil
 		}
-		s.pendingOrder = mainOrder
 		s.Logger.Log("Pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
+
+		err := s.API.CloseEverything()
+		if err != nil {
+			s.Logger.Log("An error happened while closing all the orders and all the positions -> " + err.Error())
+			s.pendingOrder = nil
+		} else {
+			s.pendingOrder = mainOrder
+		}
 	}
 }
 
@@ -186,6 +198,28 @@ func (s *Strategy) createPendingOrder(side string) {
 	}
 
 	s.pendingOrder = nil
+}
+
+func (s *Strategy) getSlAndTpOrders(
+	parentID string,
+	orders []*api.Order,
+) (*api.Order, *api.Order) {
+	var slOrder *api.Order
+	var tpOrder *api.Order
+	for _, workingOrder := range orders {
+		if workingOrder.ParentID == nil || *workingOrder.ParentID != parentID {
+			continue
+		}
+
+		if workingOrder.Type == "limit" {
+			tpOrder = workingOrder
+		}
+		if workingOrder.Type == "stop" {
+			slOrder = workingOrder
+		}
+	}
+
+	return slOrder, tpOrder
 }
 
 func isInArray(element string, arr []string) bool {
