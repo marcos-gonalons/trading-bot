@@ -36,88 +36,13 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 	)
 
 	if !isValidTime {
-		workingOrders := utils.GetWorkingOrders(s.orders)
-		if len(workingOrders) > 0 {
-			var mainOrder *api.Order
-			for _, workingOrder := range workingOrders {
-				if workingOrder.Side == "buy" && workingOrder.ParentID == nil {
-					mainOrder = workingOrder
-				}
-			}
-			if mainOrder != nil {
-				s.API.CloseEverything()
-
-				var slOrder *api.Order
-				var tpOrder *api.Order
-				for _, workingOrder := range workingOrders {
-					if workingOrder.ParentID != nil && *workingOrder.ParentID == mainOrder.ID {
-						if workingOrder.Type == "limit" {
-							tpOrder = workingOrder
-						}
-						if workingOrder.Type == "stop" {
-							slOrder = workingOrder
-						}
-					}
-				}
-				if slOrder != nil {
-					mainOrder.StopLoss = slOrder.StopPrice
-				}
-				if tpOrder != nil {
-					mainOrder.TakeProfit = tpOrder.LimitPrice
-				}
-
-				if mainOrder.Type == "limit" {
-					mainOrder.StopPrice = nil
-				}
-				if mainOrder.Type == "stop" {
-					mainOrder.LimitPrice = nil
-				}
-				s.pendingOrder = mainOrder
-			}
-		}
+		s.savePendingOrder("buy")
 	} else {
 		if s.pendingOrder != nil {
-			var price float32
-			if s.pendingOrder.Type == "limit" {
-				price = *s.pendingOrder.LimitPrice
-			} else {
-				price = *s.pendingOrder.StopPrice
-			}
-			if float64(price) > float64(s.currentBrokerQuote.Ask) {
-				currentAsk := utils.FloatToString(float64(s.currentBrokerQuote.Ask), 2)
-				currentBid := utils.FloatToString(float64(s.currentBrokerQuote.Bid), 2)
-				qty := utils.FloatToString(float64(s.pendingOrder.Qty), 2)
-				s.pendingOrder.StringValues = &api.OrderStringValues{
-					CurrentAsk: &currentAsk,
-					CurrentBid: &currentBid,
-					Qty:        &qty,
-				}
-				if s.pendingOrder.Type == "limit" {
-					limitPrice := utils.FloatToString(float64(*s.pendingOrder.LimitPrice), 2)
-					s.pendingOrder.StringValues.LimitPrice = &limitPrice
-				} else {
-					stopPrice := utils.FloatToString(float64(*s.pendingOrder.StopPrice), 2)
-					s.pendingOrder.StringValues.StopPrice = &stopPrice
-				}
-				if s.pendingOrder.StopLoss != nil {
-					stopLossPrice := utils.FloatToString(float64(*s.pendingOrder.StopLoss), 2)
-					s.pendingOrder.StringValues.StopLoss = &stopLossPrice
-				}
-				if s.pendingOrder.TakeProfit != nil {
-					takeProfitPrice := utils.FloatToString(float64(*s.pendingOrder.TakeProfit), 2)
-					s.pendingOrder.StringValues.TakeProfit = &takeProfitPrice
-				}
-				err := s.API.CreateOrder(s.pendingOrder)
-				if err != nil {
-					s.Logger.Log("Error when creating the order -> " + err.Error())
-				}
-			}
-			s.pendingOrder = nil
+			s.createPendingOrder("buy")
 			return
 		}
 		s.pendingOrder = nil
-		// Important; when creating the order, I need to add the current ask and current bid to the string values
-		// But before, check if I can create the order without adding that
 	}
 }
 
@@ -157,6 +82,110 @@ func (s *Strategy) getCurrentTimeHourAndMinutes() (int, int) {
 	currentMinutes, _ := strconv.Atoi(s.currentExecutionTime.Format("04"))
 
 	return currentHour, currentMinutes
+}
+
+func (s *Strategy) savePendingOrder(side string) {
+	workingOrders := utils.GetWorkingOrders(s.orders)
+	if len(workingOrders) == 0 {
+		return
+	}
+
+	var mainOrder *api.Order
+	for _, workingOrder := range workingOrders {
+		if workingOrder.Side == "buy" && workingOrder.ParentID == nil {
+			mainOrder = workingOrder
+		}
+	}
+	if mainOrder != nil {
+		s.Logger.Log("Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
+		s.API.CloseEverything()
+
+		var slOrder *api.Order
+		var tpOrder *api.Order
+		for _, workingOrder := range workingOrders {
+			if workingOrder.ParentID != nil && *workingOrder.ParentID == mainOrder.ID {
+				if workingOrder.Type == "limit" {
+					tpOrder = workingOrder
+				}
+				if workingOrder.Type == "stop" {
+					slOrder = workingOrder
+				}
+			}
+		}
+		if slOrder != nil {
+			mainOrder.StopLoss = slOrder.StopPrice
+		}
+		if tpOrder != nil {
+			mainOrder.TakeProfit = tpOrder.LimitPrice
+		}
+
+		if mainOrder.Type == "limit" {
+			mainOrder.StopPrice = nil
+		}
+		if mainOrder.Type == "stop" {
+			mainOrder.LimitPrice = nil
+		}
+		s.pendingOrder = mainOrder
+		s.Logger.Log("Pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
+	}
+}
+
+func (s *Strategy) createPendingOrder(side string) {
+	s.Logger.Log("Trying to create the pending order ..." + utils.GetStringRepresentation(s.pendingOrder))
+	var orderPrice float64
+	if s.pendingOrder.Type == "limit" {
+		orderPrice = float64(*s.pendingOrder.LimitPrice)
+	} else {
+		orderPrice = float64(*s.pendingOrder.StopPrice)
+	}
+
+	if (side == "buy" && s.pendingOrder.Type == "stop") || (side == "sell" && s.pendingOrder.Type == "limit") {
+		if orderPrice <= float64(s.currentBrokerQuote.Ask) {
+			s.Logger.Log("Pending order will not be created since the order price is less than the current ask")
+			s.pendingOrder = nil
+			return
+		}
+	}
+
+	if (side == "buy" && s.pendingOrder.Type == "limit") || (side == "sell" && s.pendingOrder.Type == "stop") {
+		if orderPrice >= float64(s.currentBrokerQuote.Bid) {
+			s.Logger.Log("Pending order will not be created since the order price is higher than the current bid")
+			s.pendingOrder = nil
+			return
+		}
+	}
+
+	currentAsk := utils.FloatToString(float64(s.currentBrokerQuote.Ask), 2)
+	currentBid := utils.FloatToString(float64(s.currentBrokerQuote.Bid), 2)
+	qty := utils.FloatToString(float64(s.pendingOrder.Qty), 2)
+	s.pendingOrder.StringValues = &api.OrderStringValues{
+		CurrentAsk: &currentAsk,
+		CurrentBid: &currentBid,
+		Qty:        &qty,
+	}
+	if s.pendingOrder.Type == "limit" {
+		limitPrice := utils.FloatToString(float64(*s.pendingOrder.LimitPrice), 2)
+		s.pendingOrder.StringValues.LimitPrice = &limitPrice
+	} else {
+		stopPrice := utils.FloatToString(float64(*s.pendingOrder.StopPrice), 2)
+		s.pendingOrder.StringValues.StopPrice = &stopPrice
+	}
+	if s.pendingOrder.StopLoss != nil {
+		stopLossPrice := utils.FloatToString(float64(*s.pendingOrder.StopLoss), 2)
+		s.pendingOrder.StringValues.StopLoss = &stopLossPrice
+	}
+	if s.pendingOrder.TakeProfit != nil {
+		takeProfitPrice := utils.FloatToString(float64(*s.pendingOrder.TakeProfit), 2)
+		s.pendingOrder.StringValues.TakeProfit = &takeProfitPrice
+	}
+	err := s.API.CreateOrder(s.pendingOrder)
+	if err != nil {
+		s.Logger.Log("Error when creating the pending order -> " + err.Error())
+	} else {
+		s.Logger.Log("Pending order created successfully")
+	}
+
+	s.pendingOrder = nil
 }
 
 func isInArray(element string, arr []string) bool {
