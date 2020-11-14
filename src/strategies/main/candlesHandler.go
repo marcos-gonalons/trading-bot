@@ -10,8 +10,8 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper"
 )
 
-func (s *Strategy) updateCandles(currentExecutionTime time.Time, data *tradingviewsocket.QuoteData) {
-	currentMinutes := currentExecutionTime.Format("04")
+func (s *Strategy) updateCandles(data *tradingviewsocket.QuoteData) {
+	currentMinutes := s.currentExecutionTime.Format("04")
 	previousMinutes := s.previousExecutionTime.Format("04")
 
 	var currentPrice float64
@@ -40,7 +40,7 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time, data *tradingvi
 			Low:       currentPrice,
 			High:      currentPrice,
 			Volume:    volume,
-			Timestamp: getTimestampWith0Seconds(currentExecutionTime),
+			Timestamp: getTimestampWith0Seconds(s.currentExecutionTime),
 		})
 	} else {
 		index := len(s.candles) - 1
@@ -66,44 +66,9 @@ func (s *Strategy) updateCandles(currentExecutionTime time.Time, data *tradingvi
 			s.candles[index].Volume += volume
 		}
 		if s.candles[index].Timestamp == 0 {
-			s.candles[index].Timestamp = getTimestampWith0Seconds(currentExecutionTime)
+			s.candles[index].Timestamp = getTimestampWith0Seconds(s.currentExecutionTime)
 		}
 	}
-
-	/***
-		Very, very important
-		Round ALL the prices used in ALL the calls to 2 decimals. Otherwise it won't work.
-
-		When creating an order, I need to save the 3 created orders somewhere (the limit/stop order, it's sl and it's tp)
-		The SL and the TP will have the parentID of the main one. The main one will have the parentID null
-		All 3 orders will have the status "working".
-
-		When modifying an order that hasn't been filled yet, I can use the ID of the main order to change it's sl, tp, or it's limit/stop price.
-		When modifying the sl/tp of a position, I need to use the ID of the sl/tp order.
-		Or I can just use the modifyposition api
-
-
-		Take into consideration
-		Let's say the bot dies, for whatever reason, at 15:00pm
-		I revive him at 15:05
-		It will have lost all the candles[]
-
-		To mitigate this
-		As I add a candle to the candles[]
-		Save the candles to the csv file
-		When booting the bot; initialize the candles array with those in the csv file
-
-
-		When booting {
-			if !csv file, create the csv file
-			else, load candles[] from the file
-		}
-
-		Very important as well
-		When closing a position, and the position has TP and SL; IBROKER WILL NOT LET YOU
-		CLOSE THE POSITION UNTIL YOU CLOSE THE TP AND SL FIRST
-		So; if the script needs to close a position, CLOSE THE SL AND TP FIRST.
-	***/
 
 }
 

@@ -18,6 +18,9 @@ import (
 func main() {
 	var ibrokerAPI api.Interface
 
+	a := fmt.Sprintf("%.2f", 12.0)
+	fmt.Printf("\n\n\n%#v\n\n\n", a)
+	panic("ok")
 	defer func() {
 		panicCatcher(recover(), ibrokerAPI)
 	}()

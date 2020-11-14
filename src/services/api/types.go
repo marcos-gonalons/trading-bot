@@ -39,15 +39,18 @@ type Order struct {
 	StopPrice    *float32
 	Status       string
 	ParentID     *string
-	StringValues struct {
-		CurrentAsk *string
-		CurrentBid *string
-		Qty        *string
-		StopLoss   *string
-		TakeProfit *string
-		LimitPrice *string
-		StopPrice  *string
-	}
+	StringValues *OrderStringValues
+}
+
+// OrderStringValues ...
+type OrderStringValues struct {
+	CurrentAsk *string
+	CurrentBid *string
+	Qty        *string
+	StopLoss   *string
+	TakeProfit *string
+	LimitPrice *string
+	StopPrice  *string
 }
 
 // Position ...

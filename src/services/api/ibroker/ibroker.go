@@ -12,6 +12,7 @@ import (
 	modifyorder "TradingBot/src/services/api/ibroker/modifyOrder"
 	modifyposition "TradingBot/src/services/api/ibroker/modifyPosition"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/utils"
 
 	"encoding/json"
 	"net/http"
@@ -20,6 +21,9 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/httpclient"
 )
+
+// GER30SymbolName ...
+const GER30SymbolName = "GER30"
 
 // API ...
 type API struct {
@@ -223,7 +227,7 @@ func (s *API) CloseEverything() (err error) {
 		}
 	}
 	if len(s.orders) > 0 {
-		workingOrders := getWorkingOrders(s.orders)
+		workingOrders := utils.GetWorkingOrders(s.orders)
 		for _, order := range workingOrders {
 			if order.ParentID == nil {
 				s.CloseOrder(order.ID)
@@ -235,7 +239,7 @@ func (s *API) CloseEverything() (err error) {
 			return err
 		}
 
-		workingOrders = getWorkingOrders(orders)
+		workingOrders = utils.GetWorkingOrders(orders)
 		for _, order := range workingOrders {
 			s.CloseOrder(order.ID)
 		}
@@ -352,16 +356,6 @@ func (s *API) logAPIResult(response interface{}, err error, logType logger.LogTy
 			s.logger.Log("RESULT -> "+string(str), logType)
 		}
 	}
-}
-
-func getWorkingOrders(orders []*api.Order) []*api.Order {
-	var workingOrders []*api.Order
-	for _, order := range orders {
-		if order.Status == "working" {
-			workingOrders = append(workingOrders, order)
-		}
-	}
-	return workingOrders
 }
 
 // CreateAPIServiceInstance ...

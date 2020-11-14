@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"TradingBot/src/services/api"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -40,4 +42,21 @@ func GetRandomString(length int) string {
 	}
 
 	return string(requestID)
+}
+
+// GetStringRepresentation ...
+func GetStringRepresentation(data interface{}) string {
+	str, _ := json.Marshal(data)
+	return string(str)
+}
+
+// GetWorkingOrders ...
+func GetWorkingOrders(orders []*api.Order) []*api.Order {
+	var workingOrders []*api.Order
+	for _, order := range orders {
+		if order.Status == "working" {
+			workingOrders = append(workingOrders, order)
+		}
+	}
+	return workingOrders
 }

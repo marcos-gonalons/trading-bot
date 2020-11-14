@@ -2,8 +2,10 @@ package mainstrategy
 
 import (
 	"TradingBot/src/services/api"
+	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/logger"
-	"encoding/json"
+	"TradingBot/src/utils"
+	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -16,67 +18,130 @@ type Strategy struct {
 	API    api.Interface
 	Logger logger.Interface
 
+	currentExecutionTime  time.Time
 	previousExecutionTime time.Time
 	failedAPIRequests     int
 
-	orders    []*api.Order
-	positions []*api.Position
-	state     *api.State
-	candles   []*Candle
+	currentBrokerQuote *api.Quote
+	orders             []*api.Order
+	pendingOrder       *api.Order
+	positions          []*api.Position
+	state              *api.State
+
+	candles []*Candle
 
 	csvFileName string
 	csvFileMtx  sync.Mutex
 
-	socket     tradingviewsocket.SocketInterface
-	lastVolume float64
-	avgSpread  float32
+	socket        tradingviewsocket.SocketInterface
+	lastVolume    float64
+	lastBid       *float64
+	lastAsk       *float64
+	spreads       []float64
+	averageSpread float64
 
 	fetchError error
 }
 
 // Execute ...
 func (s *Strategy) Execute() {
-	go s.panicIfTooManyAPIFails()
-
 	s.initSocket()
 	s.initCandles()
-	go func() {
-		for {
-			now := time.Now()
-			currentHour, _ := strconv.Atoi(now.Format("15"))
-			if currentHour >= 6 && currentHour <= 21 {
-				s.fetchData()
-			}
-			time.Sleep(2 * time.Second)
-		}
-	}()
 
-	go func() {
-		for {
-			if s.fetchError != nil && s.fetchError.Error() == "Api error -> Your session is disconnected. Please login again to initialize a new valid session." {
-				s.Logger.Log("Session is disconnected. Loggin in again ... ")
-				s.login(0, 0)
+	go s.panicIfTooManyAPIFails()
+	go s.fetchDataLoop()
+	go s.checkSessionDisconnectedError()
+}
+
+func (s *Strategy) initSocket() {
+	tradingviewsocket, err := tradingviewsocket.Connect(
+		s.onReceiveMarketData,
+		s.onSocketError,
+	)
+	if err != nil {
+		panic("Error while initializing the trading view socket -> " + err.Error())
+	}
+
+	err = tradingviewsocket.AddSymbol("BITSTAMP:BTCUSD")
+	if err != nil {
+		panic("Error while adding the symbol -> " + err.Error())
+	}
+
+	s.socket = tradingviewsocket
+}
+
+func (s *Strategy) fetchDataLoop() {
+	for {
+		currentHour, _ := strconv.Atoi(s.currentExecutionTime.Format("15"))
+		if currentHour >= 6 && currentHour <= 21 {
+			fetchFuncs := []func(){
+				func() {
+					s.currentBrokerQuote = s.fetch(func() (interface{}, error) {
+						return s.API.GetQuote(ibroker.GER30SymbolName)
+					}).(*api.Quote)
+				},
+				func() {
+					s.orders = s.fetch(func() (interface{}, error) {
+						return s.API.GetOrders()
+					}).([]*api.Order)
+				},
+				func() {
+					s.positions = s.fetch(func() (interface{}, error) {
+						return s.API.GetPositions()
+					}).([]*api.Position)
+				},
+				func() {
+					s.state = s.fetch(func() (interface{}, error) {
+						return s.API.GetState()
+					}).(*api.State)
+				},
 			}
-			s.fetchError = nil
-			time.Sleep(5 * time.Second)
+
+			for _, fetchFunc := range fetchFuncs {
+				go fetchFunc()
+			}
 		}
-	}()
+		time.Sleep(1666666 * time.Microsecond)
+	}
+}
+
+func (s *Strategy) checkSessionDisconnectedError() {
+	for {
+		if s.fetchError != nil && s.fetchError.Error() == "Api error -> Your session is disconnected. Please login again to initialize a new valid session." {
+			s.Logger.Log("Session is disconnected. Loggin in again ... ")
+			s.login(0, 0)
+		}
+		s.fetchError = nil
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
-	s.Logger.Log("Received data -> " + symbol + " -> " + getStringRepresentation(data))
+	s.Logger.Log("Received data -> " + symbol + " -> " + utils.GetStringRepresentation(data))
 
-	now := time.Now()
+	s.currentExecutionTime = time.Now()
 	defer func() {
-		s.previousExecutionTime = now
+		s.previousExecutionTime = s.currentExecutionTime
 
 		if data.Volume != nil {
 			s.lastVolume = *data.Volume
 		}
+		if data.Bid != nil {
+			s.lastBid = data.Bid
+		}
+		if data.Ask != nil {
+			s.lastAsk = data.Ask
+		}
 	}()
 
-	currentHour, previousHour := s.getCurrentAndPreviousHour(now, s.previousExecutionTime)
+	currentHour, previousHour := s.getCurrentAndPreviousHour()
 	if currentHour == 2 && previousHour == 1 {
+		err := s.socket.Close()
+		if err != nil {
+			s.Logger.Log("Error when restarting the socket -> " + err.Error())
+		}
+		s.initSocket()
+
 		s.initCandles()
 		s.Logger.ResetLogs()
 
@@ -84,22 +149,38 @@ func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		s.login(120, 30*time.Second)
 	}
 
-	s.updateCandles(now, data)
+	s.updateCandles(data)
 
-	// Important; the script should ignore candles[0], since it does not contain proper data.
+	go s.updateAverageSpread()
 
-	if currentHour < 6 || currentHour > 21 {
-		s.Logger.Log("Doing nothing - Now it's not the time.")
+	if len(s.candles) == 0 {
 		return
 	}
+	go s.breakoutAnticipationStrategy()
 }
 
-func (s *Strategy) getCurrentAndPreviousHour(
-	now time.Time,
-	previous time.Time,
-) (int, int) {
-	currentHour, _ := strconv.Atoi(now.Format("15"))
-	previousHour, _ := strconv.Atoi(previous.Format("15"))
+func (s *Strategy) updateAverageSpread() {
+	if s.lastAsk == nil || s.lastBid == nil {
+		return
+	}
+
+	if len(s.spreads) == 1500 {
+		s.spreads = s.spreads[1:]
+	}
+
+	s.spreads = append(s.spreads, math.Abs(*s.lastAsk-*s.lastBid))
+
+	var sum float64
+	for _, spread := range s.spreads {
+		sum += spread
+	}
+
+	s.averageSpread = sum / float64(len(s.spreads))
+}
+
+func (s *Strategy) getCurrentAndPreviousHour() (int, int) {
+	currentHour, _ := strconv.Atoi(s.currentExecutionTime.Format("15"))
+	previousHour, _ := strconv.Atoi(s.previousExecutionTime.Format("15"))
 	return currentHour, previousHour
 }
 
@@ -132,31 +213,6 @@ func (s *Strategy) login(maxRetries uint, timeBetweenRetries time.Duration) {
 	}()
 }
 
-func (s *Strategy) fetchData() {
-	fetchFuncs := []func(){
-		func() {
-			s.orders = s.fetch(func() (interface{}, error) {
-				return s.API.GetOrders()
-			}).([]*api.Order)
-		},
-		func() {
-			s.positions = s.fetch(func() (interface{}, error) {
-				return s.API.GetPositions()
-			}).([]*api.Position)
-		},
-		func() {
-			s.state = s.fetch(func() (interface{}, error) {
-				return s.API.GetState()
-			}).(*api.State)
-		},
-	}
-
-	for _, fetchFunc := range fetchFuncs {
-		go fetchFunc()
-	}
-	return
-}
-
 func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interface{}) {
 	result, err := fetchFunc()
 
@@ -181,39 +237,7 @@ func (s *Strategy) panicIfTooManyAPIFails() {
 }
 
 func (s *Strategy) onSocketError(err error) {
-	// TODO: Probably reset the socket connection
-	panic("Socket error " + err.Error())
-}
-
-func (s *Strategy) initSocket() {
-	/**
-		fx va 1 pip por detras
-		si fx:ger30 dice 13149.4, en ibroker es 13150.5
-
-		leer con unauthorized de fx:ger30
-		y tener en cuenta que va 1 por detras
-
-		El volumen se resetea cada dia a las 23:00 hora de espanya (al menos en eurusd)
-		Y cuando se recibe el volumen se recibe el volumen acumulado desde el reseteo hasta ese momento.
-	**/
-
-	tradingviewsocket, err := tradingviewsocket.Connect(
-		s.onReceiveMarketData,
-		s.onSocketError,
-	)
-	if err != nil {
-		panic("Error while initializing the trading view socket -> " + err.Error())
-	}
-
-	err = tradingviewsocket.AddSymbol("FX:GER30")
-	if err != nil {
-		panic("Error while adding the symbol -> " + err.Error())
-	}
-
-	s.socket = tradingviewsocket
-}
-
-func getStringRepresentation(data interface{}) string {
-	str, _ := json.Marshal(data)
-	return string(str)
+	s.Logger.Log("Socket error -> " + err.Error())
+	s.socket.Close()
+	s.initSocket()
 }
