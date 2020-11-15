@@ -60,3 +60,40 @@ func GetWorkingOrders(orders []*api.Order) []*api.Order {
 	}
 	return workingOrders
 }
+
+// RepeatUntilSuccess ...
+func RepeatUntilSuccess(
+	processName string,
+	process func() error,
+	delayBetweenRetries time.Duration,
+	maxRetries int,
+	successCallback func(),
+) {
+	isOk := false
+	retries := 0
+	for !isOk {
+		if retries == maxRetries {
+			panic("There is something wrong while doing " + processName)
+		}
+		err := process()
+
+		if maxRetries == 0 {
+			if err == nil {
+				successCallback()
+			}
+			return
+		}
+
+		isOk = err == nil
+		retries++
+		time.Sleep(delayBetweenRetries)
+	}
+	successCallback()
+}
+
+// GetTimestampWith0Seconds ...
+func GetTimestampWith0Seconds(t time.Time) int64 {
+	dateString := t.Format("2006-01-02 15:04:00")
+	date, _ := time.Parse("2006-01-02 15:04:05", dateString)
+	return date.Unix()
+}

@@ -17,7 +17,6 @@ import (
 
 func main() {
 	var ibrokerAPI api.Interface
-
 	defer func() {
 		panicCatcher(recover(), ibrokerAPI)
 	}()
@@ -67,8 +66,11 @@ func panicCatcher(err interface{}, API api.Interface) {
 		return
 	}
 
+	// TODO: Mobile alert or something.
+
 	logger.GetInstance().Log("PANIC - " + fmt.Sprintf("%#v", err))
-	API.CloseEverything()
+	API.CloseAllPositions()
+	API.CloseAllOrders()
 }
 
 func setupOSSignalsNotifications(API api.Interface) {
@@ -78,7 +80,8 @@ func setupOSSignalsNotifications(API api.Interface) {
 	go func() {
 		sig := <-sigs
 		fmt.Printf("%#v", sig)
-		API.CloseEverything()
+		API.CloseAllPositions()
+		API.CloseAllOrders()
 		os.Exit(0)
 	}()
 }

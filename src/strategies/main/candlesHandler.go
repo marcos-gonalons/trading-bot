@@ -33,14 +33,14 @@ func (s *Strategy) updateCandles(data *tradingviewsocket.QuoteData) {
 
 	if currentMinutes != previousMinutes {
 		s.updateCSVWithLastCandle()
-		lastCandle, _ := json.Marshal(s.candles[len(s.candles)-1])
+		lastCandle, _ := json.Marshal(s.getLastCandle())
 		s.Logger.Log("Adding new candle to the candles array -> " + string(lastCandle))
 		s.candles = append(s.candles, &Candle{
-			Open:      s.candles[len(s.candles)-1].Close,
+			Open:      s.getLastCandle().Close,
 			Low:       currentPrice,
 			High:      currentPrice,
 			Volume:    volume,
-			Timestamp: getTimestampWith0Seconds(s.currentExecutionTime),
+			Timestamp: utils.GetTimestampWith0Seconds(s.currentExecutionTime),
 		})
 	} else {
 		index := len(s.candles) - 1
@@ -66,7 +66,7 @@ func (s *Strategy) updateCandles(data *tradingviewsocket.QuoteData) {
 			s.candles[index].Volume += volume
 		}
 		if s.candles[index].Timestamp == 0 {
-			s.candles[index].Timestamp = getTimestampWith0Seconds(s.currentExecutionTime)
+			s.candles[index].Timestamp = utils.GetTimestampWith0Seconds(s.currentExecutionTime)
 		}
 	}
 
@@ -96,7 +96,7 @@ func (s *Strategy) initCandles() {
 }
 
 func (s *Strategy) updateCSVWithLastCandle() {
-	lastCandle := s.candles[len(s.candles)-1]
+	lastCandle := s.getLastCandle()
 	if lastCandle.Timestamp == 0 {
 		return
 	}
@@ -121,8 +121,6 @@ func (s *Strategy) updateCSVWithLastCandle() {
 	s.csvFileMtx.Unlock()
 }
 
-func getTimestampWith0Seconds(t time.Time) int64 {
-	dateString := t.Format("2006-01-02 15:04:00")
-	date, _ := time.Parse("2006-01-02 15:04:05", dateString)
-	return date.Unix()
+func (s *Strategy) getLastCandle() *Candle {
+	return s.candles[len(s.candles)-1]
 }
