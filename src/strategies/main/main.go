@@ -40,6 +40,8 @@ type Strategy struct {
 	spreads       []float64
 	averageSpread float64
 
+	currentOrderTimestamp *int
+
 	fetchError error
 }
 

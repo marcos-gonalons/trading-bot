@@ -10,7 +10,8 @@ type Interface interface {
 	CloseOrder(orderID string) error
 	GetPositions() ([]*Position, error)
 	ClosePosition(symbol string) error
-	CloseEverything() error
+	CloseAllOrders() error
+	CloseAllPositions() error
 	GetState() (*State, error)
 	ModifyPosition(symbol string, takeProfit *string, stopLoss *string) error
 }

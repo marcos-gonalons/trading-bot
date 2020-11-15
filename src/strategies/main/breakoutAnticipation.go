@@ -4,23 +4,27 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/utils"
 	"strconv"
+	"time"
 )
 
 func (s *Strategy) breakoutAnticipationStrategy() {
-	var err error
-
 	if s.isCurrentTimeOutsideTradingHours() {
 		s.Logger.Log("Doing nothing - Now it's not the time.")
-		if len(s.positions) > 0 || len(s.orders) > 0 {
-			s.Logger.Log("Closing all open positions and pending orders...")
-			err = s.API.CloseEverything()
-			if err != nil {
-				s.Logger.Log("An error happened while closing everything -> " + err.Error())
-			} else {
-				s.positions = nil
-				s.orders = nil
-			}
-		}
+		s.closePositions(func() {
+			s.positions = nil
+		}, func(err error) {})
+		s.closeWorkingOrders(func() {
+			s.orders = nil
+		}, func(err error) {})
+		return
+	}
+
+	if s.averageSpread > 3 {
+		s.Logger.Log("Doing nothing since the spread is very big -> " + utils.FloatToString(s.averageSpread, 0))
+		s.pendingOrder = nil
+		s.closeWorkingOrders(func() {
+			s.orders = nil
+		}, func(err error) {})
 		return
 	}
 
@@ -44,6 +48,18 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 		}
 		s.pendingOrder = nil
 	}
+
+	// When it's time to create the order:
+	/**
+		create order code {
+
+			if currentOrderTimestamp != currentCandle.timestamp {
+				createOrder
+				s.currentOrderTimestamp = now (with 00 seconds)
+			}
+
+		}
+	**/
 }
 
 func (s *Strategy) supportBreakoutAnticipationStrategy() {
@@ -132,13 +148,17 @@ func (s *Strategy) savePendingOrder(side string) {
 		}
 		s.Logger.Log("Pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
 
-		err := s.API.CloseEverything()
-		if err != nil {
-			s.Logger.Log("An error happened while closing all the orders and all the positions -> " + err.Error())
-			s.pendingOrder = nil
-		} else {
+		s.closePositions(func() {
+			s.positions = nil
+		}, func(err error) {})
+		s.closeWorkingOrders(func() {
+			s.orders = nil
 			s.pendingOrder = mainOrder
-		}
+			s.Logger.Log("Closed all orders correctly, and saved the previous order for later")
+		}, func(err error) {
+			s.pendingOrder = nil
+		})
+
 	}
 }
 
@@ -222,6 +242,50 @@ func (s *Strategy) getSlAndTpOrders(
 	return slOrder, tpOrder
 }
 
+func (s *Strategy) closeWorkingOrders(
+	successCallback func(),
+	onErrorCallback func(err error),
+) {
+	s.Logger.Log("Closing all working orders ...")
+
+	go s.repeatUntilSuccess(
+		"CloseAllWorkingOrders",
+		func() (err error) {
+			err = s.API.CloseAllOrders()
+			if err != nil {
+				s.Logger.Log("An error happened while closing all orders -> " + err.Error())
+				onErrorCallback(err)
+			}
+			return
+		},
+		3*time.Second,
+		30,
+		successCallback,
+	)
+}
+
+func (s *Strategy) closePositions(
+	successCallback func(),
+	onErrorCallback func(err error),
+) {
+	s.Logger.Log("Closing all positions ...")
+	go s.repeatUntilSuccess(
+		"CloseAllPositions",
+		func() (err error) {
+			err = s.API.CloseAllPositions()
+			if err != nil {
+				s.Logger.Log("An error happened while closing all positions -> " + err.Error())
+				onErrorCallback(err)
+			}
+			return
+		},
+		3*time.Second,
+		30,
+		successCallback,
+	)
+
+}
+
 func isInArray(element string, arr []string) bool {
 	for _, el := range arr {
 		if element == el {
@@ -233,7 +297,6 @@ func isInArray(element string, arr []string) bool {
 
 /**
 
-if average spread is more than 3, close all orders if any, (leave the positions open if any) and do nothing
 
 	fx va 1 pip por detras
 	si fx:ger30 dice 13149.4, en ibroker es 13150.5
@@ -277,3 +340,28 @@ if average spread is more than 3, close all orders if any, (leave the positions 
 	CLOSE THE POSITION UNTIL YOU CLOSE THE TP AND SL FIRST
 	So; if the script needs to close a position, CLOSE THE SL AND TP FIRST.
 ***/
+
+func (s *Strategy) repeatUntilSuccess(
+	processName string,
+	f func() error,
+	delayBetweenRetries time.Duration,
+	maxRetries int,
+	successCallback func(),
+) {
+	isOk := false
+	retries := 0
+	for !isOk {
+		if retries == maxRetries {
+			panic("There is something wrong while doing " + processName)
+		}
+		err := f()
+		if err == nil {
+			isOk = true
+		} else {
+			s.Logger.Log("Error in " + processName + " while repeating function until no error is thrown -> " + err.Error())
+		}
+		retries++
+		time.Sleep(delayBetweenRetries)
+	}
+	successCallback()
+}

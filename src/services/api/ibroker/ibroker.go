@@ -13,6 +13,7 @@ import (
 	modifyposition "TradingBot/src/services/api/ibroker/modifyPosition"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/utils"
+	"errors"
 
 	"encoding/json"
 	"net/http"
@@ -219,31 +220,61 @@ func (s *API) GetPositions() (positions []*api.Position, err error) {
 	return
 }
 
-// CloseEverything ...
-func (s *API) CloseEverything() (err error) {
-	if len(s.positions) > 0 {
-		for _, position := range s.positions {
-			s.ClosePosition(position.Instrument)
-		}
+// CloseAllOrders ...
+func (s *API) CloseAllOrders() (err error) {
+	if len(s.orders) == 0 {
+		return
 	}
-	if len(s.orders) > 0 {
-		workingOrders := utils.GetWorkingOrders(s.orders)
-		for _, order := range workingOrders {
-			if order.ParentID == nil {
-				s.CloseOrder(order.ID)
-			}
-		}
 
-		orders, err := s.GetOrders()
+	errString := ""
+	workingOrders := utils.GetWorkingOrders(s.orders)
+	for _, order := range workingOrders {
+		if order.ParentID != nil {
+			continue
+		}
+		err = s.CloseOrder(order.ID)
 		if err != nil {
-			return err
-		}
-
-		workingOrders = utils.GetWorkingOrders(orders)
-		for _, order := range workingOrders {
-			s.CloseOrder(order.ID)
+			errString += err.Error() + "\n"
 		}
 	}
+
+	orders, err := s.GetOrders()
+	if err != nil {
+		errString += err.Error() + "\n"
+		err = errors.New(errString)
+		return
+	}
+
+	workingOrders = utils.GetWorkingOrders(orders)
+	for _, order := range workingOrders {
+		err = s.CloseOrder(order.ID)
+		if err != nil {
+			errString += err.Error() + "\n"
+		}
+	}
+	if errString != "" {
+		err = errors.New(errString)
+	}
+
+	return
+}
+
+// CloseAllPositions ...
+func (s *API) CloseAllPositions() (err error) {
+	if len(s.positions) == 0 {
+		return
+	}
+	errString := ""
+	for _, position := range s.positions {
+		err = s.ClosePosition(position.Instrument)
+		if err != nil {
+			errString += err.Error() + "\n"
+		}
+	}
+	if errString != "" {
+		err = errors.New(errString)
+	}
+
 	return
 }
 
