@@ -6,6 +6,7 @@ import (
 	"TradingBot/src/services/logger"
 	"TradingBot/src/utils"
 	"math"
+	"net"
 	"strconv"
 	"sync"
 	"time"
@@ -221,6 +222,18 @@ func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interfac
 		s.fetchError = err
 		s.Logger.Error("Error while fetching data -> " + err.Error())
 		s.failedAPIRequests++
+
+		if err, ok := err.(net.Error); ok && err.Timeout() {
+			currentTimeout := s.API.GetTimeout()
+			if currentTimeout < 60*time.Second {
+				s.Logger.Log("Increasing timeout ...")
+				s.API.SetTimeout(currentTimeout + 10*time.Second)
+			} else {
+				s.Logger.Error("The API has a timeout problem")
+			}
+		} else {
+			s.API.SetTimeout(10 * time.Second)
+		}
 		return
 	}
 	s.fetchError = nil
@@ -229,7 +242,7 @@ func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interfac
 
 func (s *Strategy) panicIfTooManyAPIFails() {
 	for {
-		if s.failedAPIRequests >= 30 {
+		if s.failedAPIRequests >= 50 {
 			panic("There is something wrong with the API - Check logs - Stopping bot")
 		}
 		s.failedAPIRequests = 0

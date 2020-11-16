@@ -1,5 +1,7 @@
 package api
 
+import "time"
+
 // Interface implemented by the broker APIs
 type Interface interface {
 	Login() (*AccessToken, error)
@@ -14,4 +16,6 @@ type Interface interface {
 	CloseAllPositions() error
 	GetState() (*State, error)
 	ModifyPosition(symbol string, takeProfit *string, stopLoss *string) error
+	SetTimeout(t time.Duration)
+	GetTimeout() time.Duration
 }
