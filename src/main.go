@@ -69,6 +69,7 @@ func panicCatcher(err interface{}, API api.Interface) {
 	// TODO: Mobile alert or something.
 
 	logger.GetInstance().Log("PANIC - " + fmt.Sprintf("%#v", err))
+
 	API.CloseAllPositions()
 	API.CloseAllOrders()
 }

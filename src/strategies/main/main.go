@@ -66,7 +66,7 @@ func (s *Strategy) initSocket() {
 		panic("Error while initializing the trading view socket -> " + err.Error())
 	}
 
-	err = tradingviewsocket.AddSymbol("BITSTAMP:BTCUSD")
+	err = tradingviewsocket.AddSymbol("FX:GER30")
 	if err != nil {
 		panic("Error while adding the symbol -> " + err.Error())
 	}
@@ -142,7 +142,7 @@ func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	if currentHour == 2 && previousHour == 1 {
 		err := s.socket.Close()
 		if err != nil {
-			s.Logger.Log("Error when restarting the socket -> " + err.Error())
+			s.Logger.Error("Error when restarting the socket -> " + err.Error())
 		}
 		s.initSocket()
 
@@ -194,7 +194,7 @@ func (s *Strategy) login(maxRetries int, delayBetweenRetries time.Duration) {
 		func() (err error) {
 			_, err = s.API.Login()
 			if err != nil {
-				s.Logger.Log("Error while logging in -> " + err.Error())
+				s.Logger.Error("Error while logging in -> " + err.Error())
 			}
 			return
 		},
@@ -209,7 +209,7 @@ func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interfac
 
 	if err != nil {
 		s.fetchError = err
-		s.Logger.Log("Error while fetching data -> " + err.Error())
+		s.Logger.Error("Error while fetching data -> " + err.Error())
 		s.failedAPIRequests++
 		return
 	}

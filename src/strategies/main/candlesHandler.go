@@ -116,7 +116,7 @@ func (s *Strategy) updateCSVWithLastCandle() {
 	s.csvFileMtx.Lock()
 	_, err = csvFile.Write([]byte(row))
 	if err != nil {
-		s.Logger.Log("Error when writting the last candle in the csv file -> " + err.Error())
+		s.Logger.Error("Error when writting the last candle in the csv file -> " + err.Error())
 	}
 	s.csvFileMtx.Unlock()
 }

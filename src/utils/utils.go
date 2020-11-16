@@ -69,9 +69,8 @@ func RepeatUntilSuccess(
 	maxRetries int,
 	successCallback func(),
 ) {
-	isOk := false
 	retries := 0
-	for !isOk {
+	for {
 		if retries == maxRetries {
 			panic("There is something wrong while doing " + processName)
 		}
@@ -84,7 +83,10 @@ func RepeatUntilSuccess(
 			return
 		}
 
-		isOk = err == nil
+		if err == nil {
+			break
+		}
+
 		retries++
 		time.Sleep(delayBetweenRetries)
 	}

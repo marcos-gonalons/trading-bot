@@ -45,6 +45,9 @@ const (
 
 	// ModifyPositionRequest 11
 	ModifyPositionRequest LogType = 11
+
+	// ErrorLog 99
+	ErrorLog LogType = 99
 )
 
 // Logger ...
@@ -54,23 +57,62 @@ type Logger struct {
 	mtx       sync.Mutex
 }
 
+// Error logs the error in the normal log file + also in the error log file
+func (logger *Logger) Error(message string, logType ...LogType) {
+	logType = append(logType, ErrorLog)
+	logger.Log(message, logType...)
+}
+
 // Log logs a message
 func (logger *Logger) Log(message string, logType ...LogType) {
-
 	var logFileName string
+	isError := false
+
 	if len(logType) > 0 {
 		logFileName = logger.fileNames[logType[0]]
+		if logType[len(logType)-1] == ErrorLog {
+			isError = true
+		}
 	} else {
 		logFileName = logger.fileNames[Default]
 	}
 
-	if logFileName == logger.fileNames[Default] {
+	if logFileName == logger.fileNames[Default] || isError {
 		var ioWriter io.Writer
 		ioWriter = os.Stdout
 		fmt.Fprintf(ioWriter, message)
 		fmt.Fprintf(ioWriter, "\n\n")
 	}
 
+	logger.doLog(message, logFileName)
+	if isError {
+		logger.doLog(message, logger.fileNames[ErrorLog])
+	}
+}
+
+// ResetLogs ...
+func (logger *Logger) ResetLogs() {
+	directory := logger.rootPath
+
+	osDir, err := os.Open(directory)
+	if err != nil {
+		panic("Error opening the directory" + directory + " -> " + err.Error())
+	}
+	files, err := osDir.Readdir(0)
+	if err != nil {
+		panic("Error reading the directory" + directory + " -> " + err.Error())
+	}
+
+	for index := range files {
+		file := files[index]
+		err = os.Remove(directory + "/" + file.Name())
+		if err != nil {
+			panic("Error removing the log file" + file.Name() + " -> " + err.Error())
+		}
+	}
+}
+
+func (logger *Logger) doLog(message string, logFileName string) {
 	var now = time.Now()
 	var folderPath = logger.rootPath
 	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
@@ -105,28 +147,6 @@ func (logger *Logger) Log(message string, logType ...LogType) {
 	}
 }
 
-// ResetLogs ...
-func (logger *Logger) ResetLogs() {
-	directory := logger.rootPath
-
-	osDir, err := os.Open(directory)
-	if err != nil {
-		panic("Error opening the directory" + directory + " -> " + err.Error())
-	}
-	files, err := osDir.Readdir(0)
-	if err != nil {
-		panic("Error reading the directory" + directory + " -> " + err.Error())
-	}
-
-	for index := range files {
-		file := files[index]
-		err = os.Remove(directory + "/" + file.Name())
-		if err != nil {
-			panic("Error removing the log file" + file.Name() + " -> " + err.Error())
-		}
-	}
-}
-
 var logger *Logger
 
 func init() {
@@ -142,6 +162,7 @@ func init() {
 	filePathsMap[ClosePositionRequest] = "closePositionRequest"
 	filePathsMap[GetStateRequest] = "getStateRequest"
 	filePathsMap[ModifyPositionRequest] = "modifyPositionRequest"
+	filePathsMap[ErrorLog] = "errors"
 
 	logger = &Logger{
 		"logs/",

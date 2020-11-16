@@ -29,8 +29,8 @@ func (s *Strategy) breakoutAnticipationStrategy() {
 		return
 	}
 
-	s.resistanceBreakoutAnticipationStrategy()
-	s.supportBreakoutAnticipationStrategy()
+	//s.resistanceBreakoutAnticipationStrategy()
+	//s.supportBreakoutAnticipationStrategy()
 }
 
 func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
@@ -50,25 +50,15 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 		s.pendingOrder = nil
 	}
 
-	ignoreLastNCandles := 15
+	/*ignoreLastNCandles := 15
 	riskPercentage := 1.5
 	stopLossDistance := 12
 	takeProfitDistance := 27
+	candlesAmountWithLowerPriceToBeConsideredTop := 15*/
 	tpDistanceShortForBreakEvenSL := 5
-	candlesAmountWithLowerPriceToBeConsideredTop := 15
 
 	if len(s.positions) > 0 {
-		position := s.positions[0]
-		if position.Side == "buy" {
-			_, tpOrder := s.getSlAndTpOrdersForCurrentOpenPosition()
-
-			if float64(*tpOrder.LimitPrice)-s.getLastCandle().High < float64(tpDistanceShortForBreakEvenSL) {
-				s.Logger.Log("The trade is very close to the TP. Adjusting SL to break even ...")
-				tp := utils.FloatToString(float64(*tpOrder.LimitPrice), 2)
-				sl := utils.FloatToString(float64(position.AvgPrice), 2)
-				s.modifyPosition(&tp, &sl)
-			}
-		}
+		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), "buy")
 	}
 
 }
@@ -88,6 +78,17 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 			return
 		}
 		s.pendingOrder = nil
+	}
+
+	/*ignoreLastNCandles := 15
+	riskPercentage := 1.5
+	stopLossDistance := 12
+	takeProfitDistance := 27
+	candlesAmountWithLowerPriceToBeConsideredBottom := 15*/
+	tpDistanceShortForBreakEvenSL := 5
+
+	if len(s.positions) > 0 {
+		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), "sell")
 	}
 }
 
@@ -211,7 +212,7 @@ func (s *Strategy) createPendingOrder(side string) {
 
 	err := s.API.CreateOrder(s.pendingOrder)
 	if err != nil {
-		s.Logger.Log("Error when creating the pending order -> " + err.Error())
+		s.Logger.Error("Error when creating the pending order -> " + err.Error())
 	} else {
 		s.Logger.Log("Pending order created successfully")
 	}
@@ -270,7 +271,7 @@ func (s *Strategy) closeWorkingOrders(
 		func() (err error) {
 			err = s.API.CloseAllOrders()
 			if err != nil {
-				s.Logger.Log("An error happened while closing all orders -> " + err.Error())
+				s.Logger.Error("An error happened while closing all orders -> " + err.Error())
 				onErrorCallback(err)
 			}
 			return
@@ -292,7 +293,7 @@ func (s *Strategy) closePositions(
 		func() (err error) {
 			err = s.API.CloseAllPositions()
 			if err != nil {
-				s.Logger.Log("An error happened while closing all positions -> " + err.Error())
+				s.Logger.Error("An error happened while closing all positions -> " + err.Error())
 				onErrorCallback(err)
 			}
 			return
@@ -303,28 +304,22 @@ func (s *Strategy) closePositions(
 	)
 }
 
-func (s *Strategy) modifyPosition(
-	tp *string,
-	sl *string,
-) {
-	if s.modifyingPositionTimestamp != s.getLastCandle().Timestamp {
-		s.Logger.Log("Modifying the current open position with this values: tp -> " + *tp + " and sl -> " + *sl)
+func (s *Strategy) modifyPosition(tp string, sl string) {
+	s.Logger.Log("Modifying the current open position with this values: tp -> " + tp + " and sl -> " + sl)
 
-		go utils.RepeatUntilSuccess(
-			"ModifyPosition",
-			func() (err error) {
-				err = s.API.ModifyPosition(ibroker.GER30SymbolName, tp, sl)
-				if err != nil {
-					s.Logger.Log("An error happened while modifying the position -> " + err.Error())
-				}
-				return
-			},
-			1*time.Second,
-			10,
-			func() {},
-		)
-		s.modifyingPositionTimestamp = s.getLastCandle().Timestamp
-	}
+	go utils.RepeatUntilSuccess(
+		"ModifyPosition",
+		func() (err error) {
+			err = s.API.ModifyPosition(ibroker.GER30SymbolName, &tp, &sl)
+			if err != nil {
+				s.Logger.Error("An error happened while modifying the position -> " + err.Error())
+			}
+			return
+		},
+		1*time.Second,
+		10,
+		func() {},
+	)
 }
 
 func (s *Strategy) setStringValues(order *api.Order) {
@@ -350,6 +345,36 @@ func (s *Strategy) setStringValues(order *api.Order) {
 	if order.TakeProfit != nil {
 		takeProfitPrice := utils.FloatToString(float64(*order.TakeProfit), 2)
 		order.StringValues.TakeProfit = &takeProfitPrice
+	}
+}
+
+func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side string) {
+	if s.modifyingPositionTimestamp == s.getLastCandle().Timestamp {
+		return
+	}
+
+	position := s.positions[0]
+	if position.Side != side {
+		return
+	}
+
+	_, tpOrder := s.getSlAndTpOrdersForCurrentOpenPosition()
+
+	shouldBeAdjusted := false
+	if side == "buy" {
+		shouldBeAdjusted = float64(*tpOrder.LimitPrice)-s.getLastCandle().High < distanceToTp
+	} else {
+		shouldBeAdjusted = s.getLastCandle().Low-float64(*tpOrder.LimitPrice) < distanceToTp
+	}
+
+	if shouldBeAdjusted {
+		s.Logger.Log("The trade is very close to the TP. Adjusting SL to break even ...")
+		s.modifyingPositionTimestamp = s.getLastCandle().Timestamp
+
+		s.modifyPosition(
+			utils.FloatToString(float64(*tpOrder.LimitPrice), 2),
+			utils.FloatToString(float64(position.AvgPrice), 2),
+		)
 	}
 }
 
