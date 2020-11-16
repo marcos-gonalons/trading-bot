@@ -37,8 +37,8 @@ func (s *Strategy) updateCandles(data *tradingviewsocket.QuoteData) {
 		s.Logger.Log("Adding new candle to the candles array -> " + string(lastCandle))
 		s.candles = append(s.candles, &Candle{
 			Open:      s.getLastCandle().Close,
-			Low:       currentPrice,
-			High:      currentPrice,
+			Low:       s.getLastCandle().Close,
+			High:      s.getLastCandle().Close,
 			Volume:    volume,
 			Timestamp: utils.GetTimestampWith0Seconds(s.currentExecutionTime),
 		})
