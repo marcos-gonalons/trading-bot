@@ -17,6 +17,7 @@ import (
 
 func main() {
 	var ibrokerAPI api.Interface
+
 	defer func() {
 		panicCatcher(recover(), ibrokerAPI)
 	}()

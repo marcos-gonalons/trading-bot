@@ -59,6 +59,7 @@ func (s *Strategy) Execute() {
 }
 
 func (s *Strategy) initSocket() {
+	s.Logger.Log("Initializing the socket ...")
 	tradingviewsocket, err := tradingviewsocket.Connect(
 		s.onReceiveMarketData,
 		s.onSocketError,
@@ -67,7 +68,7 @@ func (s *Strategy) initSocket() {
 		panic("Error while initializing the trading view socket -> " + err.Error())
 	}
 
-	err = tradingviewsocket.AddSymbol("FX:GER30")
+	err = tradingviewsocket.AddSymbol("FX:EURUSD")
 	if err != nil {
 		panic("Error while adding the symbol -> " + err.Error())
 	}
@@ -151,14 +152,14 @@ func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 	currentHour, previousHour := s.getCurrentAndPreviousHour()
 	if currentHour == 2 && previousHour == 1 {
+		s.Logger.ResetLogs()
+
 		err := s.socket.Close()
 		if err != nil {
 			s.Logger.Error("Error when restarting the socket -> " + err.Error())
 		}
 		s.initSocket()
-
 		s.initCandles()
-		s.Logger.ResetLogs()
 
 		s.Logger.Log("Refreshing access token by calling API.Login")
 		s.login(120, 30*time.Second)
@@ -218,25 +219,27 @@ func (s *Strategy) login(maxRetries int, delayBetweenRetries time.Duration) {
 func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interface{}) {
 	result, err := fetchFunc()
 
-	if err != nil {
-		s.fetchError = err
-		s.Logger.Error("Error while fetching data -> " + err.Error())
-		s.failedAPIRequests++
-
-		if err, ok := err.(net.Error); ok && err.Timeout() {
-			currentTimeout := s.API.GetTimeout()
-			if currentTimeout < 60*time.Second {
-				s.Logger.Log("Increasing timeout ...")
-				s.API.SetTimeout(currentTimeout + 10*time.Second)
-			} else {
-				s.Logger.Error("The API has a timeout problem")
-			}
-		} else {
-			s.API.SetTimeout(10 * time.Second)
-		}
+	if err == nil {
+		s.fetchError = nil
 		return
 	}
-	s.fetchError = nil
+
+	s.fetchError = err
+	s.Logger.Error("Error while fetching data -> " + err.Error())
+	s.failedAPIRequests++
+
+	if err, isNetError := err.(net.Error); isNetError && err.Timeout() {
+		currentTimeout := s.API.GetTimeout()
+		if currentTimeout < 60*time.Second {
+			s.Logger.Log("Increasing timeout ...")
+			s.API.SetTimeout(currentTimeout + 10*time.Second)
+		} else {
+			s.Logger.Error("The API has a timeout problem")
+		}
+	} else {
+		s.Logger.Log("Setting default timeout of 10 seconds ...")
+		s.API.SetTimeout(10 * time.Second)
+	}
 	return
 }
 

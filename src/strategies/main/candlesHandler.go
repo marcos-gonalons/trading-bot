@@ -86,7 +86,7 @@ func (s *Strategy) initCandles() {
 		defer csvFile.Close()
 		if err != nil {
 			s.csvFileMtx.Unlock()
-			panic("Error while creating the csv file")
+			s.Logger.Error("Error while creating the csv file -> " + err.Error())
 		} else {
 			csvFile.Write([]byte("Time,Open,High,Low,Close,Volume\n"))
 			s.csvFileMtx.Unlock()
