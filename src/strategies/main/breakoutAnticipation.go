@@ -276,7 +276,7 @@ func (s *Strategy) closeWorkingOrders(
 			}
 			return
 		},
-		3*time.Second,
+		5*time.Second,
 		30,
 		successCallback,
 	)
@@ -298,7 +298,7 @@ func (s *Strategy) closePositions(
 			}
 			return
 		},
-		3*time.Second,
+		5*time.Second,
 		30,
 		successCallback,
 	)
@@ -316,8 +316,8 @@ func (s *Strategy) modifyPosition(tp string, sl string) {
 			}
 			return
 		},
-		1*time.Second,
-		10,
+		5*time.Second,
+		20,
 		func() {},
 	)
 }

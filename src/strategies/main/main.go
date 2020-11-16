@@ -22,6 +22,7 @@ type Strategy struct {
 	currentExecutionTime  time.Time
 	previousExecutionTime time.Time
 	failedAPIRequests     int
+	socketErrorsAmount    int
 
 	currentBrokerQuote *api.Quote
 	orders             []*api.Order
@@ -53,9 +54,9 @@ func (s *Strategy) Execute() {
 	s.initSocket()
 	s.initCandles()
 
-	go s.panicIfTooManyAPIFails()
-	go s.fetchDataLoop()
+	go s.panicIfTooManyAPIFailsOrSocketErrors()
 	go s.checkSessionDisconnectedError()
+	go s.fetchDataLoop()
 }
 
 func (s *Strategy) initSocket() {
@@ -243,10 +244,13 @@ func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interfac
 	return
 }
 
-func (s *Strategy) panicIfTooManyAPIFails() {
+func (s *Strategy) panicIfTooManyAPIFailsOrSocketErrors() {
 	for {
 		if s.failedAPIRequests >= 50 {
 			panic("There is something wrong with the API - Check logs - Stopping bot")
+		}
+		if s.socketErrorsAmount >= 20 {
+			panic("There is something wrong with the Socket - Check logs - Stopping bot")
 		}
 		s.failedAPIRequests = 0
 		time.Sleep(1 * time.Minute)
@@ -254,6 +258,7 @@ func (s *Strategy) panicIfTooManyAPIFails() {
 }
 
 func (s *Strategy) onSocketError(err error) {
+	s.socketErrorsAmount++
 	s.Logger.Log("Socket error -> " + err.Error())
 	s.socket.Close()
 	s.initSocket()
