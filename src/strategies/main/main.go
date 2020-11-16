@@ -76,35 +76,45 @@ func (s *Strategy) initSocket() {
 
 func (s *Strategy) fetchDataLoop() {
 	for {
+		var waitingGroup sync.WaitGroup
 		currentHour, _ := strconv.Atoi(s.currentExecutionTime.Format("15"))
 		if currentHour >= 6 && currentHour <= 21 {
 			fetchFuncs := []func(){
 				func() {
 					s.currentBrokerQuote = s.fetch(func() (interface{}, error) {
+						defer waitingGroup.Done()
 						return s.API.GetQuote(ibroker.GER30SymbolName)
 					}).(*api.Quote)
 				},
 				func() {
 					s.orders = s.fetch(func() (interface{}, error) {
+						defer waitingGroup.Done()
 						return s.API.GetOrders()
 					}).([]*api.Order)
 				},
 				func() {
 					s.positions = s.fetch(func() (interface{}, error) {
+						defer waitingGroup.Done()
 						return s.API.GetPositions()
 					}).([]*api.Position)
 				},
 				func() {
 					s.state = s.fetch(func() (interface{}, error) {
+						defer waitingGroup.Done()
 						return s.API.GetState()
 					}).(*api.State)
 				},
 			}
 
+			waitingGroup.Add(len(fetchFuncs))
 			for _, fetchFunc := range fetchFuncs {
 				go fetchFunc()
 			}
+		} else {
+			waitingGroup.Add(1)
+			waitingGroup.Done()
 		}
+		waitingGroup.Wait()
 		time.Sleep(1666666 * time.Microsecond)
 	}
 }
