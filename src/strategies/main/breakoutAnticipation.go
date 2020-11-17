@@ -4,14 +4,21 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/utils"
+	"math"
 	"strconv"
-	"time"
 )
+
+/**
+	TODO
+	Test the bot with dummy api + loaded candles from csv
+	same fashion as the frontend app
+	So I make sure it behaves the exact same way
+**/
 
 func (s *Strategy) breakoutAnticipationStrategy() {
 	if s.isCurrentTimeOutsideTradingHours() {
 		s.Logger.Log("Doing nothing - Now it's not the time.")
-		s.closeWorkingOrders(
+		s.closeAllWorkingOrders(
 			func() {
 				s.orders = nil
 				s.closePositions(func() { s.positions = nil }, func(err error) {})
@@ -25,7 +32,7 @@ func (s *Strategy) breakoutAnticipationStrategy() {
 	if s.averageSpread > 3 {
 		s.Logger.Log("Doing nothing since the spread is very big -> " + utils.FloatToString(s.averageSpread, 0))
 		s.pendingOrder = nil
-		s.closeWorkingOrders(func() { s.orders = nil }, func(err error) {})
+		s.closeAllWorkingOrders(func() { s.orders = nil }, func(err error) {})
 		return
 	}
 
@@ -50,15 +57,118 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 		s.pendingOrder = nil
 	}
 
-	/*ignoreLastNCandles := 15
+	ignoreLastNCandles := 15
 	riskPercentage := 1.5
 	stopLossDistance := 12
 	takeProfitDistance := 27
-	candlesAmountWithLowerPriceToBeConsideredTop := 15*/
+	candlesAmountWithLowerPriceToBeConsideredTop := 15
 	tpDistanceShortForBreakEvenSL := 5
 
 	if len(s.positions) > 0 {
 		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), "buy")
+		return
+	}
+
+	lastCandlesIndex := len(s.candles) - 1
+	for i := lastCandlesIndex - ignoreLastNCandles; i > lastCandlesIndex-ignoreLastNCandles-lastCandlesIndex; i-- {
+		if i < 1 {
+			break
+		}
+		isFalsePositive := false
+		for j := i + 1; j < lastCandlesIndex; j++ {
+			if s.candles[j].High >= s.candles[i].High {
+				isFalsePositive = true
+				break
+			}
+		}
+
+		if isFalsePositive {
+			break
+		}
+
+		isFalsePositive = false
+		for j := i - candlesAmountWithLowerPriceToBeConsideredTop; j < i; j++ {
+			if j < 1 || j > lastCandlesIndex {
+				continue
+			}
+			if s.candles[j].High >= s.candles[i].High {
+				isFalsePositive = true
+				break
+			}
+		}
+
+		if isFalsePositive {
+			break
+		}
+
+		price := s.candles[i].High - 3
+		if price <= float64(s.currentBrokerQuote.Ask) {
+			continue
+		}
+
+		if s.closingOrdersTimestamp == s.candles[lastCandlesIndex].Timestamp {
+			return
+		}
+		s.closingOrdersTimestamp = s.candles[lastCandlesIndex].Timestamp
+		workingOrders := utils.GetWorkingOrders(s.orders)
+		var ordersArr []*api.Order
+		for _, order := range workingOrders {
+			if order.Side == "buy" && order.ParentID == nil {
+				ordersArr = append(ordersArr, order)
+			}
+		}
+		s.closeSpecificOrders(
+			ordersArr,
+			func() {
+				lowestValue := s.candles[lastCandlesIndex].Low
+				for i := lastCandlesIndex; i > lastCandlesIndex-180; i-- {
+					if i < 1 {
+						break
+					}
+					if s.candles[i].Low < lowestValue {
+						lowestValue = s.candles[i].Low
+					}
+				}
+				diff := s.candles[lastCandlesIndex].Low - lowestValue
+				if diff < 10 {
+					return
+				}
+
+				s.closeAllWorkingOrders(
+					func() {
+						float32Price := float32(price)
+
+						stopLoss := float32Price - float32(stopLossDistance)
+						takeProfit := float32Price + float32(takeProfitDistance)
+						size := math.Floor((s.state.Equity*(riskPercentage/100))/float64(stopLossDistance) + 1)
+						if size == 0 {
+							size = 1
+						}
+
+						order := &api.Order{
+							CurrentAsk: &s.currentBrokerQuote.Ask,
+							CurrentBid: &s.currentBrokerQuote.Bid,
+							Instrument: ibroker.GER30SymbolName,
+							StopPrice:  &float32Price,
+							Qty:        float32(size),
+							Side:       "buy",
+							StopLoss:   &stopLoss,
+							TakeProfit: &takeProfit,
+							Type:       "stop",
+						}
+
+						if !isValidTime {
+							s.pendingOrder = order
+						} else {
+							s.Logger.Log("Creating the following order -> " + utils.GetStringRepresentation(order))
+							s.API.CreateOrder(order)
+						}
+					},
+					func(error) {},
+				)
+			},
+			func(error) {},
+		)
 	}
 
 }
@@ -89,6 +199,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 
 	if len(s.positions) > 0 {
 		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), "sell")
+		return
 	}
 }
 
@@ -160,7 +271,7 @@ func (s *Strategy) savePendingOrder(side string) {
 		}
 		s.Logger.Log("Pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
 
-		s.closeWorkingOrders(func() {
+		s.closeAllWorkingOrders(func() {
 			s.orders = nil
 			s.pendingOrder = mainOrder
 			s.Logger.Log("Closed all orders correctly, and saved the previous order for later")
@@ -260,68 +371,6 @@ func (s *Strategy) getSlAndTpOrdersForCurrentOpenPosition() (
 	return
 }
 
-func (s *Strategy) closeWorkingOrders(
-	successCallback func(),
-	onErrorCallback func(err error),
-) {
-	s.Logger.Log("Closing all working orders ...")
-
-	go utils.RepeatUntilSuccess(
-		"CloseAllWorkingOrders",
-		func() (err error) {
-			err = s.API.CloseAllOrders()
-			if err != nil {
-				s.Logger.Error("An error happened while closing all orders -> " + err.Error())
-				onErrorCallback(err)
-			}
-			return
-		},
-		5*time.Second,
-		30,
-		successCallback,
-	)
-}
-
-func (s *Strategy) closePositions(
-	successCallback func(),
-	onErrorCallback func(err error),
-) {
-	s.Logger.Log("Closing all positions ...")
-
-	go utils.RepeatUntilSuccess(
-		"CloseAllPositions",
-		func() (err error) {
-			err = s.API.CloseAllPositions()
-			if err != nil {
-				s.Logger.Error("An error happened while closing all positions -> " + err.Error())
-				onErrorCallback(err)
-			}
-			return
-		},
-		5*time.Second,
-		30,
-		successCallback,
-	)
-}
-
-func (s *Strategy) modifyPosition(tp string, sl string) {
-	s.Logger.Log("Modifying the current open position with this values: tp -> " + tp + " and sl -> " + sl)
-
-	go utils.RepeatUntilSuccess(
-		"ModifyPosition",
-		func() (err error) {
-			err = s.API.ModifyPosition(ibroker.GER30SymbolName, &tp, &sl)
-			if err != nil {
-				s.Logger.Error("An error happened while modifying the position -> " + err.Error())
-			}
-			return
-		},
-		5*time.Second,
-		20,
-		func() {},
-	)
-}
-
 func (s *Strategy) setStringValues(order *api.Order) {
 	currentAsk := utils.FloatToString(float64(s.currentBrokerQuote.Ask), 2)
 	currentBid := utils.FloatToString(float64(s.currentBrokerQuote.Bid), 2)
@@ -408,6 +457,14 @@ func isInArray(element string, arr []string) bool {
 	fx va 1 pip por detras, mas o menos.
 	si fx:ger30 dice 13149.4, en ibroker es 13150.5
 
+	si el precio es 13150.5 en ibroker, y yo debo abrir la posicion a 13152
+	eso significa que el precio en fx:ger30 es 13149.4, por lo tanto he de restar 3 en vez de 2, para longs
+
+	para shorts
+	si el precio es 13150.5 en ibroker, y yo debo abrir la posicion a 13148
+	eso significa que el precio en fx:ger30 es 13149.4, por lo tanto he de sumar 1 en vez de 2, para shorts
+
+
 	Hoy domingo, mercado cerrado -> FX:GER30 dixe 13123.4, IBROKER:GER30 dice 13123.8
 	Sin embargo, los picos siempre muestran 1 pip de diferencia
 Por ahora, asumir que la diferencia entre uno y otro es de 1 pip
@@ -420,14 +477,6 @@ Por ahora, asumir que la diferencia entre uno y otro es de 1 pip
 
 	Very, very important
 	Round ALL the prices used in ALL the calls to 2 decimals. Otherwise it won't work.
-
-	When creating an order, I need to save the 3 created orders somewhere (the limit/stop order, it's sl and it's tp)
-	The SL and the TP will have the parentID of the main one. The main one will have the parentID null
-	All 3 orders will have the status "working".
-
-	When modifying an order that hasn't been filled yet, I can use the ID of the main order to change it's sl, tp, or it's limit/stop price.
-	When modifying the sl/tp of a position, I need to use the ID of the sl/tp order.
-	Or I can just use the modifyposition api
 
 
 	Take into consideration

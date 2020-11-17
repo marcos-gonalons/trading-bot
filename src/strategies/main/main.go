@@ -45,6 +45,7 @@ type Strategy struct {
 	creatingOrderTimestamp     int64
 	modifyingOrderTimestamp    int64
 	modifyingPositionTimestamp int64
+	closingOrdersTimestamp     int64
 
 	fetchError error
 }
