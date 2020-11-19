@@ -295,8 +295,8 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 					func() {
 						float32Price := float32(price)
 
-						stopLoss := float32Price - float32(stopLossDistance)
-						takeProfit := float32Price + float32(takeProfitDistance)
+						stopLoss := float32Price + float32(stopLossDistance)
+						takeProfit := float32Price - float32(takeProfitDistance)
 						size := math.Floor((s.state.Equity*(riskPercentage/100))/float64(stopLossDistance) + 1)
 						if size == 0 {
 							size = 1
