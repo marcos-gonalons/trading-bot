@@ -60,7 +60,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 	}
 
 	ignoreLastNCandles := 15
-	riskPercentage := 1
+	riskPercentage := float64(1)
 	stopLossDistance := 12
 	takeProfitDistance := 27
 	candlesAmountWithLowerPriceToBeConsideredTop := 15
@@ -207,7 +207,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 	}
 
 	ignoreLastNCandles := 15
-	riskPercentage := 1
+	riskPercentage := float64(1)
 	stopLossDistance := 12
 	takeProfitDistance := 27
 	candlesAmountWithLowerPriceToBeConsideredBottom := 15

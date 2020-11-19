@@ -70,7 +70,7 @@ func (s *Strategy) initSocket() {
 		panic("Error while initializing the trading view socket -> " + err.Error())
 	}
 
-	err = tradingviewsocket.AddSymbol("FX:EURUSD")
+	err = tradingviewsocket.AddSymbol("FX:GER30")
 	if err != nil {
 		panic("Error while adding the symbol -> " + err.Error())
 	}
