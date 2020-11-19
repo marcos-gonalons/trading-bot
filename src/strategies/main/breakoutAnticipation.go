@@ -13,6 +13,8 @@ import (
 	Test the bot with dummy api + loaded candles from csv
 	same fashion as the frontend app
 	So I make sure it behaves the exact same way
+
+	Also a flowchart or something ...
 **/
 
 func (s *Strategy) breakoutAnticipationStrategy() {
@@ -36,8 +38,8 @@ func (s *Strategy) breakoutAnticipationStrategy() {
 		return
 	}
 
-	//s.resistanceBreakoutAnticipationStrategy()
-	//s.supportBreakoutAnticipationStrategy()
+	s.resistanceBreakoutAnticipationStrategy()
+	s.supportBreakoutAnticipationStrategy()
 }
 
 func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
@@ -58,7 +60,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 	}
 
 	ignoreLastNCandles := 15
-	riskPercentage := 1.5
+	riskPercentage := 1
 	stopLossDistance := 12
 	takeProfitDistance := 27
 	candlesAmountWithLowerPriceToBeConsideredTop := 15
@@ -83,6 +85,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 		}
 
 		if isFalsePositive {
+			s.Logger.Log("Doing nothing, not the proper trade setup for a buy 1")
 			break
 		}
 
@@ -98,17 +101,22 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 		}
 
 		if isFalsePositive {
+			s.Logger.Log("Doing nothing, not the proper trade setup for a buy 2")
 			break
 		}
 
 		price := s.candles[i].High - 3
 		if price <= float64(s.currentBrokerQuote.Ask) {
+			s.Logger.Log("Price is lower than the current ask, so we can't create the long order now. Price is -> " + utils.FloatToString(price, 2))
+			s.Logger.Log("Quote is -> " + utils.GetStringRepresentation(s.currentBrokerQuote))
 			continue
 		}
 
+		// todo -> find a better name for closingOrdersTimestamp
 		if s.closingOrdersTimestamp == s.candles[lastCandlesIndex].Timestamp {
 			return
 		}
+
 		s.closingOrdersTimestamp = s.candles[lastCandlesIndex].Timestamp
 		workingOrders := utils.GetWorkingOrders(s.orders)
 		var ordersArr []*api.Order
@@ -117,6 +125,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 				ordersArr = append(ordersArr, order)
 			}
 		}
+		s.Logger.Log("Ok, we might have a long setup, closing all working orders first if any ...")
 		s.closeSpecificOrders(
 			ordersArr,
 			func() {
@@ -131,6 +140,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 				}
 				diff := s.candles[lastCandlesIndex].Low - lowestValue
 				if diff < 10 {
+					s.Logger.Log("At the end it wasn't a good setup, doing nothing ...")
 					return
 				}
 
@@ -157,11 +167,17 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 							Type:       "stop",
 						}
 
+						s.Logger.Log("Buy order to be created -> " + utils.GetStringRepresentation(order))
+
 						if !isValidTime {
+							s.Logger.Log("Now is not the time for opening any buy orders, saving it for later ...")
 							s.pendingOrder = order
 						} else {
-							s.Logger.Log("Creating the following order -> " + utils.GetStringRepresentation(order))
-							s.API.CreateOrder(order)
+							s.Logger.Log("Creating the following buy order -> " + utils.GetStringRepresentation(order))
+							err := s.API.CreateOrder(order)
+							if err != nil {
+								s.Logger.Error("Error when creating the order -> " + err.Error())
+							}
 						}
 					},
 					func(error) {},
@@ -190,16 +206,132 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 		s.pendingOrder = nil
 	}
 
-	/*ignoreLastNCandles := 15
-	riskPercentage := 1.5
+	ignoreLastNCandles := 15
+	riskPercentage := 1
 	stopLossDistance := 12
 	takeProfitDistance := 27
-	candlesAmountWithLowerPriceToBeConsideredBottom := 15*/
+	candlesAmountWithLowerPriceToBeConsideredBottom := 15
 	tpDistanceShortForBreakEvenSL := 5
 
 	if len(s.positions) > 0 {
 		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), "sell")
 		return
+	}
+
+	lastCandlesIndex := len(s.candles) - 1
+	for i := lastCandlesIndex - ignoreLastNCandles; i > lastCandlesIndex-ignoreLastNCandles-lastCandlesIndex; i-- {
+		if i < 1 {
+			break
+		}
+		isFalsePositive := false
+		for j := i + 1; j < lastCandlesIndex; j++ {
+			if s.candles[j].Low <= s.candles[i].Low {
+				isFalsePositive = true
+				break
+			}
+		}
+
+		if isFalsePositive {
+			s.Logger.Log("Doing nothing, not the proper trade setup for a short 1")
+			break
+		}
+
+		isFalsePositive = false
+		for j := i - candlesAmountWithLowerPriceToBeConsideredBottom; j < i; j++ {
+			if j < 1 || j > lastCandlesIndex {
+				continue
+			}
+			if s.candles[j].Low <= s.candles[i].Low {
+				isFalsePositive = true
+				break
+			}
+		}
+
+		if isFalsePositive {
+			s.Logger.Log("Doing nothing, not the proper trade setup for a short 2")
+			break
+		}
+
+		price := s.candles[i].Low + 1
+		if price >= float64(s.currentBrokerQuote.Bid) {
+			s.Logger.Log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, 2))
+			s.Logger.Log("Quote is -> " + utils.GetStringRepresentation(s.currentBrokerQuote))
+			continue
+		}
+
+		// todo -> find a better name for closingOrdersTimestamp
+		if s.closingOrdersTimestamp == s.candles[lastCandlesIndex].Timestamp {
+			return
+		}
+
+		s.closingOrdersTimestamp = s.candles[lastCandlesIndex].Timestamp
+		workingOrders := utils.GetWorkingOrders(s.orders)
+		var ordersArr []*api.Order
+		for _, order := range workingOrders {
+			if order.Side == "sell" && order.ParentID == nil {
+				ordersArr = append(ordersArr, order)
+			}
+		}
+		s.Logger.Log("Ok, we might have a short setup, closing all working orders first if any ...")
+		s.closeSpecificOrders(
+			ordersArr,
+			func() {
+				highestValue := s.candles[lastCandlesIndex].High
+				for i := lastCandlesIndex; i > lastCandlesIndex-180; i-- {
+					if i < 1 {
+						break
+					}
+					if s.candles[i].High > highestValue {
+						highestValue = s.candles[i].High
+					}
+				}
+				diff := highestValue - s.candles[lastCandlesIndex].High
+				if diff < 29 {
+					s.Logger.Log("At the end it wasn't a good short setup, doing nothing ...")
+					return
+				}
+
+				s.closeAllWorkingOrders(
+					func() {
+						float32Price := float32(price)
+
+						stopLoss := float32Price - float32(stopLossDistance)
+						takeProfit := float32Price + float32(takeProfitDistance)
+						size := math.Floor((s.state.Equity*(riskPercentage/100))/float64(stopLossDistance) + 1)
+						if size == 0 {
+							size = 1
+						}
+
+						order := &api.Order{
+							CurrentAsk: &s.currentBrokerQuote.Ask,
+							CurrentBid: &s.currentBrokerQuote.Bid,
+							Instrument: ibroker.GER30SymbolName,
+							StopPrice:  &float32Price,
+							Qty:        float32(size),
+							Side:       "sell",
+							StopLoss:   &stopLoss,
+							TakeProfit: &takeProfit,
+							Type:       "stop",
+						}
+
+						s.Logger.Log("Short order to be created -> " + utils.GetStringRepresentation(order))
+
+						if !isValidTime {
+							s.Logger.Log("Now is not the time for opening any short orders, saving it for later ...")
+							s.pendingOrder = order
+						} else {
+							s.Logger.Log("Creating the following short order -> " + utils.GetStringRepresentation(order))
+							err := s.API.CreateOrder(order)
+							if err != nil {
+								s.Logger.Error("Error when creating the order -> " + err.Error())
+							}
+						}
+					},
+					func(error) {},
+				)
+			},
+			func(error) {},
+		)
 	}
 }
 
