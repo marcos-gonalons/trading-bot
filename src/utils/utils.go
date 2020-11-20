@@ -71,9 +71,6 @@ func RepeatUntilSuccess(
 ) {
 	retries := 0
 	for {
-		if retries == maxRetries {
-			panic("There is something wrong while doing " + processName)
-		}
 		err := process()
 
 		if maxRetries == 0 {
@@ -88,6 +85,9 @@ func RepeatUntilSuccess(
 		}
 
 		retries++
+		if retries == maxRetries {
+			panic("There is something wrong while doing " + processName)
+		}
 		time.Sleep(delayBetweenRetries)
 	}
 	successCallback()
