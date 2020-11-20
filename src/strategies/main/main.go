@@ -162,6 +162,7 @@ func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		}
 		s.initSocket()
 		s.initCandles()
+		s.pendingOrder = nil
 
 		s.Logger.Log("Refreshing access token by calling API.Login")
 		s.login(120, 30*time.Second)

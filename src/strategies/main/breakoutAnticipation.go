@@ -14,6 +14,8 @@ import (
 	same fashion as the frontend app
 	So I make sure it behaves the exact same way
 
+
+
 	Also a flowchart or something ...
 **/
 
@@ -105,7 +107,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 			break
 		}
 
-		price := s.candles[i].High - 3
+		price := s.candles[i].High - 1
 		if price <= float64(s.currentBrokerQuote.Ask) {
 			s.Logger.Log("Price is lower than the current ask, so we can't create the long order now. Price is -> " + utils.FloatToString(price, 2))
 			s.Logger.Log("Quote is -> " + utils.GetStringRepresentation(s.currentBrokerQuote))
@@ -173,6 +175,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 							s.Logger.Log("Now is not the time for opening any buy orders, saving it for later ...")
 							s.pendingOrder = order
 						} else {
+							s.setStringValues(order)
 							s.Logger.Log("Creating the following buy order -> " + utils.GetStringRepresentation(order))
 							err := s.API.CreateOrder(order)
 							if err != nil {
@@ -252,7 +255,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 			break
 		}
 
-		price := s.candles[i].Low + 1
+		price := s.candles[i].Low + 3
 		if price >= float64(s.currentBrokerQuote.Bid) {
 			s.Logger.Log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, 2))
 			s.Logger.Log("Quote is -> " + utils.GetStringRepresentation(s.currentBrokerQuote))
@@ -320,6 +323,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 							s.Logger.Log("Now is not the time for opening any short orders, saving it for later ...")
 							s.pendingOrder = order
 						} else {
+							s.setStringValues(order)
 							s.Logger.Log("Creating the following short order -> " + utils.GetStringRepresentation(order))
 							err := s.API.CreateOrder(order)
 							if err != nil {
