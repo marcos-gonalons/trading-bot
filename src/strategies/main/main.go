@@ -203,22 +203,6 @@ func (s *Strategy) getCurrentAndPreviousHour() (int, int) {
 	return currentHour, previousHour
 }
 
-func (s *Strategy) login(maxRetries int, delayBetweenRetries time.Duration) {
-	go utils.RepeatUntilSuccess(
-		"Login",
-		func() (err error) {
-			_, err = s.API.Login()
-			if err != nil {
-				s.Logger.Error("Error while logging in -> " + err.Error())
-			}
-			return
-		},
-		delayBetweenRetries,
-		maxRetries,
-		func() {},
-	)
-}
-
 func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interface{}) {
 	result, err := fetchFunc()
 

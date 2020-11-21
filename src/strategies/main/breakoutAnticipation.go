@@ -158,8 +158,6 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 						}
 
 						order := &api.Order{
-							CurrentAsk: &s.currentBrokerQuote.Ask,
-							CurrentBid: &s.currentBrokerQuote.Bid,
 							Instrument: ibroker.GER30SymbolName,
 							StopPrice:  &float32Price,
 							Qty:        float32(size),
@@ -175,12 +173,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 							s.Logger.Log("Now is not the time for opening any buy orders, saving it for later ...")
 							s.pendingOrder = order
 						} else {
-							s.setStringValues(order)
-							s.Logger.Log("Creating the following buy order -> " + utils.GetStringRepresentation(order))
-							err := s.API.CreateOrder(order)
-							if err != nil {
-								s.Logger.Error("Error when creating the order -> " + err.Error())
-							}
+							s.createOrder(order)
 						}
 					},
 					func(error) {},
@@ -323,12 +316,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 							s.Logger.Log("Now is not the time for opening any short orders, saving it for later ...")
 							s.pendingOrder = order
 						} else {
-							s.setStringValues(order)
-							s.Logger.Log("Creating the following short order -> " + utils.GetStringRepresentation(order))
-							err := s.API.CreateOrder(order)
-							if err != nil {
-								s.Logger.Error("Error when creating the order -> " + err.Error())
-							}
+							s.createOrder(order)
 						}
 					},
 					func(error) {},
@@ -386,36 +374,39 @@ func (s *Strategy) savePendingOrder(side string) {
 			mainOrder = workingOrder
 		}
 	}
-	if mainOrder != nil {
-		s.Logger.Log("Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
-		s.Logger.Log("This is the current order -> " + utils.GetStringRepresentation(mainOrder))
 
-		slOrder, tpOrder := s.getSlAndTpOrders(mainOrder.ID, workingOrders)
-
-		if slOrder != nil {
-			mainOrder.StopLoss = slOrder.StopPrice
-		}
-		if tpOrder != nil {
-			mainOrder.TakeProfit = tpOrder.LimitPrice
-		}
-
-		if mainOrder.Type == "limit" {
-			mainOrder.StopPrice = nil
-		}
-		if mainOrder.Type == "stop" {
-			mainOrder.LimitPrice = nil
-		}
-		s.Logger.Log("Pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
-
-		s.closeAllWorkingOrders(func() {
-			s.orders = nil
-			s.pendingOrder = mainOrder
-			s.Logger.Log("Closed all orders correctly, and saved the previous order for later")
-			s.Logger.Log("Closing the position now ...")
-			s.closePositions(func() { s.positions = nil }, func(err error) {})
-		}, func(err error) { s.pendingOrder = nil })
-
+	if mainOrder == nil {
+		return
 	}
+
+	s.Logger.Log("Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
+	s.Logger.Log("This is the current order -> " + utils.GetStringRepresentation(mainOrder))
+
+	slOrder, tpOrder := s.getSlAndTpOrders(mainOrder.ID, workingOrders)
+
+	if slOrder != nil {
+		mainOrder.StopLoss = slOrder.StopPrice
+	}
+	if tpOrder != nil {
+		mainOrder.TakeProfit = tpOrder.LimitPrice
+	}
+
+	if mainOrder.Type == "limit" {
+		mainOrder.StopPrice = nil
+	}
+	if mainOrder.Type == "stop" {
+		mainOrder.LimitPrice = nil
+	}
+	s.Logger.Log("Pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
+
+	s.closeAllWorkingOrders(func() {
+		s.orders = nil
+		s.pendingOrder = mainOrder
+		s.Logger.Log("Closed all orders correctly, and saved the previous order for later")
+		s.Logger.Log("Closing the position now ...")
+		s.closePositions(func() { s.positions = nil }, func(err error) {})
+	}, func(err error) { s.pendingOrder = nil })
+
 }
 
 func (s *Strategy) createPendingOrder(side string) {
@@ -455,15 +446,7 @@ func (s *Strategy) createPendingOrder(side string) {
 		}
 	}
 
-	s.setStringValues(s.pendingOrder)
-
-	err := s.API.CreateOrder(s.pendingOrder)
-	if err != nil {
-		s.Logger.Error("Error when creating the pending order -> " + err.Error())
-	} else {
-		s.Logger.Log("Pending order created successfully")
-	}
-
+	s.createOrder(s.pendingOrder)
 	s.pendingOrder = nil
 }
 
@@ -593,12 +576,12 @@ func isInArray(element string, arr []string) bool {
 	fx va 1 pip por detras, mas o menos.
 	si fx:ger30 dice 13149.4, en ibroker es 13150.5
 
-	si el precio es 13150.5 en ibroker, y yo debo abrir la posicion a 13152
-	eso significa que el precio en fx:ger30 es 13149.4, por lo tanto he de restar 3 en vez de 2, para longs
+	si el precio es 13150.5 en ibroker, y yo debo abrir la posicion a 13148
+	eso significa que el precio en fx:ger30 es 13149.4, por lo tanto he de restar 1 en vez de 2, para longs
 
 	para shorts
-	si el precio es 13150.5 en ibroker, y yo debo abrir la posicion a 13148
-	eso significa que el precio en fx:ger30 es 13149.4, por lo tanto he de sumar 1 en vez de 2, para shorts
+	si el precio es 13150.5 en ibroker, y yo debo abrir la posicion a 13152
+	eso significa que el precio en fx:ger30 es 13149.4, por lo tanto he de sumar 3 en vez de 2, para shorts
 
 
 	Hoy domingo, mercado cerrado -> FX:GER30 dixe 13123.4, IBROKER:GER30 dice 13123.8

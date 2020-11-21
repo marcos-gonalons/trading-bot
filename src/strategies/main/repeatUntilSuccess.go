@@ -7,6 +7,22 @@ import (
 	"time"
 )
 
+func (s *Strategy) login(maxRetries int, delayBetweenRetries time.Duration) {
+	go utils.RepeatUntilSuccess(
+		"Login",
+		func() (err error) {
+			_, err = s.API.Login()
+			if err != nil {
+				s.Logger.Error("Error while logging in -> " + err.Error())
+			}
+			return
+		},
+		delayBetweenRetries,
+		maxRetries,
+		func() {},
+	)
+}
+
 func (s *Strategy) closeSpecificOrders(
 	orders []*api.Order,
 	successCallback func(),
@@ -95,6 +111,48 @@ func (s *Strategy) modifyPosition(tp string, sl string) {
 			return
 		},
 		5*time.Second,
+		20,
+		func() {},
+	)
+}
+
+func (s *Strategy) createOrder(order *api.Order) {
+	s.Logger.Log("Creating this order -> " + utils.GetStringRepresentation(order))
+
+	go utils.RepeatUntilSuccess(
+		"CreateOrder",
+		func() (err error) {
+			if order.Side == "buy" {
+				if order.Type == "limit" && *order.LimitPrice >= s.currentBrokerQuote.Bid {
+					s.Logger.Log("Can't create the limit buy order since the order price is bigger than the current bid")
+					return
+				}
+				if order.Type == "stop" && *order.StopPrice <= s.currentBrokerQuote.Ask {
+					s.Logger.Log("Can't create the stop buy order since the order price is lower than the current ask")
+					return
+				}
+			}
+			if order.Side == "sell" {
+				if order.Type == "limit" && *order.LimitPrice <= s.currentBrokerQuote.Ask {
+					s.Logger.Log("Can't create the limit sell order since the order price is lower than the current ask")
+					return
+				}
+				if order.Type == "stop" && *order.StopPrice >= s.currentBrokerQuote.Bid {
+					s.Logger.Log("Can't create the stop sell order since the order price is bigger than the current bid")
+					return
+				}
+			}
+
+			s.setStringValues(order)
+			err = s.API.CreateOrder(order)
+			if err != nil {
+				s.Logger.Error("Error when creating the order -> " + err.Error())
+			} else {
+				s.Logger.Log("Order created successfully")
+			}
+			return
+		},
+		10*time.Second,
 		20,
 		func() {},
 	)
