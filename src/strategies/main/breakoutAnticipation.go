@@ -491,27 +491,28 @@ func (s *Strategy) getSlAndTpOrdersForCurrentOpenPosition() (
 }
 
 func (s *Strategy) setStringValues(order *api.Order) {
-	currentAsk := utils.FloatToString(float64(s.currentBrokerQuote.Ask), 2)
-	currentBid := utils.FloatToString(float64(s.currentBrokerQuote.Bid), 2)
-	qty := utils.FloatToString(float64(order.Qty), 2)
+	currentAsk := utils.FloatToString(float64(s.currentBrokerQuote.Ask), 1)
+	currentBid := utils.FloatToString(float64(s.currentBrokerQuote.Bid), 1)
+	qty := utils.IntToString(int64(order.Qty))
 	order.StringValues = &api.OrderStringValues{
 		CurrentAsk: &currentAsk,
 		CurrentBid: &currentBid,
 		Qty:        &qty,
 	}
+
 	if order.Type == "limit" {
-		limitPrice := utils.FloatToString(float64(*order.LimitPrice), 2)
+		limitPrice := utils.FloatToString(math.Round(float64(*order.LimitPrice)*10)/10, 1)
 		order.StringValues.LimitPrice = &limitPrice
 	} else {
-		stopPrice := utils.FloatToString(float64(*order.StopPrice), 2)
+		stopPrice := utils.FloatToString(math.Round(float64(*order.StopPrice)*10)/10, 1)
 		order.StringValues.StopPrice = &stopPrice
 	}
 	if order.StopLoss != nil {
-		stopLossPrice := utils.FloatToString(float64(*order.StopLoss), 2)
+		stopLossPrice := utils.FloatToString(math.Round(float64(*order.StopLoss)*10)/10, 1)
 		order.StringValues.StopLoss = &stopLossPrice
 	}
 	if order.TakeProfit != nil {
-		takeProfitPrice := utils.FloatToString(float64(*order.TakeProfit), 2)
+		takeProfitPrice := utils.FloatToString(math.Round(float64(*order.TakeProfit)*10)/10, 1)
 		order.StringValues.TakeProfit = &takeProfitPrice
 	}
 }
