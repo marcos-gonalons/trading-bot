@@ -26,7 +26,6 @@ func (s *Strategy) login(maxRetries int, delayBetweenRetries time.Duration) {
 func (s *Strategy) closeSpecificOrders(
 	orders []*api.Order,
 	successCallback func(),
-	onErrorCallback func(err error),
 ) {
 	if orders == nil || len(orders) == 0 {
 		successCallback()
@@ -42,7 +41,6 @@ func (s *Strategy) closeSpecificOrders(
 				err = s.API.CloseOrder(order.ID)
 				if err != nil {
 					s.Logger.Error("An error happened while closing the specified orders -> " + err.Error())
-					onErrorCallback(err)
 					return
 				}
 			}
@@ -56,7 +54,6 @@ func (s *Strategy) closeSpecificOrders(
 
 func (s *Strategy) closeAllWorkingOrders(
 	successCallback func(),
-	onErrorCallback func(err error),
 ) {
 	s.Logger.Log("Closing all working orders ...")
 
@@ -66,7 +63,6 @@ func (s *Strategy) closeAllWorkingOrders(
 			err = s.API.CloseAllOrders()
 			if err != nil {
 				s.Logger.Error("An error happened while closing all orders -> " + err.Error())
-				onErrorCallback(err)
 			}
 			return
 		},
@@ -116,7 +112,11 @@ func (s *Strategy) modifyPosition(tp string, sl string) {
 	)
 }
 
-func (s *Strategy) createOrder(order *api.Order) {
+func (s *Strategy) createOrder(
+	order *api.Order,
+	maxRetries int,
+	delayBetweenRetries time.Duration,
+) {
 	s.Logger.Log("Creating this order -> " + utils.GetStringRepresentation(order))
 
 	go utils.RepeatUntilSuccess(

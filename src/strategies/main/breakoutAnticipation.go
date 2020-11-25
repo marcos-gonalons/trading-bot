@@ -6,6 +6,7 @@ import (
 	"TradingBot/src/utils"
 	"math"
 	"strconv"
+	"time"
 )
 
 /**
@@ -27,7 +28,6 @@ func (s *Strategy) breakoutAnticipationStrategy() {
 				s.orders = nil
 				s.closePositions(func() { s.positions = nil }, func(err error) {})
 			},
-			func(err error) {},
 		)
 
 		return
@@ -36,7 +36,7 @@ func (s *Strategy) breakoutAnticipationStrategy() {
 	if s.averageSpread > 3 {
 		s.Logger.Log("Doing nothing since the spread is very big -> " + utils.FloatToString(s.averageSpread, 0))
 		s.pendingOrder = nil
-		s.closeAllWorkingOrders(func() { s.orders = nil }, func(err error) {})
+		s.closeAllWorkingOrders(func() { s.orders = nil })
 		return
 	}
 
@@ -45,14 +45,16 @@ func (s *Strategy) breakoutAnticipationStrategy() {
 }
 
 func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
-	isValidTime := s.isExecutionTimeValid(
+	isValidTimeToOpenAPosition := s.isExecutionTimeValid(
 		[]string{"January", "March", "April", "May", "June", "August", "September", "October"},
 		[]string{"Monday", "Tuesday", "Wednesday", "Friday"},
 		[]string{"9:00", "10:00", "11:30", "12:00", "12:30", "20:30"},
 	)
 
-	if !isValidTime {
-		s.savePendingOrder("buy")
+	if !isValidTimeToOpenAPosition {
+		if len(s.positions) == 0 {
+			s.savePendingOrder("buy")
+		}
 	} else {
 		if s.pendingOrder != nil {
 			s.createPendingOrder("buy")
@@ -169,31 +171,31 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 
 						s.Logger.Log("Buy order to be created -> " + utils.GetStringRepresentation(order))
 
-						if !isValidTime {
+						if !isValidTimeToOpenAPosition {
 							s.Logger.Log("Now is not the time for opening any buy orders, saving it for later ...")
 							s.pendingOrder = order
 						} else {
-							s.createOrder(order)
+							s.createOrder(order, 20, 10*time.Second)
 						}
 					},
-					func(error) {},
 				)
 			},
-			func(error) {},
 		)
 	}
 
 }
 
 func (s *Strategy) supportBreakoutAnticipationStrategy() {
-	isValidTime := s.isExecutionTimeValid(
+	isValidTimeToOpenAPosition := s.isExecutionTimeValid(
 		[]string{"March", "April", "June", "September", "December"},
 		[]string{"Monday", "Tuesday", "Thursday", "Friday"},
 		[]string{"08:30", "9:00", "12:00", "13:00", "14:30", "15:30", "18:00"},
 	)
 
-	if !isValidTime {
-		s.savePendingOrder("sell")
+	if !isValidTimeToOpenAPosition {
+		if len(s.positions) == 0 {
+			s.savePendingOrder("sell")
+		}
 	} else {
 		if s.pendingOrder != nil {
 			s.createPendingOrder("sell")
@@ -312,17 +314,15 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 
 						s.Logger.Log("Short order to be created -> " + utils.GetStringRepresentation(order))
 
-						if !isValidTime {
+						if !isValidTimeToOpenAPosition {
 							s.Logger.Log("Now is not the time for opening any short orders, saving it for later ...")
 							s.pendingOrder = order
 						} else {
-							s.createOrder(order)
+							s.createOrder(order, 20, 10*time.Second)
 						}
 					},
-					func(error) {},
 				)
 			},
-			func(error) {},
 		)
 	}
 }
@@ -351,7 +351,7 @@ func (s *Strategy) isExecutionTimeValid(
 
 func (s *Strategy) isCurrentTimeOutsideTradingHours() bool {
 	currentHour, currentMinutes := s.getCurrentTimeHourAndMinutes()
-	return (currentHour < 6) || (currentHour > 21) || (currentHour == 21 && currentMinutes > 57)
+	return (currentHour < 7) || (currentHour > 21) || (currentHour == 21 && currentMinutes > 57)
 }
 
 func (s *Strategy) getCurrentTimeHourAndMinutes() (int, int) {
@@ -397,15 +397,15 @@ func (s *Strategy) savePendingOrder(side string) {
 	if mainOrder.Type == "stop" {
 		mainOrder.LimitPrice = nil
 	}
-	s.Logger.Log("Pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
 
 	s.closeAllWorkingOrders(func() {
 		s.orders = nil
 		s.pendingOrder = mainOrder
-		s.Logger.Log("Closed all orders correctly, and saved the previous order for later")
+		s.Logger.Log("Pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
+		s.Logger.Log("Closed all orders correctly, closing all open positions now ...")
 		s.Logger.Log("Closing the position now ...")
 		s.closePositions(func() { s.positions = nil }, func(err error) {})
-	}, func(err error) { s.pendingOrder = nil })
+	})
 
 }
 
@@ -446,7 +446,7 @@ func (s *Strategy) createPendingOrder(side string) {
 		}
 	}
 
-	s.createOrder(s.pendingOrder)
+	s.createOrder(s.pendingOrder, 20, 10*time.Second)
 	s.pendingOrder = nil
 }
 
@@ -527,6 +527,10 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 	}
 
 	_, tpOrder := s.getSlAndTpOrdersForCurrentOpenPosition()
+
+	if tpOrder == nil {
+		return
+	}
 
 	shouldBeAdjusted := false
 	if side == "buy" {
