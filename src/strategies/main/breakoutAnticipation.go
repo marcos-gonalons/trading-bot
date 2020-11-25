@@ -26,6 +26,7 @@ func (s *Strategy) breakoutAnticipationStrategy() {
 		s.closeAllWorkingOrders(
 			func() {
 				s.orders = nil
+				s.pendingOrder = nil
 				s.closePositions(func() { s.positions = nil }, func(err error) {})
 			},
 		)
@@ -37,6 +38,10 @@ func (s *Strategy) breakoutAnticipationStrategy() {
 		s.Logger.Log("Doing nothing since the spread is very big -> " + utils.FloatToString(s.averageSpread, 0))
 		s.pendingOrder = nil
 		s.closeAllWorkingOrders(func() { s.orders = nil })
+		return
+	}
+
+	if len(s.candles) < 2 {
 		return
 	}
 
@@ -63,11 +68,11 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 		s.pendingOrder = nil
 	}
 
-	ignoreLastNCandles := 15
+	ignoreLastNCandles := 18
 	riskPercentage := float64(1)
 	stopLossDistance := 12
 	takeProfitDistance := 27
-	candlesAmountWithLowerPriceToBeConsideredTop := 15
+	candlesAmountWithLowerPriceToBeConsideredTop := 18
 	tpDistanceShortForBreakEvenSL := 5
 
 	if len(s.positions) > 0 {
@@ -81,7 +86,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 			break
 		}
 		isFalsePositive := false
-		for j := i + 1; j < lastCandlesIndex; j++ {
+		for j := i + 1; j < lastCandlesIndex-1; j++ {
 			if s.candles[j].High >= s.candles[i].High {
 				isFalsePositive = true
 				break
@@ -133,8 +138,8 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 		s.closeSpecificOrders(
 			ordersArr,
 			func() {
-				lowestValue := s.candles[lastCandlesIndex].Low
-				for i := lastCandlesIndex; i > lastCandlesIndex-180; i-- {
+				lowestValue := s.candles[lastCandlesIndex-1].Low
+				for i := lastCandlesIndex - 1; i > lastCandlesIndex-180; i-- {
 					if i < 1 {
 						break
 					}
@@ -142,7 +147,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 						lowestValue = s.candles[i].Low
 					}
 				}
-				diff := s.candles[lastCandlesIndex].Low - lowestValue
+				diff := s.candles[lastCandlesIndex-1].Low - lowestValue
 				if diff < 10 {
 					s.Logger.Log("At the end it wasn't a good setup, doing nothing ...")
 					return
@@ -204,11 +209,11 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 		s.pendingOrder = nil
 	}
 
-	ignoreLastNCandles := 15
+	ignoreLastNCandles := 18
 	riskPercentage := float64(1)
 	stopLossDistance := 12
 	takeProfitDistance := 27
-	candlesAmountWithLowerPriceToBeConsideredBottom := 15
+	candlesAmountWithLowerPriceToBeConsideredBottom := 18
 	tpDistanceShortForBreakEvenSL := 5
 
 	if len(s.positions) > 0 {
@@ -222,7 +227,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 			break
 		}
 		isFalsePositive := false
-		for j := i + 1; j < lastCandlesIndex; j++ {
+		for j := i + 1; j < lastCandlesIndex-1; j++ {
 			if s.candles[j].Low <= s.candles[i].Low {
 				isFalsePositive = true
 				break
@@ -274,8 +279,8 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 		s.closeSpecificOrders(
 			ordersArr,
 			func() {
-				highestValue := s.candles[lastCandlesIndex].High
-				for i := lastCandlesIndex; i > lastCandlesIndex-180; i-- {
+				highestValue := s.candles[lastCandlesIndex-1].High
+				for i := lastCandlesIndex - 1; i > lastCandlesIndex-120; i-- {
 					if i < 1 {
 						break
 					}
@@ -283,7 +288,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 						highestValue = s.candles[i].High
 					}
 				}
-				diff := highestValue - s.candles[lastCandlesIndex].High
+				diff := highestValue - s.candles[lastCandlesIndex-1].High
 				if diff < 29 {
 					s.Logger.Log("At the end it wasn't a good short setup, doing nothing ...")
 					return
@@ -401,12 +406,8 @@ func (s *Strategy) savePendingOrder(side string) {
 	s.closeAllWorkingOrders(func() {
 		s.orders = nil
 		s.pendingOrder = mainOrder
-		s.Logger.Log("Pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
-		s.Logger.Log("Closed all orders correctly, closing all open positions now ...")
-		s.Logger.Log("Closing the position now ...")
-		s.closePositions(func() { s.positions = nil }, func(err error) {})
+		s.Logger.Log("Closed all working orders correctly and pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
 	})
-
 }
 
 func (s *Strategy) createPendingOrder(side string) {
