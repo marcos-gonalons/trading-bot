@@ -3,11 +3,11 @@ package ibroker
 import (
 	closeorder "TradingBot/src/services/api/ibroker/closeOrder"
 	closeposition "TradingBot/src/services/api/ibroker/closePosition"
-	"TradingBot/src/services/api/ibroker/createorder"
+	createorder "TradingBot/src/services/api/ibroker/createOrder"
 	getorders "TradingBot/src/services/api/ibroker/getOrders"
 	getpositions "TradingBot/src/services/api/ibroker/getPositions"
+	getquote "TradingBot/src/services/api/ibroker/getQuote"
 	getstate "TradingBot/src/services/api/ibroker/getState"
-	"TradingBot/src/services/api/ibroker/getquote"
 	"TradingBot/src/services/api/ibroker/login"
 	modifyorder "TradingBot/src/services/api/ibroker/modifyOrder"
 	modifyposition "TradingBot/src/services/api/ibroker/modifyPosition"
