@@ -22,7 +22,6 @@ type Strategy struct {
 	currentExecutionTime  time.Time
 	previousExecutionTime time.Time
 	failedAPIRequests     int
-	socketErrorsAmount    int
 
 	currentBrokerQuote *api.Quote
 	orders             []*api.Order
@@ -240,16 +239,12 @@ func (s *Strategy) panicIfTooManyAPIFailsOrSocketErrors() {
 		if s.failedAPIRequests >= 50 {
 			panic("There is something wrong with the API - Check logs - Stopping bot")
 		}
-		if s.socketErrorsAmount >= 20 {
-			panic("There is something wrong with the Socket - Check logs - Stopping bot")
-		}
 		s.failedAPIRequests = 0
 		time.Sleep(1 * time.Minute)
 	}
 }
 
 func (s *Strategy) onSocketError(err error) {
-	s.socketErrorsAmount++
 	s.Logger.Log("Socket error -> " + err.Error())
 	s.socket.Close()
 	s.initSocket()
