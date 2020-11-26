@@ -55,9 +55,33 @@ func (s *Strategy) Execute() {
 	s.initSocket()
 	s.initCandles()
 
+	go s.resetAtTwoAm()
 	go s.panicIfTooManyAPIFailsOrSocketErrors()
 	go s.checkSessionDisconnectedError()
 	go s.fetchDataLoop()
+}
+
+func (s *Strategy) resetAtTwoAm() {
+	for {
+		currentHour, _ := strconv.Atoi(time.Now().Format("15"))
+
+		if currentHour == 2 {
+			s.Logger.ResetLogs()
+
+			err := s.socket.Close()
+			if err != nil {
+				s.Logger.Error("Error when restarting the socket -> " + err.Error())
+			}
+			s.initSocket()
+			s.initCandles()
+			s.pendingOrder = nil
+
+			s.Logger.Log("Refreshing access token by calling API.Login")
+			s.login(120, 30*time.Second)
+		}
+
+		time.Sleep(60 * time.Minute)
+	}
 }
 
 func (s *Strategy) initSocket() {
@@ -151,27 +175,9 @@ func (s *Strategy) onReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			s.lastAsk = data.Ask
 		}
 	}()
-
-	currentHour, previousHour := s.getCurrentAndPreviousHour()
-	if currentHour == 2 && previousHour == 1 {
-		s.Logger.ResetLogs()
-
-		err := s.socket.Close()
-		if err != nil {
-			s.Logger.Error("Error when restarting the socket -> " + err.Error())
-		}
-		s.initSocket()
-		s.initCandles()
-		s.pendingOrder = nil
-
-		s.Logger.Log("Refreshing access token by calling API.Login")
-		s.login(120, 30*time.Second)
-	}
-
 	s.updateCandles(data)
 
 	go s.updateAverageSpread()
-
 	if len(s.candles) == 0 {
 		return
 	}
