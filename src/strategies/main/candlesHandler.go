@@ -39,6 +39,7 @@ func (s *Strategy) updateCandles(data *tradingviewsocket.QuoteData) {
 			Open:      s.getLastCandle().Close,
 			Low:       s.getLastCandle().Close,
 			High:      s.getLastCandle().Close,
+			Close:     s.getLastCandle().Close,
 			Volume:    volume,
 			Timestamp: utils.GetTimestampWith0Seconds(s.currentExecutionTime),
 		})
