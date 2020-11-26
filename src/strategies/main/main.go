@@ -72,7 +72,6 @@ func (s *Strategy) resetAtTwoAm() {
 			if err != nil {
 				s.Logger.Error("Error when restarting the socket -> " + err.Error())
 			}
-			s.initSocket()
 			s.initCandles()
 			s.pendingOrder = nil
 
