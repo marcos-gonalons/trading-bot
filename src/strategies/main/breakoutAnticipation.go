@@ -209,11 +209,11 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 		s.pendingOrder = nil
 	}
 
-	ignoreLastNCandles := 18
+	ignoreLastNCandles := 14
 	riskPercentage := float64(1)
 	stopLossDistance := 12
 	takeProfitDistance := 27
-	candlesAmountWithLowerPriceToBeConsideredBottom := 18
+	candlesAmountWithLowerPriceToBeConsideredBottom := 14
 	tpDistanceShortForBreakEvenSL := 5
 
 	if len(s.positions) > 0 {
