@@ -104,7 +104,7 @@ func (s *Strategy) fetchDataLoop() {
 	for {
 		var waitingGroup sync.WaitGroup
 		currentHour, _ := strconv.Atoi(s.currentExecutionTime.Format("15"))
-		if currentHour >= 6 && currentHour <= 21 {
+		if currentHour >= 8 && currentHour <= 21 {
 			fetchFuncs := []func(){
 				func() {
 					s.currentBrokerQuote = s.fetch(func() (interface{}, error) {
