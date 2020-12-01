@@ -347,7 +347,7 @@ func (s *Strategy) isExecutionTimeValid(
 	}
 
 	currentHour, currentMinutes := s.getCurrentTimeHourAndMinutes()
-	if currentMinutes > 30 {
+	if currentMinutes >= 30 {
 		currentMinutes = 30
 	} else {
 		currentMinutes = 0
