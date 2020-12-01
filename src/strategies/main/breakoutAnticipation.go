@@ -194,7 +194,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 	isValidTimeToOpenAPosition := s.isExecutionTimeValid(
 		[]string{"March", "April", "June", "September", "December"},
 		[]string{"Monday", "Tuesday", "Thursday", "Friday"},
-		[]string{"08:30", "9:00", "12:00", "13:00", "14:30", "15:30", "18:00"},
+		[]string{"8:30", "9:00", "12:00", "13:00", "14:30", "15:30", "18:00"},
 	)
 
 	if !isValidTimeToOpenAPosition {
@@ -338,20 +338,28 @@ func (s *Strategy) isExecutionTimeValid(
 	validHalfHours []string,
 ) bool {
 
-	if !isInArray(s.currentExecutionTime.Format("January"), validMonths) {
+	if !utils.IsInArray(s.currentExecutionTime.Format("January"), validMonths) {
 		return false
 	}
 
-	if !isInArray(s.currentExecutionTime.Format("Monday"), validWeekDays) {
+	if !utils.IsInArray(s.currentExecutionTime.Format("Monday"), validWeekDays) {
 		return false
 	}
 
 	currentHour, currentMinutes := s.getCurrentTimeHourAndMinutes()
 	if currentMinutes > 30 {
 		currentMinutes = 30
+	} else {
+		currentMinutes = 0
 	}
 
-	return isInArray(strconv.Itoa(currentHour)+":"+strconv.Itoa(currentMinutes), validHalfHours)
+	currentHourString := strconv.Itoa(currentHour)
+	currentMinutesString := strconv.Itoa(currentMinutes)
+	if len(currentMinutesString) == 1 {
+		currentMinutesString += "0"
+	}
+
+	return utils.IsInArray(currentHourString+":"+currentMinutesString, validHalfHours)
 }
 
 func (s *Strategy) isCurrentTimeOutsideTradingHours() bool {
@@ -550,15 +558,6 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 			utils.FloatToString(float64(position.AvgPrice), 2),
 		)
 	}
-}
-
-func isInArray(element string, arr []string) bool {
-	for _, el := range arr {
-		if element == el {
-			return true
-		}
-	}
-	return false
 }
 
 /**

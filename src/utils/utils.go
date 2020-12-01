@@ -99,3 +99,13 @@ func GetTimestampWith0Seconds(t time.Time) int64 {
 	date, _ := time.Parse("2006-01-02 15:04:05", dateString)
 	return date.Unix()
 }
+
+// IsInArray ...
+func IsInArray(element string, arr []string) bool {
+	for _, el := range arr {
+		if element == el {
+			return true
+		}
+	}
+	return false
+}
