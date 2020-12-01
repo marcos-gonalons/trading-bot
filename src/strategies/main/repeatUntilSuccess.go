@@ -2,7 +2,6 @@ package mainstrategy
 
 import (
 	"TradingBot/src/services/api"
-	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/utils"
 	"time"
 )
@@ -94,13 +93,17 @@ func (s *Strategy) closePositions(
 	)
 }
 
-func (s *Strategy) modifyPosition(tp string, sl string) {
-	s.Logger.Log("Modifying the current open position with this values: tp -> " + tp + " and sl -> " + sl)
+func (s *Strategy) modifyPosition(
+	symbol string,
+	tp string,
+	sl string,
+) {
+	s.Logger.Log("Modifying the current open position with this values: symbol -> " + symbol + ", tp -> " + tp + " and sl -> " + sl)
 
 	go utils.RepeatUntilSuccess(
 		"ModifyPosition",
 		func() (err error) {
-			err = s.API.ModifyPosition(ibroker.GER30SymbolName, &tp, &sl)
+			err = s.API.ModifyPosition(symbol, &tp, &sl)
 			if err != nil {
 				s.Logger.Error("An error happened while modifying the position -> " + err.Error())
 			}

@@ -9,17 +9,6 @@ import (
 	"time"
 )
 
-/**
-	TODO
-	Test the bot with dummy api + loaded candles from csv
-	same fashion as the frontend app
-	So I make sure it behaves the exact same way
-
-
-
-	Also a flowchart or something ...
-**/
-
 func (s *Strategy) breakoutAnticipationStrategy() {
 	if s.isCurrentTimeOutsideTradingHours() {
 		s.Logger.Log("Doing nothing - Now it's not the time.")
@@ -554,77 +543,9 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 		s.modifyingPositionTimestamp = s.getLastCandle().Timestamp
 
 		s.modifyPosition(
+			ibroker.GER30SymbolName,
 			utils.FloatToString(float64(*tpOrder.LimitPrice), 2),
 			utils.FloatToString(float64(position.AvgPrice), 2),
 		)
 	}
 }
-
-/**
-
-	// When it's time to create the order:
-		create order code {
-
-			if creatingOrderTimestamp != currentCandle.timestamp {
-				createOrder
-				s.creatingOrderTimestamp = now (with 00 seconds)
-			}
-
-		}
-
-	// when it's time to modify the sl/tp of an order
-		modifyingOrderTimestamp
-
-	// When it's time to modify the sl/tp of a position
-
-
-	fx va 1 pip por detras, mas o menos.
-	si fx:ger30 dice 13149.4, en ibroker es 13150.5
-
-	si el precio es 13150.5 en ibroker, y yo debo abrir la posicion a 13148
-	eso significa que el precio en fx:ger30 es 13149.4, por lo tanto he de restar 1 en vez de 2, para longs
-
-	para shorts
-	si el precio es 13150.5 en ibroker, y yo debo abrir la posicion a 13152
-	eso significa que el precio en fx:ger30 es 13149.4, por lo tanto he de sumar 3 en vez de 2, para shorts
-
-
-	Hoy domingo, mercado cerrado -> FX:GER30 dixe 13123.4, IBROKER:GER30 dice 13123.8
-	Sin embargo, los picos siempre muestran 1 pip de diferencia
-Por ahora, asumir que la diferencia entre uno y otro es de 1 pip
-
-	leer con unauthorized de fx:ger30
-	y tener en cuenta que va 1 por detras
-
-
-	Important; the script should ignore candles[0], since it does not contain proper data.
-
-	Very, very important
-	Round ALL the prices used in ALL the calls to 2 decimals. Otherwise it won't work.
-
-
-	Take into consideration
-	Let's say the bot dies, for whatever reason, at 15:00pm
-	I revive him at 15:05
-	It will have lost all the candles[]
-
-	To mitigate this
-	As I add a candle to the candles[]
-	Save the candles to the csv file
-	When booting the bot; initialize the candles array with those in the csv file
-
-
-	When booting {
-		if !csv file, create the csv file
-		else, load candles[] from the file
-	}
-
-	Very important as well
-	When closing a position, and the position has TP and SL; IBROKER WILL NOT LET YOU
-	CLOSE THE POSITION UNTIL YOU CLOSE THE TP AND SL FIRST
-	So; if the script needs to close a position, CLOSE THE SL AND TP FIRST.
-
-
-	Also very important; when the order is created,
-	I need to quickly check it's SL and TP, and adjust them correctly to 12/27
-***/

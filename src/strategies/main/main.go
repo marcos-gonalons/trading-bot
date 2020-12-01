@@ -28,6 +28,7 @@ type Strategy struct {
 	pendingOrder       *api.Order
 	positions          []*api.Position
 	state              *api.State
+	currentPosition    *api.Position
 
 	candles []*Candle
 
@@ -58,6 +59,7 @@ func (s *Strategy) Execute() {
 	go s.panicIfTooManyAPIFailsOrSocketErrors()
 	go s.checkSessionDisconnectedError()
 	go s.fetchDataLoop()
+	go s.checkOpenPositionSLandTP()
 }
 
 func (s *Strategy) resetAtTwoAm() {
@@ -232,6 +234,28 @@ func (s *Strategy) fetch(fetchFunc func() (interface{}, error)) (result interfac
 		s.API.SetTimeout(10 * time.Second)
 	}
 	return
+}
+
+func (s *Strategy) checkOpenPositionSLandTP() {
+	for {
+		if len(s.positions) > 0 && s.currentPosition == nil {
+			s.currentPosition = s.positions[0]
+			var tp string
+			var sl string
+			if s.currentPosition.Side == "sell" {
+				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-27), 1)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+27), 1)
+			} else {
+				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+27), 1)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-12), 1)
+			}
+			s.modifyPosition(ibroker.GER30SymbolName, tp, sl)
+		}
+		if len(s.positions) == 0 {
+			s.currentPosition = nil
+		}
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func (s *Strategy) panicIfTooManyAPIFailsOrSocketErrors() {
