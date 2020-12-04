@@ -204,11 +204,6 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 		validHalfHours,
 	)
 
-	/**
-		If it's not the month or the day, RETURN INMEDIATLY
-		Else, continue this logic
-	**/
-
 	if !isValidTimeToOpenAPosition {
 		if len(s.positions) == 0 {
 			s.savePendingOrder("sell")
