@@ -244,7 +244,7 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 			var sl string
 			if s.currentPosition.Side == "sell" {
 				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-27), 1)
-				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+27), 1)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+12), 1)
 			} else {
 				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+27), 1)
 				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-12), 1)

@@ -45,6 +45,11 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 		[]string{"9:00", "10:00", "11:30", "12:00", "12:30", "20:30"},
 	)
 
+	/**
+		If it's not the month or the day, RETURN INMEDIATLY
+		Else, continue this logic
+	**/
+
 	if !isValidTimeToOpenAPosition {
 		if len(s.positions) == 0 {
 			s.savePendingOrder("buy")
@@ -185,6 +190,11 @@ func (s *Strategy) supportBreakoutAnticipationStrategy() {
 		[]string{"Monday", "Tuesday", "Thursday", "Friday"},
 		[]string{"8:30", "9:00", "12:00", "13:00", "14:30", "15:30", "18:00"},
 	)
+
+	/**
+		If it's not the month or the day, RETURN INMEDIATLY
+		Else, continue this logic
+	**/
 
 	if !isValidTimeToOpenAPosition {
 		if len(s.positions) == 0 {
@@ -381,6 +391,8 @@ func (s *Strategy) savePendingOrder(side string) {
 		return
 	}
 
+	// TODO: savingPendingOrderTimestamp
+
 	s.Logger.Log("Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
 	s.Logger.Log("This is the current order -> " + utils.GetStringRepresentation(mainOrder))
 
@@ -443,6 +455,8 @@ func (s *Strategy) createPendingOrder(side string) {
 			s.pendingOrder.StopPrice = nil
 		}
 	}
+
+	// todo: creatependingordertimestamp
 
 	s.createOrder(s.pendingOrder, 20, 10*time.Second)
 	s.pendingOrder = nil
