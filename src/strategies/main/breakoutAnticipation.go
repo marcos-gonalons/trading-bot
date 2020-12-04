@@ -39,16 +39,20 @@ func (s *Strategy) breakoutAnticipationStrategy() {
 }
 
 func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
-	isValidTimeToOpenAPosition := s.isExecutionTimeValid(
-		[]string{"January", "March", "April", "May", "June", "August", "September", "October"},
-		[]string{"Monday", "Tuesday", "Wednesday", "Friday"},
-		[]string{"9:00", "10:00", "11:30", "12:00", "12:30", "20:30"},
-	)
+	validMonths := []string{"January", "March", "April", "May", "June", "August", "September", "October"}
+	validWeekdays := []string{"Monday", "Tuesday", "Wednesday", "Friday"}
+	validHalfHours := []string{"9:00", "10:00", "11:30", "12:00", "12:30", "20:30"}
 
-	/**
-		If it's not the month or the day, RETURN INMEDIATLY
-		Else, continue this logic
-	**/
+	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
+		s.Logger.Log("Today it's not the day for resistance breakout anticipation")
+		return
+	}
+
+	isValidTimeToOpenAPosition := s.isExecutionTimeValid(
+		validMonths,
+		validWeekdays,
+		validHalfHours,
+	)
 
 	if !isValidTimeToOpenAPosition {
 		if len(s.positions) == 0 {
@@ -185,10 +189,19 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy() {
 }
 
 func (s *Strategy) supportBreakoutAnticipationStrategy() {
+	validMonths := []string{"March", "April", "June", "September", "December"}
+	validWeekdays := []string{"Monday", "Tuesday", "Thursday", "Friday"}
+	validHalfHours := []string{"8:30", "9:00", "12:00", "13:00", "14:30", "15:30", "18:00"}
+
+	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
+		s.Logger.Log("Today it's not the day for support breakout anticipation")
+		return
+	}
+
 	isValidTimeToOpenAPosition := s.isExecutionTimeValid(
-		[]string{"March", "April", "June", "September", "December"},
-		[]string{"Monday", "Tuesday", "Thursday", "Friday"},
-		[]string{"8:30", "9:00", "12:00", "13:00", "14:30", "15:30", "18:00"},
+		validMonths,
+		validWeekdays,
+		validHalfHours,
 	)
 
 	/**
@@ -337,28 +350,36 @@ func (s *Strategy) isExecutionTimeValid(
 	validHalfHours []string,
 ) bool {
 
-	if !utils.IsInArray(s.currentExecutionTime.Format("January"), validMonths) {
-		return false
+	if len(validMonths) > 0 {
+		if !utils.IsInArray(s.currentExecutionTime.Format("January"), validMonths) {
+			return false
+		}
 	}
 
-	if !utils.IsInArray(s.currentExecutionTime.Format("Monday"), validWeekDays) {
-		return false
+	if len(validWeekDays) > 0 {
+		if !utils.IsInArray(s.currentExecutionTime.Format("Monday"), validWeekDays) {
+			return false
+		}
 	}
 
-	currentHour, currentMinutes := s.getCurrentTimeHourAndMinutes()
-	if currentMinutes >= 30 {
-		currentMinutes = 30
-	} else {
-		currentMinutes = 0
+	if len(validHalfHours) > 0 {
+		currentHour, currentMinutes := s.getCurrentTimeHourAndMinutes()
+		if currentMinutes >= 30 {
+			currentMinutes = 30
+		} else {
+			currentMinutes = 0
+		}
+
+		currentHourString := strconv.Itoa(currentHour)
+		currentMinutesString := strconv.Itoa(currentMinutes)
+		if len(currentMinutesString) == 1 {
+			currentMinutesString += "0"
+		}
+
+		return utils.IsInArray(currentHourString+":"+currentMinutesString, validHalfHours)
 	}
 
-	currentHourString := strconv.Itoa(currentHour)
-	currentMinutesString := strconv.Itoa(currentMinutes)
-	if len(currentMinutesString) == 1 {
-		currentMinutesString += "0"
-	}
-
-	return utils.IsInArray(currentHourString+":"+currentMinutesString, validHalfHours)
+	return true
 }
 
 func (s *Strategy) isCurrentTimeOutsideTradingHours() bool {
