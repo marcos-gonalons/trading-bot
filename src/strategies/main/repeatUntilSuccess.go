@@ -3,6 +3,7 @@ package mainstrategy
 import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/utils"
+	"strings"
 	"time"
 )
 
@@ -106,6 +107,9 @@ func (s *Strategy) modifyPosition(
 			err = s.API.ModifyPosition(symbol, &tp, &sl)
 			if err != nil {
 				s.Logger.Error("An error happened while modifying the position -> " + err.Error())
+				if strings.Contains(err.Error(), "no tiene posición abierta en el contrato") {
+					err = nil
+				}
 			}
 			return
 		},
