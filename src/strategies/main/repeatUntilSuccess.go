@@ -154,6 +154,9 @@ func (s *Strategy) createOrder(
 			err = s.API.CreateOrder(order)
 			if err != nil {
 				s.Logger.Error("Error when creating the order -> " + err.Error())
+				if strings.Contains(err.Error(), "ya existe alguna orden vigente") {
+					err = nil
+				}
 			} else {
 				s.Logger.Log("Order created successfully")
 			}
