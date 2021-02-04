@@ -11,25 +11,30 @@ import (
 	"time"
 )
 
+// RequestParameters ...
+type RequestParameters struct {
+	Credentials *api.Credentials
+}
+
 // Request ...
 func Request(
-	url string,
-	credentials *api.Credentials,
+	endpoint string,
 	httpClient httpclient.Interface,
 	setHeaders func(rq *http.Request),
-	optionsRequest func() error,
+	optionsRequest func(url string, httpMethod string) error,
+	params *RequestParameters,
 ) (accessToken *api.AccessToken, err error) {
 	var mappedResponse = &APIResponse{}
 
-	err = optionsRequest()
+	err = optionsRequest(endpoint, http.MethodPost)
 	if err != nil {
 		return
 	}
 
 	rq, err := http.NewRequest(
 		http.MethodPost,
-		url,
-		bytes.NewBuffer([]byte("locale=en&login="+credentials.Username+"&password="+credentials.Password)),
+		endpoint,
+		bytes.NewBuffer([]byte("locale=en&login="+params.Credentials.Username+"&password="+params.Credentials.Password)),
 	)
 	if err != nil {
 		return

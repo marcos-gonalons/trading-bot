@@ -40,158 +40,147 @@ type API struct {
 
 // Login ...
 func (s *API) Login() (accessToken *api.AccessToken, err error) {
-	defer func() {
-		s.logAPIResult(accessToken, err, logger.LoginRequest)
-	}()
-
-	url := s.getURL("authorize")
-	accessToken, err = login.Request(
-		url,
-		s.credentials,
-		s.httpclient,
-		func(rq *http.Request) {
-			s.setHeaders(rq, false, "")
-		},
-		func() error {
-			return s.doOptionsRequest(url, http.MethodPost, logger.LoginRequest)
+	returnValue, err := s.apiCall(
+		logger.LoginRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("authorize")
+			return login.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&login.RequestParameters{
+					Credentials: s.credentials,
+				},
+			)
 		},
 	)
-
-	s.accessToken = accessToken
+	accessToken = returnValue.(*api.AccessToken)
 	return
 }
 
 // GetQuote ...
 func (s *API) GetQuote(symbol string) (quote *api.Quote, err error) {
-	defer func() {
-		s.logAPIResult(quote, err, logger.GetQuoteRequest)
-	}()
-
-	url := s.getURL("quotes")
-	quote, err = getquote.Request(
-		url,
-		s.httpclient,
-		s.accessToken.Token,
-		s.credentials.AccountID,
-		symbol,
-		func(rq *http.Request) {
-			s.setHeaders(rq, false, "")
-		},
-		func() error {
-			return s.doOptionsRequest(url, http.MethodGet, logger.GetQuoteRequest)
+	returnValue, err := s.apiCall(
+		logger.LoginRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("quotes")
+			return getquote.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&getquote.RequestParameters{
+					AccessToken: s.accessToken.Token,
+					AccountID:   s.credentials.AccountID,
+					Symbol:      symbol,
+				},
+			)
 		},
 	)
-
+	quote = returnValue.(*api.Quote)
 	return
 }
 
 // CreateOrder ...
 func (s *API) CreateOrder(order *api.Order) (err error) {
-	defer func() {
-		s.logAPIResult("", err, logger.CreateOrderRequest)
-	}()
-
-	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders"
-	err = createorder.Request(
-		url,
-		s.httpclient,
-		s.accessToken.Token,
-		order,
-		func(rq *http.Request) {
-			s.setHeaders(rq, false, "")
-		},
-		func() error {
-			return s.doOptionsRequest(url, http.MethodPost, logger.CreateOrderRequest)
+	_, err = s.apiCall(
+		logger.CreateOrderRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders"
+			return createorder.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&createorder.RequestParameters{
+					AccessToken: s.accessToken.Token,
+					Order:       order,
+				},
+			)
 		},
 	)
-
 	return
 }
 
 // GetOrders ...
 func (s *API) GetOrders() (orders []*api.Order, err error) {
-	defer func() {
-		s.logAPIResult(orders, err, logger.GetOrdersRequest)
-	}()
-
-	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders"
-	orders, err = getorders.Request(
-		url,
-		s.httpclient,
-		s.accessToken.Token,
-		func(rq *http.Request) {
-			s.setHeaders(rq, false, "")
-		},
-		func() error {
-			return s.doOptionsRequest(url, http.MethodGet, logger.GetOrdersRequest)
+	returnValue, err := s.apiCall(
+		logger.GetOrdersRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders"
+			return getorders.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&getorders.RequestParameters{
+					AccessToken: s.accessToken.Token,
+				},
+			)
 		},
 	)
-
+	orders = returnValue.([]*api.Order)
 	s.orders = orders
 	return
 }
 
 // ModifyOrder ...
 func (s *API) ModifyOrder(order *api.Order) (err error) {
-	defer func() {
-		s.logAPIResult("", err, logger.ModifyOrderRequest)
-	}()
-
-	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + order.ID
-	err = modifyorder.Request(
-		url,
-		s.httpclient,
-		s.accessToken.Token,
-		order,
-		func(rq *http.Request) {
-			s.setHeaders(rq, false, "")
-		},
-		func() error {
-			return s.doOptionsRequest(url, http.MethodPut, logger.ModifyOrderRequest)
+	_, err = s.apiCall(
+		logger.ModifyOrderRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + order.ID
+			return modifyorder.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&modifyorder.RequestParameters{
+					AccessToken: s.accessToken.Token,
+					Order:       order,
+				},
+			)
 		},
 	)
-
 	return
 }
 
 // ClosePosition ...
 func (s *API) ClosePosition(symbol string) (err error) {
-	defer func() {
-		s.logAPIResult("", err, logger.ClosePositionRequest)
-	}()
-
-	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + symbol
-	err = closeposition.Request(
-		url,
-		s.httpclient,
-		s.accessToken.Token,
-		func(rq *http.Request) {
-			s.setHeaders(rq, false, "")
-		},
-		func() error {
-			return s.doOptionsRequest(url, http.MethodDelete, logger.ClosePositionRequest)
+	_, err = s.apiCall(
+		logger.ClosePositionRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + symbol
+			return closeposition.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&closeposition.RequestParameters{
+					AccessToken: s.accessToken.Token,
+				},
+			)
 		},
 	)
-
 	return
 }
 
 // CloseOrder ...
 func (s *API) CloseOrder(orderID string) (err error) {
-	defer func() {
-		s.logAPIResult("", err, logger.CloseOrderRequest)
-	}()
-
-	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + orderID
-	err = closeorder.Request(
-		url,
-		s.httpclient,
-		s.accessToken.Token,
-		func(rq *http.Request) {
-			s.setHeaders(rq, false, "")
-		},
-		func() error {
-			return s.doOptionsRequest(url, http.MethodDelete, logger.CloseOrderRequest)
+	_, err = s.apiCall(
+		logger.CloseOrderRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + orderID
+			return closeorder.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&closeorder.RequestParameters{
+					AccessToken: s.accessToken.Token,
+				},
+			)
 		},
 	)
 
@@ -200,23 +189,23 @@ func (s *API) CloseOrder(orderID string) (err error) {
 
 // GetPositions ...
 func (s *API) GetPositions() (positions []*api.Position, err error) {
-	defer func() {
-		s.logAPIResult(positions, err, logger.GetPositionsRequest)
-	}()
-
-	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions"
-	positions, err = getpositions.Request(
-		url,
-		s.httpclient,
-		s.accessToken.Token,
-		func(rq *http.Request) {
-			s.setHeaders(rq, false, "")
-		},
-		func() error {
-			return s.doOptionsRequest(url, http.MethodGet, logger.GetPositionsRequest)
+	returnValue, err := s.apiCall(
+		logger.GetPositionsRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions"
+			return getpositions.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&getpositions.RequestParameters{
+					AccessToken: s.accessToken.Token,
+				},
+			)
 		},
 	)
 
+	positions = returnValue.([]*api.Position)
 	s.positions = positions
 	return
 }
@@ -281,47 +270,45 @@ func (s *API) CloseAllPositions() (err error) {
 
 // GetState ...
 func (s *API) GetState() (state *api.State, err error) {
-	defer func() {
-		s.logAPIResult(state, err, logger.GetStateRequest)
-	}()
-
-	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/state?locale=en"
-	state, err = getstate.Request(
-		url,
-		s.httpclient,
-		s.accessToken.Token,
-		func(rq *http.Request) {
-			s.setHeaders(rq, false, "")
-		},
-		func() error {
-			return s.doOptionsRequest(url, http.MethodGet, logger.GetStateRequest)
+	returnValue, err := s.apiCall(
+		logger.GetStateRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/state?locale=en"
+			return getstate.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&getstate.RequestParameters{
+					AccessToken: s.accessToken.Token,
+				},
+			)
 		},
 	)
 
+	state = returnValue.(*api.State)
 	return
 }
 
 // ModifyPosition ...
 func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string) (err error) {
-	defer func() {
-		s.logAPIResult("", err, logger.ModifyPositionRequest)
-	}()
-
-	url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + symbol
-	err = modifyposition.Request(
-		url,
-		s.httpclient,
-		s.accessToken.Token,
-		takeProfit,
-		stopLoss,
-		func(rq *http.Request) {
-			s.setHeaders(rq, false, "")
-		},
-		func() error {
-			return s.doOptionsRequest(url, http.MethodPut, logger.ModifyPositionRequest)
+	_, err = s.apiCall(
+		logger.ModifyPositionRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + symbol
+			return modifyposition.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&modifyposition.RequestParameters{
+					AccessToken: s.accessToken.Token,
+					TakeProfit:  takeProfit,
+					StopLoss:    stopLoss,
+				},
+			)
 		},
 	)
-
 	return
 }
 
@@ -334,6 +321,26 @@ func (s *API) SetTimeout(t time.Duration) {
 // GetTimeout ...
 func (s *API) GetTimeout() time.Duration {
 	return s.timeout
+}
+
+func (s *API) apiCall(
+	logType logger.LogType,
+	call func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (interface{}, error),
+) (r interface{}, err error) {
+	defer func() {
+		s.logAPIResult("", err, logType)
+	}()
+
+	r, err = call(
+		func(rq *http.Request) {
+			s.setHeaders(rq, false, "")
+		},
+		func(url string, httpMethod string) error {
+			return s.optionsRequest(url, httpMethod, logType)
+		},
+	)
+
+	return
 }
 
 func (s *API) getURL(endpoint string) string {
@@ -363,7 +370,7 @@ func (s *API) setHeaders(rq *http.Request, isOptionsRequest bool, method string)
 	rq.Header.Set("Accept-Language", "en-US,en;q=0.9,es;q=0.8")
 }
 
-func (s *API) doOptionsRequest(url string, method string, logType logger.LogType) (err error) {
+func (s *API) optionsRequest(url string, method string, logType logger.LogType) (err error) {
 	// The OPTIONS request is, of course, not really needed outside a browser's context.
 	// But since we want to simulate we are in the browser, we send the options request anyway.
 	rq, err := http.NewRequest(

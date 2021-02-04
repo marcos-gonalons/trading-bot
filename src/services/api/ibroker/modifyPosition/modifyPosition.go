@@ -9,34 +9,39 @@ import (
 	"net/http"
 )
 
+// RequestParameters ...
+type RequestParameters struct {
+	AccessToken string
+	TakeProfit  *string
+	StopLoss    *string
+}
+
 // Request ...
 func Request(
-	url string,
+	endpoint string,
 	httpClient httpclient.Interface,
-	accessToken string,
-	takeProfit *string,
-	stopLoss *string,
 	setHeaders func(rq *http.Request),
-	optionsRequest func() error,
-) (err error) {
+	optionsRequest func(url string, httpMethod string) error,
+	params *RequestParameters,
+) (n interface{}, err error) {
 	var mappedResponse = &APIResponse{}
 
-	err = optionsRequest()
+	err = optionsRequest(endpoint, http.MethodPut)
 	if err != nil {
 		return
 	}
 
 	rq, err := http.NewRequest(
 		http.MethodPut,
-		url,
-		getRequestBody(takeProfit, stopLoss),
+		endpoint,
+		getRequestBody(params.TakeProfit, params.StopLoss),
 	)
 	if err != nil {
 		return
 	}
 
 	setHeaders(rq)
-	rq.Header.Set("Authorization", "Bearer "+accessToken)
+	rq.Header.Set("Authorization", "Bearer "+params.AccessToken)
 	response, err := httpClient.Do(rq, logger.ModifyPositionRequest)
 	if err != nil {
 		return

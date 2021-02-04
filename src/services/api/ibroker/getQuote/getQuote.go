@@ -8,27 +8,32 @@ import (
 	"net/http"
 )
 
+// RequestParameters ...
+type RequestParameters struct {
+	AccessToken string
+	AccountID   string
+	Symbol      string
+}
+
 // Request ...
 func Request(
-	url string,
+	endpoint string,
 	httpClient httpclient.Interface,
-	accessToken string,
-	accountID string,
-	symbol string,
 	setHeaders func(rq *http.Request),
-	optionsRequest func() error,
+	optionsRequest func(url string, httpMethod string) error,
+	params *RequestParameters,
 ) (quote *api.Quote, err error) {
 	var mappedResponse = &APIResponse{}
 
-	err = optionsRequest()
+	err = optionsRequest(endpoint, http.MethodGet)
 	if err != nil {
 		return
 	}
 
-	url = url + "?symbols=" + symbol + "&accountId=" + accountID
+	endpoint = endpoint + "?symbols=" + params.Symbol + "&accountId=" + params.AccountID
 	rq, err := http.NewRequest(
 		http.MethodGet,
-		url,
+		endpoint,
 		nil,
 	)
 	if err != nil {
@@ -36,7 +41,7 @@ func Request(
 	}
 
 	setHeaders(rq)
-	rq.Header.Set("Authorization", "Bearer "+accessToken)
+	rq.Header.Set("Authorization", "Bearer "+params.AccessToken)
 	response, err := httpClient.Do(rq, logger.GetQuoteRequest)
 	if err != nil {
 		return
