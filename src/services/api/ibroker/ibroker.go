@@ -210,6 +210,50 @@ func (s *API) GetPositions() (positions []*api.Position, err error) {
 	return
 }
 
+// GetState ...
+func (s *API) GetState() (state *api.State, err error) {
+	returnValue, err := s.apiCall(
+		logger.GetStateRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/state?locale=en"
+			return getstate.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&getstate.RequestParameters{
+					AccessToken: s.accessToken.Token,
+				},
+			)
+		},
+	)
+
+	state = returnValue.(*api.State)
+	return
+}
+
+// ModifyPosition ...
+func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string) (err error) {
+	_, err = s.apiCall(
+		logger.ModifyPositionRequest,
+		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + symbol
+			return modifyposition.Request(
+				url,
+				s.httpclient,
+				setHeaders,
+				optionsRequest,
+				&modifyposition.RequestParameters{
+					AccessToken: s.accessToken.Token,
+					TakeProfit:  takeProfit,
+					StopLoss:    stopLoss,
+				},
+			)
+		},
+	)
+	return
+}
+
 // CloseAllOrders ...
 func (s *API) CloseAllOrders() (err error) {
 	if len(s.orders) == 0 {
@@ -268,50 +312,6 @@ func (s *API) CloseAllPositions() (err error) {
 	return
 }
 
-// GetState ...
-func (s *API) GetState() (state *api.State, err error) {
-	returnValue, err := s.apiCall(
-		logger.GetStateRequest,
-		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
-			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/state?locale=en"
-			return getstate.Request(
-				url,
-				s.httpclient,
-				setHeaders,
-				optionsRequest,
-				&getstate.RequestParameters{
-					AccessToken: s.accessToken.Token,
-				},
-			)
-		},
-	)
-
-	state = returnValue.(*api.State)
-	return
-}
-
-// ModifyPosition ...
-func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string) (err error) {
-	_, err = s.apiCall(
-		logger.ModifyPositionRequest,
-		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
-			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + symbol
-			return modifyposition.Request(
-				url,
-				s.httpclient,
-				setHeaders,
-				optionsRequest,
-				&modifyposition.RequestParameters{
-					AccessToken: s.accessToken.Token,
-					TakeProfit:  takeProfit,
-					StopLoss:    stopLoss,
-				},
-			)
-		},
-	)
-	return
-}
-
 // SetTimeout ...
 func (s *API) SetTimeout(t time.Duration) {
 	s.timeout = t
@@ -328,7 +328,7 @@ func (s *API) apiCall(
 	call func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (interface{}, error),
 ) (r interface{}, err error) {
 	defer func() {
-		s.logAPIResult("", err, logType)
+		s.logAPIResult(r, err, logType)
 	}()
 
 	r, err = call(
@@ -391,10 +391,6 @@ func (s *API) optionsRequest(url string, method string, logType logger.LogType) 
 	return
 }
 
-func (s *API) setCredentials(credentials *api.Credentials) {
-	s.credentials = credentials
-}
-
 func (s *API) logAPIResult(response interface{}, err error, logType logger.LogType) {
 	if err != nil {
 		s.logger.Error("ERROR -> "+err.Error(), logType)
@@ -406,6 +402,10 @@ func (s *API) logAPIResult(response interface{}, err error, logType logger.LogTy
 			s.logger.Log("RESULT -> "+string(str), logType)
 		}
 	}
+}
+
+func (s *API) setCredentials(credentials *api.Credentials) {
+	s.credentials = credentials
 }
 
 // CreateAPIServiceInstance ...
