@@ -1,4 +1,4 @@
-package mainstrategy
+package types
 
 // Candle ...
 type Candle struct {

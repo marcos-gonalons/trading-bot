@@ -2,8 +2,10 @@ package utils
 
 import (
 	"TradingBot/src/services/api"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"strconv"
 	"time"
@@ -66,10 +68,11 @@ func RepeatUntilSuccess(
 	processName string,
 	process func() error,
 	delayBetweenRetries time.Duration,
-	maxRetries int,
+	maxRetries uint,
 	successCallback func(),
 ) {
-	retries := 0
+	var retries uint
+	retries = 0
 	for {
 		err := process()
 
@@ -108,4 +111,9 @@ func IsInArray(element string, arr []string) bool {
 		}
 	}
 	return false
+}
+
+// GetBodyForHTTPRequest ...
+func GetBodyForHTTPRequest(body string) io.Reader {
+	return bytes.NewBuffer([]byte(body))
 }

@@ -5,7 +5,6 @@ import (
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/utils"
-	"bytes"
 	"errors"
 	"io"
 	"net/http"
@@ -97,5 +96,5 @@ func getRequestBody(order *api.Order) io.Reader {
 		body = body + "&" + "takeProfit=" + *order.StringValues.TakeProfit
 	}
 
-	return bytes.NewBuffer([]byte(body))
+	return utils.GetBodyForHTTPRequest(body)
 }

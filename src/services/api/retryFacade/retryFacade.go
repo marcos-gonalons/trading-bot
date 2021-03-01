@@ -1,13 +1,20 @@
-package mainstrategy
+package retryFacade
 
 import (
 	"TradingBot/src/services/api"
+	"TradingBot/src/services/logger"
 	"TradingBot/src/utils"
 	"strings"
-	"time"
 )
 
-func (s *Strategy) login(maxRetries int, delayBetweenRetries time.Duration) {
+// APIFacade ...
+type APIFacade struct {
+	API    api.Interface
+	Logger logger.Interface
+}
+
+// Login ...
+func (s *APIFacade) Login(retryParams RetryParams) {
 	go utils.RepeatUntilSuccess(
 		"Login",
 		func() (err error) {
@@ -17,18 +24,24 @@ func (s *Strategy) login(maxRetries int, delayBetweenRetries time.Duration) {
 			}
 			return
 		},
-		delayBetweenRetries,
-		maxRetries,
+		retryParams.DelayBetweenRetries,
+		retryParams.MaxRetries,
 		func() {},
 	)
 }
 
-func (s *Strategy) closeSpecificOrders(
+// CloseSpecificOrders ...
+func (s *APIFacade) CloseSpecificOrders(
 	orders []*api.Order,
-	successCallback func(),
+	retryParams RetryParams,
 ) {
+	/**
+		todo: pass retry params when this method is called
+		delay 5*time.Second,
+		max 30
+	**/
 	if orders == nil || len(orders) == 0 {
-		successCallback()
+		retryParams.SuccessCallback()
 		return
 	}
 
@@ -46,17 +59,21 @@ func (s *Strategy) closeSpecificOrders(
 			}
 			return
 		},
-		5*time.Second,
-		30,
-		successCallback,
+		retryParams.DelayBetweenRetries,
+		retryParams.MaxRetries,
+		retryParams.SuccessCallback,
 	)
 }
 
-func (s *Strategy) closeAllWorkingOrders(
-	successCallback func(),
-) {
+// CloseAllWorkingOrders ...
+func (s *APIFacade) CloseAllWorkingOrders(retryParams RetryParams) {
 	s.Logger.Log("Closing all working orders ...")
 
+	/**
+		todo: pass retry params when this method is called
+		delay 5*time.Second,
+		max 30
+	**/
 	go utils.RepeatUntilSuccess(
 		"CloseAllWorkingOrders",
 		func() (err error) {
@@ -66,41 +83,51 @@ func (s *Strategy) closeAllWorkingOrders(
 			}
 			return
 		},
-		5*time.Second,
-		30,
-		successCallback,
+		retryParams.DelayBetweenRetries,
+		retryParams.MaxRetries,
+		retryParams.SuccessCallback,
 	)
 }
 
-func (s *Strategy) closePositions(
-	successCallback func(),
-	onErrorCallback func(err error),
-) {
+// ClosePositions ...
+func (s *APIFacade) ClosePositions(retryParams RetryParams) {
 	s.Logger.Log("Closing all positions ...")
 
+	/**
+		todo: pass retry params when this method is called
+		delay 5*time.Second,
+		max 30
+	**/
 	go utils.RepeatUntilSuccess(
 		"CloseAllPositions",
 		func() (err error) {
 			err = s.API.CloseAllPositions()
 			if err != nil {
 				s.Logger.Error("An error happened while closing all positions -> " + err.Error())
-				onErrorCallback(err)
+				retryParams.ErrorCallback(err)
 			}
 			return
 		},
-		5*time.Second,
-		30,
-		successCallback,
+		retryParams.DelayBetweenRetries,
+		retryParams.MaxRetries,
+		retryParams.SuccessCallback,
 	)
 }
 
-func (s *Strategy) modifyPosition(
+// ModifyPosition ...
+func (s *APIFacade) ModifyPosition(
 	symbol string,
 	tp string,
 	sl string,
+	retryParams RetryParams,
 ) {
 	s.Logger.Log("Modifying the current open position with this values: symbol -> " + symbol + ", tp -> " + tp + " and sl -> " + sl)
 
+	/**
+		todo: pass retry params when this method is called
+		delay 5*time.Second,
+		max 20
+	**/
 	go utils.RepeatUntilSuccess(
 		"ModifyPosition",
 		func() (err error) {
@@ -113,44 +140,52 @@ func (s *Strategy) modifyPosition(
 			}
 			return
 		},
-		5*time.Second,
-		20,
-		func() {},
+		retryParams.DelayBetweenRetries,
+		retryParams.MaxRetries,
+		retryParams.SuccessCallback,
 	)
 }
 
-func (s *Strategy) createOrder(
+// CreateOrder ...
+func (s *APIFacade) CreateOrder(
 	order *api.Order,
-	maxRetries int,
-	delayBetweenRetries time.Duration,
+	getCurrentBrokerQuote func() *api.Quote,
+	setStringValues func(order *api.Order),
+	retryParams RetryParams,
 ) {
 	s.Logger.Log("Creating this order -> " + utils.GetStringRepresentation(order))
-
+	/**
+		todo: pass retry params when this method is called
+		delay 10*time.Second,
+		max 20
+	**/
 	go utils.RepeatUntilSuccess(
 		"CreateOrder",
 		func() (err error) {
+			currentQuote := getCurrentBrokerQuote()
+
 			if order.Side == "buy" {
-				if order.Type == "limit" && *order.LimitPrice >= s.currentBrokerQuote.Bid {
+				if order.Type == "limit" && *order.LimitPrice >= currentQuote.Bid {
 					s.Logger.Log("Can't create the limit buy order since the order price is bigger than the current bid")
 					return
 				}
-				if order.Type == "stop" && *order.StopPrice <= s.currentBrokerQuote.Ask {
+				if order.Type == "stop" && *order.StopPrice <= currentQuote.Ask {
 					s.Logger.Log("Can't create the stop buy order since the order price is lower than the current ask")
 					return
 				}
 			}
 			if order.Side == "sell" {
-				if order.Type == "limit" && *order.LimitPrice <= s.currentBrokerQuote.Ask {
+				if order.Type == "limit" && *order.LimitPrice <= currentQuote.Ask {
 					s.Logger.Log("Can't create the limit sell order since the order price is lower than the current ask")
 					return
 				}
-				if order.Type == "stop" && *order.StopPrice >= s.currentBrokerQuote.Bid {
+				if order.Type == "stop" && *order.StopPrice >= currentQuote.Bid {
 					s.Logger.Log("Can't create the stop sell order since the order price is bigger than the current bid")
 					return
 				}
 			}
 
-			s.setStringValues(order)
+			setStringValues(order)
 			err = s.API.CreateOrder(order)
 			if err != nil {
 				s.Logger.Error("Error when creating the order -> " + err.Error())
@@ -162,8 +197,18 @@ func (s *Strategy) createOrder(
 			}
 			return
 		},
-		10*time.Second,
-		20,
-		func() {},
+		retryParams.DelayBetweenRetries,
+		retryParams.MaxRetries,
+		retryParams.SuccessCallback,
 	)
+}
+
+// CreateAPIFacadeInstance ...
+func CreateAPIFacadeInstance(api api.Interface) Interface {
+	instance := &APIFacade{
+		API:    api,
+		Logger: logger.GetInstance(),
+	}
+
+	return instance
 }

@@ -3,7 +3,7 @@ package modifyposition
 import (
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
-	"bytes"
+	"TradingBot/src/utils"
 	"errors"
 	"io"
 	"net/http"
@@ -85,5 +85,5 @@ func getRequestBody(takeProfit *string, stopLoss *string) io.Reader {
 		}
 	}
 
-	return bytes.NewBuffer([]byte(body))
+	return utils.GetBodyForHTTPRequest(body)
 }

@@ -4,8 +4,8 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/utils"
 
-	"bytes"
 	"errors"
 	"net/http"
 	"time"
@@ -31,10 +31,11 @@ func Request(
 		return
 	}
 
+	bodyString := "locale=en&login=" + params.Credentials.Username + "&password=" + params.Credentials.Password
 	rq, err := http.NewRequest(
 		http.MethodPost,
 		endpoint,
-		bytes.NewBuffer([]byte("locale=en&login="+params.Credentials.Username+"&password="+params.Credentials.Password)),
+		utils.GetBodyForHTTPRequest(bodyString),
 	)
 	if err != nil {
 		return

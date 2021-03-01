@@ -3,6 +3,7 @@ package main
 import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
+	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/strategies"
 	"errors"
@@ -45,9 +46,16 @@ func main() {
 
 	var waitingGroup sync.WaitGroup
 	waitingGroup.Add(1)
-	for _, strategy := range strategies.GetStrategies(ibrokerAPI, logger.GetInstance()) {
-		go strategy.Execute()
+	apiRetryFacade := &retryFacade.APIFacade{
+		API:    ibrokerAPI,
+		Logger: logger.GetInstance(),
 	}
+	handler := &strategies.Handler{
+		Logger:         logger.GetInstance(),
+		API:            ibrokerAPI,
+		APIRetryFacade: apiRetryFacade,
+	}
+	handler.Run()
 	waitingGroup.Wait() // Wait forever, this script should never die
 }
 

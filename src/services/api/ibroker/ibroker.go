@@ -26,6 +26,9 @@ import (
 // GER30SymbolName ...
 const GER30SymbolName = "GER30"
 
+// SP500SymbolName ...
+const SP500SymbolName = "SPX500"
+
 // API ...
 type API struct {
 	httpclient httpclient.Interface
@@ -359,7 +362,7 @@ func (s *API) setHeaders(rq *http.Request, isOptionsRequest bool, method string)
 	} else {
 		rq.Header.Set("Accept", "application/json")
 	}
-	rq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36")
+	rq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36")
 	rq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rq.Header.Set("Origin", "https://www.tradingview.com")
 	rq.Header.Set("Sec-Fetch-Site", "cross-site")

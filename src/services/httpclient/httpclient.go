@@ -41,9 +41,9 @@ func (s *Service) MapJSONResponseToStruct(targetStruct interface{}, responseBody
 func (s *Service) getRQStringRepresentation(rq *http.Request) string {
 	var bodyAsStr string
 	if rq.Body != nil {
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(rq.Body)
-		bodyAsStr = buf.String()
+		contents, _ := ioutil.ReadAll(rq.Body)
+		bodyAsStr = string(contents)
+		rq.Body = ioutil.NopCloser(bytes.NewReader(contents))
 	} else {
 		bodyAsStr = ""
 	}
