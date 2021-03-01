@@ -35,11 +35,7 @@ func (s *APIFacade) CloseSpecificOrders(
 	orders []*api.Order,
 	retryParams RetryParams,
 ) {
-	/**
-		todo: pass retry params when this method is called
-		delay 5*time.Second,
-		max 30
-	**/
+
 	if orders == nil || len(orders) == 0 {
 		retryParams.SuccessCallback()
 		return
@@ -69,11 +65,6 @@ func (s *APIFacade) CloseSpecificOrders(
 func (s *APIFacade) CloseAllWorkingOrders(retryParams RetryParams) {
 	s.Logger.Log("Closing all working orders ...")
 
-	/**
-		todo: pass retry params when this method is called
-		delay 5*time.Second,
-		max 30
-	**/
 	go utils.RepeatUntilSuccess(
 		"CloseAllWorkingOrders",
 		func() (err error) {
@@ -93,11 +84,6 @@ func (s *APIFacade) CloseAllWorkingOrders(retryParams RetryParams) {
 func (s *APIFacade) ClosePositions(retryParams RetryParams) {
 	s.Logger.Log("Closing all positions ...")
 
-	/**
-		todo: pass retry params when this method is called
-		delay 5*time.Second,
-		max 30
-	**/
 	go utils.RepeatUntilSuccess(
 		"CloseAllPositions",
 		func() (err error) {
@@ -123,11 +109,6 @@ func (s *APIFacade) ModifyPosition(
 ) {
 	s.Logger.Log("Modifying the current open position with this values: symbol -> " + symbol + ", tp -> " + tp + " and sl -> " + sl)
 
-	/**
-		todo: pass retry params when this method is called
-		delay 5*time.Second,
-		max 20
-	**/
 	go utils.RepeatUntilSuccess(
 		"ModifyPosition",
 		func() (err error) {
@@ -154,11 +135,7 @@ func (s *APIFacade) CreateOrder(
 	retryParams RetryParams,
 ) {
 	s.Logger.Log("Creating this order -> " + utils.GetStringRepresentation(order))
-	/**
-		todo: pass retry params when this method is called
-		delay 10*time.Second,
-		max 20
-	**/
+
 	go utils.RepeatUntilSuccess(
 		"CreateOrder",
 		func() (err error) {
