@@ -10,6 +10,7 @@ import (
 	"TradingBot/src/utils"
 	"math"
 	"strconv"
+	"sync"
 	"time"
 
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper"
@@ -20,6 +21,7 @@ type Strategy struct {
 	APIRetryFacade retryFacade.Interface
 	Logger         logger.Interface
 	CandlesHandler candlesHandler.Interface
+	Mutex          *sync.Mutex
 
 	Name      string
 	Symbol    string
@@ -54,6 +56,8 @@ func (s *Strategy) SetCandlesHandler(candlesHandler candlesHandler.Interface) {
 
 // Initialize ...
 func (s *Strategy) Initialize() {
+	s.Mutex = &sync.Mutex{}
+
 	s.CandlesHandler.InitCandles()
 	go s.checkOpenPositionSLandTP()
 }
@@ -86,6 +90,11 @@ func (s *Strategy) SetState(state *api.State) {
 
 // OnReceiveMarketData ...
 func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
+	s.Mutex.Lock()
+	defer func() {
+		s.Mutex.Unlock()
+	}()
+
 	go s.updateAverageSpread()
 
 	s.currentExecutionTime = time.Now()
