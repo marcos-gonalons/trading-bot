@@ -77,7 +77,7 @@ func RepeatUntilSuccess(
 		err := process()
 
 		if maxRetries == 0 {
-			if err == nil {
+			if err == nil && successCallback != nil {
 				successCallback()
 			}
 			return
@@ -93,7 +93,9 @@ func RepeatUntilSuccess(
 		}
 		time.Sleep(delayBetweenRetries)
 	}
-	successCallback()
+	if successCallback != nil {
+		successCallback()
+	}
 }
 
 // GetTimestampWith0Seconds ...
