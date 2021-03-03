@@ -66,7 +66,7 @@ func (s *API) Login() (accessToken *api.AccessToken, err error) {
 // GetQuote ...
 func (s *API) GetQuote(symbol string) (quote *api.Quote, err error) {
 	returnValue, err := s.apiCall(
-		logger.LoginRequest,
+		logger.GetQuoteRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("quotes")
 			return getquote.Request(
