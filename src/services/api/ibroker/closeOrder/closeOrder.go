@@ -53,7 +53,7 @@ func Request(
 	}
 
 	if mappedResponse.ErrorMsg != "" {
-		err = errors.New("Api error -> " + mappedResponse.ErrorMsg)
+		err = errors.New("Api error -> " + mappedResponse.ErrorMsg + "\n Raw Body is -> " + rawBody)
 		return
 	}
 

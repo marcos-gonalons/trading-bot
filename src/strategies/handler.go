@@ -73,6 +73,10 @@ func (s *Handler) onReceiveMarketData(symbol string, data *tradingviewsocket.Quo
 	s.Logger.Log("Received data -> " + symbol + " -> " + utils.GetStringRepresentation(data))
 
 	for _, strategy := range s.strategies {
+		// TODO: Only call the strategy if the data is received for the symbol that the strategy expects.
+		// the breakout strategy that we have right now must only process FX:GER30 data
+		// So do that somehow
+		// Maybe each startegy will have "validSymbols" so I can check that from here
 		go strategy.OnReceiveMarketData(symbol, data)
 	}
 }
