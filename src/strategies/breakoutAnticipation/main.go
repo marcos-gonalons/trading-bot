@@ -334,12 +334,6 @@ func (s *Strategy) getSlAndTpOrders(
 
 func (s *Strategy) createPendingOrder(side string) {
 	s.Logger.Log("Trying to create the pending order ..." + utils.GetStringRepresentation(s.pendingOrder))
-	var orderPrice float64
-	if s.pendingOrder.Type == "limit" {
-		orderPrice = float64(*s.pendingOrder.LimitPrice)
-	} else {
-		orderPrice = float64(*s.pendingOrder.StopPrice)
-	}
 
 	// todo: creatependingordertimestamp
 
