@@ -341,37 +341,8 @@ func (s *Strategy) createPendingOrder(side string) {
 		orderPrice = float64(*s.pendingOrder.StopPrice)
 	}
 
-	if (side == "buy" && s.pendingOrder.Type == "stop") || (side == "sell" && s.pendingOrder.Type == "limit") {
-		if s.pendingOrder.Side == "buy" && orderPrice <= float64(s.currentBrokerQuote.Ask) {
-			s.Logger.Log("Pending order will not be created since the order price is less than the current ask")
-			s.pendingOrder = nil
-			return
-		}
-		if side == "buy" && s.pendingOrder.Side == "sell" && s.pendingOrder.Type == "stop" {
-			s.Logger.Log("Transforming sell stop order into a limit order -> " + utils.GetStringRepresentation(s.pendingOrder))
-			s.pendingOrder.Type = "limit"
-			s.pendingOrder.LimitPrice = s.pendingOrder.StopPrice
-			s.pendingOrder.StopPrice = nil
-		}
-	}
-
-	if (side == "buy" && s.pendingOrder.Type == "limit") || (side == "sell" && s.pendingOrder.Type == "stop") {
-		if s.pendingOrder.Side == "sell" && orderPrice >= float64(s.currentBrokerQuote.Bid) {
-			s.Logger.Log("Pending order will not be created since the order price is higher than the current bid")
-			s.pendingOrder = nil
-			return
-		}
-		if side == "sell" && s.pendingOrder.Side == "buy" && s.pendingOrder.Type == "stop" {
-			s.Logger.Log("Transforming buy stop order into a limit order -> " + utils.GetStringRepresentation(s.pendingOrder))
-			s.pendingOrder.Type = "limit"
-			s.pendingOrder.LimitPrice = s.pendingOrder.StopPrice
-			s.pendingOrder.StopPrice = nil
-		}
-	}
-
 	// todo: creatependingordertimestamp
 
-	// todo: test that get current broker quote func works as expected
 	s.APIRetryFacade.CreateOrder(
 		s.pendingOrder,
 		func() *api.Quote {

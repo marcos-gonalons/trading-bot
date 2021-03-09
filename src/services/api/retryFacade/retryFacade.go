@@ -140,6 +140,7 @@ func (s *APIFacade) CreateOrder(
 		"CreateOrder",
 		func() (err error) {
 			currentQuote := getCurrentBrokerQuote()
+			s.Logger.Log("Current broker quote is" + utils.GetStringRepresentation(currentQuote))
 
 			if order.Side == "buy" {
 				if order.Type == "limit" && *order.LimitPrice >= currentQuote.Bid {
