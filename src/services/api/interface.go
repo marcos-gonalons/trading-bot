@@ -18,4 +18,5 @@ type Interface interface {
 	ModifyPosition(symbol string, takeProfit *string, stopLoss *string) error
 	SetTimeout(t time.Duration)
 	GetTimeout() time.Duration
+	IsSessionDisconnectedError(err error) bool
 }

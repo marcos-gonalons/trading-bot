@@ -200,9 +200,8 @@ func (s *Handler) fetch(fetchFunc func() (interface{}, error)) (result interface
 }
 
 func (s *Handler) checkSessionDisconnectedError() {
-	// TODO: Save the error string in the ibrokerApi and call API.IsSessionDisconnectedError(s.fetchError.Error())
 	for {
-		if s.fetchError != nil && s.fetchError.Error() == "Api error -> Your session is disconnected. Please login again to initialize a new valid session." {
+		if s.API.IsSessionDisconnectedError(s.fetchError) {
 			s.Logger.Log("Session is disconnected. Loggin in again ... ")
 			s.APIRetryFacade.Login(retryFacade.RetryParams{
 				DelayBetweenRetries: 0,

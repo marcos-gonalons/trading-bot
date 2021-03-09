@@ -14,6 +14,7 @@ import (
 	"TradingBot/src/services/logger"
 	"TradingBot/src/utils"
 	"errors"
+	"strings"
 
 	"encoding/json"
 	"net/http"
@@ -28,6 +29,9 @@ const GER30SymbolName = "GER30"
 
 // SP500SymbolName ...
 const SP500SymbolName = "SPX500"
+
+// SessionDisconnectedErrorString ...
+const SessionDisconnectedErrorString = "Your session is disconnected. Please login again to initialize a new valid session."
 
 // API ...
 type API struct {
@@ -325,6 +329,11 @@ func (s *API) SetTimeout(t time.Duration) {
 // GetTimeout ...
 func (s *API) GetTimeout() time.Duration {
 	return s.timeout
+}
+
+// IsSessionDisconnectedError ...
+func (s *API) IsSessionDisconnectedError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), SessionDisconnectedErrorString)
 }
 
 func (s *API) apiCall(
