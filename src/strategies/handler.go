@@ -126,8 +126,10 @@ func (s *Handler) fetchDataLoop() {
 						defer waitingGroup.Done()
 						return s.API.GetQuote(s.symbol)
 					}).(*api.Quote)
-					for _, strategy := range s.strategies {
-						strategy.SetCurrentBrokerQuote(quote)
+					if quote != nil {
+						for _, strategy := range s.strategies {
+							strategy.SetCurrentBrokerQuote(quote)
+						}
 					}
 				},
 				func() {
@@ -135,8 +137,10 @@ func (s *Handler) fetchDataLoop() {
 						defer waitingGroup.Done()
 						return s.API.GetOrders()
 					}).([]*api.Order)
-					for _, strategy := range s.strategies {
-						strategy.SetOrders(orders)
+					if orders != nil {
+						for _, strategy := range s.strategies {
+							strategy.SetOrders(orders)
+						}
 					}
 				},
 				func() {
@@ -144,8 +148,10 @@ func (s *Handler) fetchDataLoop() {
 						defer waitingGroup.Done()
 						return s.API.GetPositions()
 					}).([]*api.Position)
-					for _, strategy := range s.strategies {
-						strategy.SetPositions(positions)
+					if positions != nil {
+						for _, strategy := range s.strategies {
+							strategy.SetPositions(positions)
+						}
 					}
 				},
 				func() {
@@ -153,8 +159,10 @@ func (s *Handler) fetchDataLoop() {
 						defer waitingGroup.Done()
 						return s.API.GetState()
 					}).(*api.State)
-					for _, strategy := range s.strategies {
-						strategy.SetState(state)
+					if state != nil {
+						for _, strategy := range s.strategies {
+							strategy.SetState(state)
+						}
 					}
 				},
 			}
