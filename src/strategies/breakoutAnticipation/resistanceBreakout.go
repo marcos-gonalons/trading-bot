@@ -10,11 +10,14 @@ import (
 	"time"
 )
 
+// ResistanceBreakoutStrategyName ...
+const ResistanceBreakoutStrategyName = MainStrategyName + " - RBA"
+
 func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candle) {
 	validMonths, validWeekdays, validHalfHours := getValidResistanceBreakoutTimes()
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
-		s.Logger.Log("Today it's not the day for resistance breakout anticipation")
+		s.log(ResistanceBreakoutStrategyName, "Today it's not the day for resistance breakout anticipation")
 		return
 	}
 
@@ -30,7 +33,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		}
 	} else {
 		if s.pendingOrder != nil {
-			s.createPendingOrder("buy")
+			s.createPendingOrder()
 			return
 		}
 		s.pendingOrder = nil
@@ -62,7 +65,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		}
 
 		if isFalsePositive {
-			s.Logger.Log("Doing nothing, not the proper trade setup for a buy 1")
+			s.log(ResistanceBreakoutStrategyName, "Doing nothing, not the proper trade setup for a buy 1")
 			break
 		}
 
@@ -78,14 +81,14 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		}
 
 		if isFalsePositive {
-			s.Logger.Log("Doing nothing, not the proper trade setup for a buy 2")
+			s.log(ResistanceBreakoutStrategyName, "Doing nothing, not the proper trade setup for a buy 2")
 			break
 		}
 
 		price := candles[i].High - 1
 		if price <= float64(s.currentBrokerQuote.Ask) {
-			s.Logger.Log("Price is lower than the current ask, so we can't create the long order now. Price is -> " + utils.FloatToString(price, 2))
-			s.Logger.Log("Quote is -> " + utils.GetStringRepresentation(s.currentBrokerQuote))
+			s.log(ResistanceBreakoutStrategyName, "Price is lower than the current ask, so we can't create the long order now. Price is -> "+utils.FloatToString(price, 2))
+			s.log(ResistanceBreakoutStrategyName, "Quote is -> "+utils.GetStringRepresentation(s.currentBrokerQuote))
 			continue
 		}
 
@@ -102,7 +105,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 				ordersArr = append(ordersArr, order)
 			}
 		}
-		s.Logger.Log("Ok, we might have a long setup, closing all working orders first if any ...")
+		s.log(ResistanceBreakoutStrategyName, "Ok, we might have a long setup, closing all working orders first if any ...")
 		s.APIRetryFacade.CloseSpecificOrders(
 			ordersArr,
 			retryFacade.RetryParams{
@@ -120,7 +123,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 					}
 					diff := candles[lastCandlesIndex-1].Low - lowestValue
 					if diff < 10 {
-						s.Logger.Log("At the end it wasn't a good setup, doing nothing ...")
+						s.log(ResistanceBreakoutStrategyName, "At the end it wasn't a good setup, doing nothing ...")
 						return
 					}
 
@@ -148,10 +151,10 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 									Type:       "stop",
 								}
 
-								s.Logger.Log("Buy order to be created -> " + utils.GetStringRepresentation(order))
+								s.log(ResistanceBreakoutStrategyName, "Buy order to be created -> "+utils.GetStringRepresentation(order))
 
 								if !isValidTimeToOpenAPosition {
-									s.Logger.Log("Now is not the time for opening any buy orders, saving it for later ...")
+									s.log(ResistanceBreakoutStrategyName, "Now is not the time for opening any buy orders, saving it for later ...")
 									s.pendingOrder = order
 								} else {
 									s.APIRetryFacade.CreateOrder(

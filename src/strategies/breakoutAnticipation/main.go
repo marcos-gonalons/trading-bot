@@ -16,6 +16,9 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper"
 )
 
+// MainStrategyName ...
+const MainStrategyName = "Breakout Anticipation Strategy"
+
 // Strategy ...
 type Strategy struct {
 	APIRetryFacade retryFacade.Interface
@@ -113,7 +116,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		}
 	}()
 
-	s.Logger.Log("Updating candles... ")
+	s.log(MainStrategyName, "Updating candles... ")
 	s.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.previousExecutionTime, s.lastVolume)
 
 	if len(s.CandlesHandler.GetCandles()) == 0 {
@@ -121,7 +124,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}
 
 	if s.isCurrentTimeOutsideTradingHours() {
-		s.Logger.Log("Doing nothing - Now it's not the time.")
+		s.log(MainStrategyName, "Doing nothing - Now it's not the time.")
 		s.APIRetryFacade.CloseAllWorkingOrders(retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          30,
@@ -149,7 +152,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			if spread  big, no no
 			else do it as it does it right now
 		**/
-		s.Logger.Log("Doing nothing since the spread is very big -> " + utils.FloatToString(s.averageSpread, 0))
+		s.log(MainStrategyName, "Doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
 		s.pendingOrder = nil
 		s.APIRetryFacade.CloseAllWorkingOrders(retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
@@ -261,6 +264,7 @@ func (s *Strategy) isExecutionTimeValid(
 }
 
 func (s *Strategy) savePendingOrder(side string) {
+	// TODO: GetWorkingOrders should be an API method
 	workingOrders := utils.GetWorkingOrders(s.orders)
 
 	if len(workingOrders) == 0 {
@@ -280,8 +284,8 @@ func (s *Strategy) savePendingOrder(side string) {
 
 	// TODO: savingPendingOrderTimestamp
 
-	s.Logger.Log("Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
-	s.Logger.Log("This is the current order -> " + utils.GetStringRepresentation(mainOrder))
+	s.log(MainStrategyName, "Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
+	s.log(MainStrategyName, "This is the current order -> "+utils.GetStringRepresentation(mainOrder))
 
 	slOrder, tpOrder := s.getSlAndTpOrders(mainOrder.ID, workingOrders)
 
@@ -305,7 +309,7 @@ func (s *Strategy) savePendingOrder(side string) {
 		SuccessCallback: func() {
 			s.orders = nil
 			s.pendingOrder = mainOrder
-			s.Logger.Log("Closed all working orders correctly and pending order saved -> " + utils.GetStringRepresentation(s.pendingOrder))
+			s.log(MainStrategyName, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.pendingOrder))
 		},
 	})
 }
@@ -332,8 +336,8 @@ func (s *Strategy) getSlAndTpOrders(
 	return slOrder, tpOrder
 }
 
-func (s *Strategy) createPendingOrder(side string) {
-	s.Logger.Log("Trying to create the pending order ..." + utils.GetStringRepresentation(s.pendingOrder))
+func (s *Strategy) createPendingOrder() {
+	s.log(MainStrategyName, "Trying to create the pending order ..."+utils.GetStringRepresentation(s.pendingOrder))
 
 	// todo: creatependingordertimestamp
 
@@ -381,7 +385,7 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 	}
 
 	if shouldBeAdjusted {
-		s.Logger.Log("The trade is very close to the TP. Adjusting SL to break even ...")
+		s.log(MainStrategyName, "The trade is very close to the TP. Adjusting SL to break even ...")
 		s.modifyingPositionTimestamp = s.CandlesHandler.GetLastCandle().Timestamp
 
 		s.APIRetryFacade.ModifyPosition(
@@ -442,6 +446,10 @@ func (s *Strategy) setStringValues(order *api.Order) {
 	}
 }
 
+func (s *Strategy) log(strategyName string, message string) {
+	s.Logger.Log(strategyName + " - " + message)
+}
+
 // GetStrategyInstance ...
 func GetStrategyInstance(
 	apiRetryFacade retryFacade.Interface,
@@ -451,7 +459,7 @@ func GetStrategyInstance(
 	return &Strategy{
 		APIRetryFacade: apiRetryFacade,
 		Logger:         logger,
-		Name:           "breakout-anticipation",
+		Name:           MainStrategyName,
 		Symbol:         symbol,
 		Timeframe: types.Timeframe{
 			Value: 1,
