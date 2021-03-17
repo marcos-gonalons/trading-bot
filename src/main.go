@@ -19,6 +19,12 @@ import (
 func main() {
 	var ibrokerAPI api.Interface
 
+	// TODO: Add functionality to pause/resume the bot
+	// Maybe with OS signals?
+	// When receiving the specific signal, do not process the strategies code?
+	// Can be a bit dangerous if a position is open or there is a pending order
+	// But think further!
+
 	defer func() {
 		panicCatcher(recover(), ibrokerAPI)
 	}()
