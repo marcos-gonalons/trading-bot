@@ -37,7 +37,7 @@ func (s *Service) getPrice(candlesAmount int, supportOrResistance string) (price
 	lastCandlesIndex := len(candles) - 1
 
 	horizontalLevelCandleIndex := lastCandlesIndex - candlesAmount
-	if lastCandlesIndex < horizontalLevelCandleIndex*2 {
+	if horizontalLevelCandleIndex < 0 || lastCandlesIndex < horizontalLevelCandleIndex*2 {
 		err = errors.New(NotEnoughCandlesError)
 		return
 	}
