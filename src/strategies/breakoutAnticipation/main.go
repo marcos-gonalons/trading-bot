@@ -6,6 +6,7 @@ import (
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"math"
@@ -21,10 +22,11 @@ const MainStrategyName = "Breakout Anticipation Strategy"
 
 // Strategy ...
 type Strategy struct {
-	APIRetryFacade retryFacade.Interface
-	Logger         logger.Interface
-	CandlesHandler candlesHandler.Interface
-	Mutex          *sync.Mutex
+	APIRetryFacade          retryFacade.Interface
+	Logger                  logger.Interface
+	CandlesHandler          candlesHandler.Interface
+	HorizontalLevelsService horizontalLevels.Interface
+	Mutex                   *sync.Mutex
 
 	Name      string
 	Symbol    string
@@ -55,6 +57,11 @@ type Strategy struct {
 // SetCandlesHandler ...
 func (s *Strategy) SetCandlesHandler(candlesHandler candlesHandler.Interface) {
 	s.CandlesHandler = candlesHandler
+}
+
+// SetHorizontalLevelsService ...
+func (s *Strategy) SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface) {
+	s.HorizontalLevelsService = horizontalLevelsService
 }
 
 // Initialize ...
