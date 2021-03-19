@@ -126,10 +126,6 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	s.log(MainStrategyName, "Updating candles... ")
 	s.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.previousExecutionTime, s.lastVolume)
 
-	if len(s.CandlesHandler.GetCandles()) == 0 {
-		return
-	}
-
 	if s.isCurrentTimeOutsideTradingHours() {
 		s.log(MainStrategyName, "Doing nothing - Now it's not the time.")
 		s.APIRetryFacade.CloseAllWorkingOrders(retryFacade.RetryParams{
@@ -166,10 +162,6 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			MaxRetries:          30,
 			SuccessCallback:     func() { s.orders = nil },
 		})
-		return
-	}
-
-	if len(s.CandlesHandler.GetCandles()) < 2 {
 		return
 	}
 
