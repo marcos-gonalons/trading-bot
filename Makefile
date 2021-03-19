@@ -4,8 +4,6 @@ build:
 		--build-arg password=${password} \
 		--build-arg account_id=${account_id}
 
-dependencies: build
-
 up:
 	docker-compose up
 
