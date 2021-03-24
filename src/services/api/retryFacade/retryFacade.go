@@ -36,12 +36,12 @@ func (s *APIFacade) CloseOrders(
 	retryParams RetryParams,
 ) {
 
+	s.Logger.Log("Closing specified orders -> " + utils.GetStringRepresentation(orders))
+
 	if len(orders) == 0 {
 		retryParams.SuccessCallback()
 		return
 	}
-
-	s.Logger.Log("Closing specified orders -> " + utils.GetStringRepresentation(orders))
 
 	go utils.RepeatUntilSuccess(
 		"CloseOrders",
