@@ -19,11 +19,17 @@ import (
 func main() {
 	var ibrokerAPI api.Interface
 
+	// TODO: Add functionality to pause/resume the bot
+	// Maybe with OS signals?
+	// When receiving the specific signal, do not process the strategies code?
+	// Can be a bit dangerous if a position is open or there is a pending order
+	// But think further!
+
 	defer func() {
 		panicCatcher(recover(), ibrokerAPI)
 	}()
 
-	user, password, accountID, err := getArgs(os.Args[1:])
+	user, password, accountID, err := getEnvVars()
 	if err != nil {
 		fmt.Printf("%#v", err.Error())
 		return
@@ -59,14 +65,21 @@ func main() {
 	waitingGroup.Wait() // Wait forever, this script should never die
 }
 
-func getArgs(args []string) (user, password, accountID string, err error) {
-	if len(args) == 3 {
-		user = args[0]
-		password = args[1]
-		accountID = args[2]
-	} else {
-		err = errors.New("Need 3 arguments: username, password and accountID")
+func getEnvVars() (user, password, accountID string, err error) {
+	user = os.Getenv("USERNAME")
+	password = os.Getenv("PASSWORD")
+	accountID = os.Getenv("ACCOUNT_ID")
+
+	if user == "" {
+		err = errors.New("Empty USER env var")
 	}
+	if password == "" {
+		err = errors.New("Empty PASSWORD env var")
+	}
+	if accountID == "" {
+		err = errors.New("Empty ACCOUNT_ID env var")
+	}
+
 	return
 }
 

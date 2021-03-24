@@ -6,6 +6,7 @@ import (
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"math"
@@ -21,10 +22,11 @@ const MainStrategyName = "Breakout Anticipation Strategy"
 
 // Strategy ...
 type Strategy struct {
-	APIRetryFacade retryFacade.Interface
-	Logger         logger.Interface
-	CandlesHandler candlesHandler.Interface
-	Mutex          *sync.Mutex
+	APIRetryFacade          retryFacade.Interface
+	Logger                  logger.Interface
+	CandlesHandler          candlesHandler.Interface
+	HorizontalLevelsService horizontalLevels.Interface
+	Mutex                   *sync.Mutex
 
 	Name      string
 	Symbol    string
@@ -55,6 +57,11 @@ type Strategy struct {
 // SetCandlesHandler ...
 func (s *Strategy) SetCandlesHandler(candlesHandler candlesHandler.Interface) {
 	s.CandlesHandler = candlesHandler
+}
+
+// SetHorizontalLevelsService ...
+func (s *Strategy) SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface) {
+	s.HorizontalLevelsService = horizontalLevelsService
 }
 
 // Initialize ...
@@ -119,25 +126,23 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	s.log(MainStrategyName, "Updating candles... ")
 	s.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.previousExecutionTime, s.lastVolume)
 
-	if len(s.CandlesHandler.GetCandles()) == 0 {
-		return
-	}
-
 	if s.isCurrentTimeOutsideTradingHours() {
 		s.log(MainStrategyName, "Doing nothing - Now it's not the time.")
-		s.APIRetryFacade.CloseAllWorkingOrders(retryFacade.RetryParams{
-			DelayBetweenRetries: 5 * time.Second,
-			MaxRetries:          30,
-			SuccessCallback: func() {
-				s.orders = nil
-				s.pendingOrder = nil
-				s.APIRetryFacade.ClosePositions(retryFacade.RetryParams{
-					DelayBetweenRetries: 5 * time.Second,
-					MaxRetries:          30,
-					SuccessCallback:     func() { s.positions = nil },
-				})
-			},
-		})
+		s.APIRetryFacade.CloseOrders(
+			utils.GetWorkingOrders(s.orders),
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 5 * time.Second,
+				MaxRetries:          30,
+				SuccessCallback: func() {
+					s.orders = nil
+					s.pendingOrder = nil
+					s.APIRetryFacade.ClosePositions(retryFacade.RetryParams{
+						DelayBetweenRetries: 5 * time.Second,
+						MaxRetries:          30,
+						SuccessCallback:     func() { s.positions = nil },
+					})
+				},
+			})
 
 		return
 	}
@@ -154,15 +159,13 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		**/
 		s.log(MainStrategyName, "Doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
 		s.pendingOrder = nil
-		s.APIRetryFacade.CloseAllWorkingOrders(retryFacade.RetryParams{
-			DelayBetweenRetries: 5 * time.Second,
-			MaxRetries:          30,
-			SuccessCallback:     func() { s.orders = nil },
-		})
-		return
-	}
-
-	if len(s.CandlesHandler.GetCandles()) < 2 {
+		s.APIRetryFacade.CloseOrders(
+			utils.GetWorkingOrders(s.orders),
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 5 * time.Second,
+				MaxRetries:          30,
+				SuccessCallback:     func() { s.orders = nil },
+			})
 		return
 	}
 
@@ -303,15 +306,17 @@ func (s *Strategy) savePendingOrder(side string) {
 		mainOrder.LimitPrice = nil
 	}
 
-	s.APIRetryFacade.CloseAllWorkingOrders(retryFacade.RetryParams{
-		DelayBetweenRetries: 5 * time.Second,
-		MaxRetries:          30,
-		SuccessCallback: func() {
-			s.orders = nil
-			s.pendingOrder = mainOrder
-			s.log(MainStrategyName, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.pendingOrder))
-		},
-	})
+	s.APIRetryFacade.CloseOrders(
+		utils.GetWorkingOrders(s.orders),
+		retryFacade.RetryParams{
+			DelayBetweenRetries: 5 * time.Second,
+			MaxRetries:          30,
+			SuccessCallback: func() {
+				s.orders = nil
+				s.pendingOrder = mainOrder
+				s.log(MainStrategyName, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.pendingOrder))
+			},
+		})
 }
 
 func (s *Strategy) getSlAndTpOrders(

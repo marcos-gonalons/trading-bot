@@ -1,6 +1,6 @@
 github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/marcos-gonalons/tradingview-scraper v0.0.0-20201116211247-a0896214dd1f h1:5a1s73Wf5dDZAIr6HP0vpsTQij/sOYdnm1qqw/7r7QE=
-github.com/marcos-gonalons/tradingview-scraper v0.0.0-20201116211247-a0896214dd1f/go.mod h1:M9VAHDL8zMsikHuNfxsc2ufzbry9PDP907dDT89PpSw=
+github.com/marcos-gonalons/tradingview-scraper v1.0.0 h1:TRzHkjWB0mcULGfHQvU4th4Qvj7IrPCIBo+C3EgBsi4=
+github.com/marcos-gonalons/tradingview-scraper v1.0.0/go.mod h1:YVk3YyIEevJS/My8UVYFmlx2yPaTE9CvkjTdliEoqw8=
 github.com/mitchellh/mapstructure v1.4.1 h1:CpVNEelQCZBooIPDn+AR3NpivK/TIKU8bDxdASFVQag=
 github.com/mitchellh/mapstructure v1.4.1/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=

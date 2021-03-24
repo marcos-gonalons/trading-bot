@@ -30,47 +30,36 @@ func (s *APIFacade) Login(retryParams RetryParams) {
 	)
 }
 
-// CloseSpecificOrders ...
-func (s *APIFacade) CloseSpecificOrders(
+// CloseOrders ...
+func (s *APIFacade) CloseOrders(
 	orders []*api.Order,
 	retryParams RetryParams,
 ) {
 
-	if orders == nil || len(orders) == 0 {
+	s.Logger.Log("Closing specified orders -> " + utils.GetStringRepresentation(orders))
+
+	if len(orders) == 0 {
 		retryParams.SuccessCallback()
 		return
 	}
 
-	s.Logger.Log("Closing specified orders -> " + utils.GetStringRepresentation(orders))
-
 	go utils.RepeatUntilSuccess(
-		"CloseSpecifiedOrders",
+		"CloseOrders",
 		func() (err error) {
+
 			for _, order := range orders {
 				err = s.API.CloseOrder(order.ID)
+
 				if err != nil {
-					s.Logger.Error("An error happened while closing the specified orders -> " + err.Error())
-					return
+					s.Logger.Error("An error happened while closing this order -> " + utils.GetStringRepresentation(order))
+					s.Logger.Error("Error -> " + err.Error())
+
+					if s.API.IsOrderPendingCancelError(err) || s.API.IsOrderCancelledError(err) || s.API.IsOrderFilledError(err) {
+						err = nil
+					} else {
+						return
+					}
 				}
-			}
-			return
-		},
-		retryParams.DelayBetweenRetries,
-		retryParams.MaxRetries,
-		retryParams.SuccessCallback,
-	)
-}
-
-// CloseAllWorkingOrders ...
-func (s *APIFacade) CloseAllWorkingOrders(retryParams RetryParams) {
-	s.Logger.Log("Closing all working orders ...")
-
-	go utils.RepeatUntilSuccess(
-		"CloseAllWorkingOrders",
-		func() (err error) {
-			err = s.API.CloseAllOrders()
-			if err != nil {
-				s.Logger.Error("An error happened while closing all orders -> " + err.Error())
 			}
 			return
 		},
@@ -167,7 +156,7 @@ func (s *APIFacade) CreateOrder(
 			err = s.API.CreateOrder(order)
 			if err != nil {
 				s.Logger.Error("Error when creating the order -> " + err.Error())
-				if strings.Contains(err.Error(), "ya existe alguna orden vigente") {
+				if s.API.IsOrderAlreadyExistsError(err) || s.API.IsNotEnoughFundsError(err) {
 					err = nil
 				}
 			} else {

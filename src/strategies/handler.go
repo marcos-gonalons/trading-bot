@@ -6,6 +6,7 @@ import (
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/strategies/breakoutAnticipation"
 	"TradingBot/src/utils"
 	"net"
@@ -232,14 +233,18 @@ func (s *Handler) panicIfTooManyAPIFails() {
 }
 
 func (s *Handler) getStrategies() []Interface {
-	breakoutAnticipationStrategy := breakoutAnticipation.GetStrategyInstance(s.APIRetryFacade, s.Logger, s.symbol)
-	breakoutAnticipationStrategy.SetCandlesHandler(
-		&candlesHandler.Service{
-			Logger:    s.Logger,
-			Symbol:    s.symbol,
-			Timeframe: breakoutAnticipationStrategy.Timeframe,
-		},
+	breakoutAnticipationStrategy := breakoutAnticipation.GetStrategyInstance(
+		s.APIRetryFacade,
+		s.Logger,
+		s.symbol,
 	)
+	candlesHandler := &candlesHandler.Service{
+		Logger:    s.Logger,
+		Symbol:    s.symbol,
+		Timeframe: breakoutAnticipationStrategy.Timeframe,
+	}
+	breakoutAnticipationStrategy.SetCandlesHandler(candlesHandler)
+	breakoutAnticipationStrategy.SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
 
 	return []Interface{breakoutAnticipationStrategy}
 }
