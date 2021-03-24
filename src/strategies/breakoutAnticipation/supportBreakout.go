@@ -95,7 +95,8 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 					return
 				}
 
-				s.APIRetryFacade.CloseAllWorkingOrders(
+				s.APIRetryFacade.CloseOrders(
+					utils.GetWorkingOrders(s.orders),
 					retryFacade.RetryParams{
 						DelayBetweenRetries: 5 * time.Second,
 						MaxRetries:          30,
