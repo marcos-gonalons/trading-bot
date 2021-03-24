@@ -73,16 +73,9 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	}
 
 	s.closingOrdersTimestamp = candles[lastCandlesIndex].Timestamp
-	workingOrders := utils.GetWorkingOrders(s.orders)
-	var ordersArr []*api.Order
-	for _, order := range workingOrders {
-		if order.Side == "sell" && order.ParentID == nil {
-			ordersArr = append(ordersArr, order)
-		}
-	}
 	s.log(SupportBreakoutStrategyName, "Ok, we might have a short setup, closing all working orders first if any ...")
-	s.APIRetryFacade.CloseSpecificOrders(
-		ordersArr,
+	s.APIRetryFacade.CloseOrders(
+		utils.GetWorkingOrders(s.orders),
 		retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          30,

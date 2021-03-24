@@ -128,19 +128,21 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 	if s.isCurrentTimeOutsideTradingHours() {
 		s.log(MainStrategyName, "Doing nothing - Now it's not the time.")
-		s.APIRetryFacade.CloseAllWorkingOrders(retryFacade.RetryParams{
-			DelayBetweenRetries: 5 * time.Second,
-			MaxRetries:          30,
-			SuccessCallback: func() {
-				s.orders = nil
-				s.pendingOrder = nil
-				s.APIRetryFacade.ClosePositions(retryFacade.RetryParams{
-					DelayBetweenRetries: 5 * time.Second,
-					MaxRetries:          30,
-					SuccessCallback:     func() { s.positions = nil },
-				})
-			},
-		})
+		s.APIRetryFacade.CloseOrders(
+			utils.GetWorkingOrders(s.orders),
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 5 * time.Second,
+				MaxRetries:          30,
+				SuccessCallback: func() {
+					s.orders = nil
+					s.pendingOrder = nil
+					s.APIRetryFacade.ClosePositions(retryFacade.RetryParams{
+						DelayBetweenRetries: 5 * time.Second,
+						MaxRetries:          30,
+						SuccessCallback:     func() { s.positions = nil },
+					})
+				},
+			})
 
 		return
 	}
@@ -157,11 +159,13 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		**/
 		s.log(MainStrategyName, "Doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
 		s.pendingOrder = nil
-		s.APIRetryFacade.CloseAllWorkingOrders(retryFacade.RetryParams{
-			DelayBetweenRetries: 5 * time.Second,
-			MaxRetries:          30,
-			SuccessCallback:     func() { s.orders = nil },
-		})
+		s.APIRetryFacade.CloseOrders(
+			utils.GetWorkingOrders(s.orders),
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 5 * time.Second,
+				MaxRetries:          30,
+				SuccessCallback:     func() { s.orders = nil },
+			})
 		return
 	}
 
@@ -302,15 +306,17 @@ func (s *Strategy) savePendingOrder(side string) {
 		mainOrder.LimitPrice = nil
 	}
 
-	s.APIRetryFacade.CloseAllWorkingOrders(retryFacade.RetryParams{
-		DelayBetweenRetries: 5 * time.Second,
-		MaxRetries:          30,
-		SuccessCallback: func() {
-			s.orders = nil
-			s.pendingOrder = mainOrder
-			s.log(MainStrategyName, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.pendingOrder))
-		},
-	})
+	s.APIRetryFacade.CloseOrders(
+		utils.GetWorkingOrders(s.orders),
+		retryFacade.RetryParams{
+			DelayBetweenRetries: 5 * time.Second,
+			MaxRetries:          30,
+			SuccessCallback: func() {
+				s.orders = nil
+				s.pendingOrder = mainOrder
+				s.log(MainStrategyName, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.pendingOrder))
+			},
+		})
 }
 
 func (s *Strategy) getSlAndTpOrders(

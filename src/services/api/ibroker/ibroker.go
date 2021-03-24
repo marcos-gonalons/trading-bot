@@ -24,15 +24,6 @@ import (
 	"TradingBot/src/services/httpclient"
 )
 
-// GER30SymbolName ...
-const GER30SymbolName = "GER30"
-
-// SP500SymbolName ...
-const SP500SymbolName = "SPX500"
-
-// SessionDisconnectedErrorString ...
-const SessionDisconnectedErrorString = "Your session is disconnected. Please login again to initialize a new valid session."
-
 // API ...
 type API struct {
 	httpclient httpclient.Interface
@@ -268,6 +259,7 @@ func (s *API) CloseAllOrders() (err error) {
 		return
 	}
 
+	// First, close the main order that is not the TP nor the SL
 	errString := ""
 	workingOrders := utils.GetWorkingOrders(s.orders)
 	for _, order := range workingOrders {
@@ -280,6 +272,7 @@ func (s *API) CloseAllOrders() (err error) {
 		}
 	}
 
+	// Then, get the orders again from the broker and close the TP and SL orders
 	orders, err := s.GetOrders()
 	if err != nil {
 		errString += err.Error() + "\n"
@@ -334,6 +327,31 @@ func (s *API) GetTimeout() time.Duration {
 // IsSessionDisconnectedError ...
 func (s *API) IsSessionDisconnectedError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), SessionDisconnectedErrorString)
+}
+
+// IsOrderAlreadyExistsError ...
+func (s *API) IsOrderAlreadyExistsError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), SessionDisconnectedErrorString)
+}
+
+// IsNotEnoughFundsError ...
+func (s *API) IsNotEnoughFundsError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), NotEnoughFundsErrorString)
+}
+
+// IsOrderPendingCancelError ...
+func (s *API) IsOrderPendingCancelError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), OrderIsPendingCancelErrorString)
+}
+
+// IsOrderCancelledError ...
+func (s *API) IsOrderCancelledError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), OrderIsCancelledErrorString)
+}
+
+// IsOrderFilledError ...
+func (s *API) IsOrderFilledError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), OrderIsFilledErrorString)
 }
 
 func (s *API) apiCall(

@@ -73,16 +73,9 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	}
 
 	s.closingOrdersTimestamp = candles[lastCandlesIndex].Timestamp
-	workingOrders := utils.GetWorkingOrders(s.orders)
-	var ordersArr []*api.Order
-	for _, order := range workingOrders {
-		if order.Side == "buy" && order.ParentID == nil {
-			ordersArr = append(ordersArr, order)
-		}
-	}
 	s.log(ResistanceBreakoutStrategyName, "Ok, we might have a long setup, closing all working orders first if any ...")
-	s.APIRetryFacade.CloseSpecificOrders(
-		ordersArr,
+	s.APIRetryFacade.CloseOrders(
+		utils.GetWorkingOrders(s.orders),
 		retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          30,
@@ -102,7 +95,8 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 					return
 				}
 
-				s.APIRetryFacade.CloseAllWorkingOrders(
+				s.APIRetryFacade.CloseOrders(
+					utils.GetWorkingOrders(s.orders),
 					retryFacade.RetryParams{
 						DelayBetweenRetries: 5 * time.Second,
 						MaxRetries:          30,

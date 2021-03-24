@@ -16,7 +16,14 @@ type Interface interface {
 	CloseAllPositions() error
 	GetState() (*State, error)
 	ModifyPosition(symbol string, takeProfit *string, stopLoss *string) error
+
 	SetTimeout(t time.Duration)
 	GetTimeout() time.Duration
+
 	IsSessionDisconnectedError(err error) bool
+	IsOrderAlreadyExistsError(err error) bool
+	IsNotEnoughFundsError(err error) bool
+	IsOrderPendingCancelError(err error) bool
+	IsOrderCancelledError(err error) bool
+	IsOrderFilledError(err error) bool
 }
