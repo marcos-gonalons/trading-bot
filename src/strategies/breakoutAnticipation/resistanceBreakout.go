@@ -73,7 +73,8 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	}
 
 	s.closingOrdersTimestamp = candles[lastCandlesIndex].Timestamp
-	s.log(ResistanceBreakoutStrategyName, "Ok, we might have a long setup, closing all working orders first if any ...")
+	s.log(ResistanceBreakoutStrategyName, "Ok, we might have a long setup at price "+utils.FloatToString(price, 2))
+	s.log(ResistanceBreakoutStrategyName, "Closing all working orders first if any ...")
 	s.APIRetryFacade.CloseOrders(
 		utils.GetWorkingOrders(s.orders),
 		retryFacade.RetryParams{

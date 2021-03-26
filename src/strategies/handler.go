@@ -120,7 +120,9 @@ func (s *Handler) fetchDataLoop() {
 		var waitingGroup sync.WaitGroup
 		now := time.Now()
 		currentHour, _ := strconv.Atoi(now.Format("15"))
-		if currentHour >= 8 && currentHour <= 21 {
+		// TODO: Function somewhere to check if we are inside the time range
+		// Check function in strategies/main.go (isCurrentTimeOutsideTradingHours), refactor this somehow
+		if currentHour >= 7 && currentHour <= 21 {
 			fetchFuncs := []func(){
 				func() {
 					quote := s.fetch(func() (interface{}, error) {

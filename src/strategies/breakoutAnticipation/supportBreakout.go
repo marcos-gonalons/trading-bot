@@ -73,7 +73,8 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	}
 
 	s.closingOrdersTimestamp = candles[lastCandlesIndex].Timestamp
-	s.log(SupportBreakoutStrategyName, "Ok, we might have a short setup, closing all working orders first if any ...")
+	s.log(SupportBreakoutStrategyName, "Ok, we might have a short setup at price "+utils.FloatToString(price, 2))
+	s.log(SupportBreakoutStrategyName, "Closing all working orders first if any ...")
 	s.APIRetryFacade.CloseOrders(
 		utils.GetWorkingOrders(s.orders),
 		retryFacade.RetryParams{

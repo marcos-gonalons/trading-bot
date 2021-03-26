@@ -9,21 +9,6 @@ type Service struct {
 	CandlesHandler candlesHandler.Interface
 }
 
-// ResistanceName ...
-const ResistanceName = "resistance"
-
-// SupportName ...
-const SupportName = "support"
-
-// FutureCandlesOvercamePriceError ...
-const FutureCandlesOvercamePriceError = "future_overcame"
-
-// PastCandlesOvercamePriceError ...
-const PastCandlesOvercamePriceError = "past_overcame"
-
-// NotEnoughCandlesError ...
-const NotEnoughCandlesError = "not_enough_candles"
-
 func (s *Service) GetResistancePrice(candlesWithLowerPriceToBeConsideredTop int) (price float64, err error) {
 	return s.getPrice(candlesWithLowerPriceToBeConsideredTop, ResistanceName)
 }

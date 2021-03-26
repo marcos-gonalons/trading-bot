@@ -1,0 +1,16 @@
+package horizontalLevels
+
+// ResistanceName ...
+const ResistanceName = "resistance"
+
+// SupportName ...
+const SupportName = "support"
+
+// FutureCandlesOvercamePriceError ...
+const FutureCandlesOvercamePriceError = "future_overcame"
+
+// PastCandlesOvercamePriceError ...
+const PastCandlesOvercamePriceError = "past_overcame"
+
+// NotEnoughCandlesError ...
+const NotEnoughCandlesError = "not_enough_candles"
