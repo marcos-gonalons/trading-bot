@@ -42,7 +42,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	riskPercentage := float64(1)
 	stopLossDistance := 12
 	takeProfitDistance := 27
-	candlesAmountWithLowerPriceToBeConsideredTop := 19
+	candlesAmountWithLowerPriceToBeConsideredTop := 18
 	tpDistanceShortForBreakEvenSL := 5
 	priceOffset := -1
 

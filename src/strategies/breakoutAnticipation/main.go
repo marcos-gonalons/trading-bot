@@ -35,6 +35,7 @@ type Strategy struct {
 
 	currentExecutionTime  time.Time
 	previousExecutionTime time.Time
+	lastCandlesAmount     int
 	lastVolume            float64
 	lastBid               *float64
 	lastAsk               *float64
@@ -122,6 +123,8 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		if data.Ask != nil {
 			s.lastAsk = data.Ask
 		}
+
+		s.lastCandlesAmount = len(s.CandlesHandler.GetCandles())
 	}()
 
 	s.log(MainStrategyName, "Updating candles... ")
@@ -170,13 +173,10 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		return
 	}
 
-	// TODO: Only run the strategy code when a new candle has been added to the candles array
-	// This way we emulate 100% the backtest
-	// Also take into account that I should remove 1 from the candlesAmount to check if I do it this way!
-	// Or maybe not? Check it hard and be 100% sure. Probably yes, but better to think well rested.
-
-	s.resistanceBreakoutAnticipationStrategy(s.CandlesHandler.GetCandles())
-	s.supportBreakoutAnticipationStrategy(s.CandlesHandler.GetCandles())
+	if s.lastCandlesAmount != len(s.CandlesHandler.GetCandles()) {
+		s.resistanceBreakoutAnticipationStrategy(s.CandlesHandler.GetCandles())
+		s.supportBreakoutAnticipationStrategy(s.CandlesHandler.GetCandles())
+	}
 }
 
 func (s *Strategy) checkOpenPositionSLandTP() {
