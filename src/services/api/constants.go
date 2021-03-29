@@ -13,10 +13,10 @@ const ShortSide OrderSide = "sell"
 type OrderType = string
 
 // LimitType ...
-const LimitType = "limit"
+const LimitType OrderType = "limit"
 
 // StopType ...
-const StopType = "stop"
+const StopType OrderType = "stop"
 
 // MarketType ...
 const MarketType = "market"
