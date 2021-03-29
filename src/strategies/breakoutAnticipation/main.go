@@ -23,6 +23,7 @@ const MainStrategyName = "Breakout Anticipation Strategy"
 // Strategy ...
 type Strategy struct {
 	APIRetryFacade          retryFacade.Interface
+	API                     api.Interface
 	Logger                  logger.Interface
 	CandlesHandler          candlesHandler.Interface
 	HorizontalLevelsService horizontalLevels.Interface
@@ -184,7 +185,7 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 			s.currentPosition = s.positions[0]
 			var tp string
 			var sl string
-			if s.currentPosition.Side == "sell" {
+			if s.currentPosition.Side == api.ShortSide {
 				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-27), 1)
 				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+12), 1)
 			} else {
@@ -304,10 +305,10 @@ func (s *Strategy) savePendingOrder(side string) {
 		mainOrder.TakeProfit = tpOrder.LimitPrice
 	}
 
-	if mainOrder.Type == "limit" {
+	if s.API.IsLimitOrder(mainOrder) {
 		mainOrder.StopPrice = nil
 	}
-	if mainOrder.Type == "stop" {
+	if s.API.IsStopOrder(mainOrder) {
 		mainOrder.LimitPrice = nil
 	}
 
@@ -335,10 +336,10 @@ func (s *Strategy) getSlAndTpOrders(
 			continue
 		}
 
-		if workingOrder.Type == "limit" {
+		if s.API.IsLimitOrder(workingOrder) {
 			tpOrder = workingOrder
 		}
-		if workingOrder.Type == "stop" {
+		if s.API.IsStopOrder(workingOrder) {
 			slOrder = workingOrder
 		}
 	}
@@ -346,9 +347,14 @@ func (s *Strategy) getSlAndTpOrders(
 	return slOrder, tpOrder
 }
 
-func (s *Strategy) createPendingOrder() {
-	s.log(MainStrategyName, "Trying to create the pending order ..."+utils.GetStringRepresentation(s.pendingOrder))
+func (s *Strategy) createPendingOrder(side api.OrderSide) {
+	s.log(MainStrategyName, "Trying to create the pending order "+utils.GetStringRepresentation(s.pendingOrder))
 
+	if s.pendingOrder.Side != side {
+		return
+	}
+
+	s.log(MainStrategyName, "Trying to create the pending order ..."+utils.GetStringRepresentation(s.pendingOrder))
 	// todo: creatependingordertimestamp
 
 	s.APIRetryFacade.CreateOrder(
@@ -388,7 +394,7 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 	}
 
 	shouldBeAdjusted := false
-	if side == "buy" {
+	if side == api.LongSide {
 		shouldBeAdjusted = float64(*tpOrder.LimitPrice)-s.CandlesHandler.GetLastCandle().High < distanceToTp
 	} else {
 		shouldBeAdjusted = s.CandlesHandler.GetLastCandle().Low-float64(*tpOrder.LimitPrice) < distanceToTp
@@ -418,10 +424,10 @@ func (s *Strategy) getSlAndTpOrdersForCurrentOpenPosition() (
 		if order.Status != "working" {
 			continue
 		}
-		if order.Type == "limit" {
+		if s.API.IsLimitOrder(order) {
 			tpOrder = order
 		}
-		if order.Type == "stop" {
+		if s.API.IsStopOrder(order) {
 			slOrder = order
 		}
 	}
@@ -439,7 +445,7 @@ func (s *Strategy) setStringValues(order *api.Order) {
 		Qty:        &qty,
 	}
 
-	if order.Type == "limit" {
+	if s.API.IsLimitOrder(order) {
 		limitPrice := utils.FloatToString(math.Round(float64(*order.LimitPrice)*10)/10, 1)
 		order.StringValues.LimitPrice = &limitPrice
 	} else {
@@ -462,11 +468,13 @@ func (s *Strategy) log(strategyName string, message string) {
 
 // GetStrategyInstance ...
 func GetStrategyInstance(
+	api api.Interface,
 	apiRetryFacade retryFacade.Interface,
 	logger logger.Interface,
 	symbol string,
 ) *Strategy {
 	return &Strategy{
+		API:            api,
 		APIRetryFacade: apiRetryFacade,
 		Logger:         logger,
 		Name:           MainStrategyName,

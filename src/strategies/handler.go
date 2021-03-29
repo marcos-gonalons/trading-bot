@@ -236,6 +236,7 @@ func (s *Handler) panicIfTooManyAPIFails() {
 
 func (s *Handler) getStrategies() []Interface {
 	breakoutAnticipationStrategy := breakoutAnticipation.GetStrategyInstance(
+		s.API,
 		s.APIRetryFacade,
 		s.Logger,
 		s.symbol,

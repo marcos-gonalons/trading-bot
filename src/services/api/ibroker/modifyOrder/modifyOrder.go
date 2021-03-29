@@ -12,8 +12,10 @@ import (
 
 // RequestParameters ...
 type RequestParameters struct {
-	AccessToken string
-	Order       *api.Order
+	AccessToken  string
+	Order        *api.Order
+	IsLimitOrder func(order *api.Order) bool
+	IsStopOrder  func(order *api.Order) bool
 }
 
 // Request ...
@@ -34,7 +36,7 @@ func Request(
 	rq, err := http.NewRequest(
 		http.MethodPut,
 		endpoint,
-		getRequestBody(params.Order),
+		getRequestBody(params),
 	)
 	if err != nil {
 		return
@@ -69,7 +71,9 @@ func Request(
 	return
 }
 
-func getRequestBody(order *api.Order) io.Reader {
+func getRequestBody(params *RequestParameters) io.Reader {
+	order := params.Order
+
 	body := "" +
 		"currentAsk=" + *order.StringValues.CurrentAsk + "&" +
 		"currentBid=" + *order.StringValues.CurrentBid + "&" +
@@ -77,12 +81,12 @@ func getRequestBody(order *api.Order) io.Reader {
 		"qty=" + *order.StringValues.Qty + "&" +
 		"id=" + order.ID
 
-	if order.Type == "limit" {
+	if params.IsLimitOrder(order) {
 		body = body + "&" + "limitPrice=" + *order.StringValues.LimitPrice
 		body = body + "&" + "stopPrice=0"
 	}
 
-	if order.Type == "stop" {
+	if params.IsStopOrder(order) {
 		body = body + "&" + "stopPrice=" + *order.StringValues.StopPrice
 		body = body + "&" + "limitPrice=0"
 	}

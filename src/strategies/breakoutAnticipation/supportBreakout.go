@@ -29,11 +29,11 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 
 	if !isValidTimeToOpenAPosition {
 		if len(s.positions) == 0 {
-			s.savePendingOrder("sell")
+			s.savePendingOrder(api.ShortSide)
 		}
 	} else {
 		if s.pendingOrder != nil {
-			s.createPendingOrder()
+			s.createPendingOrder(api.ShortSide)
 			return
 		}
 		s.pendingOrder = nil
@@ -47,7 +47,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	priceOffset := 3
 
 	if len(s.positions) > 0 {
-		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), "sell")
+		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), api.ShortSide)
 		return
 	}
 
@@ -117,10 +117,10 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 								Instrument: ibroker.GER30SymbolName,
 								StopPrice:  &float32Price,
 								Qty:        float32(size),
-								Side:       "sell",
+								Side:       api.ShortSide,
 								StopLoss:   &stopLoss,
 								TakeProfit: &takeProfit,
-								Type:       "stop",
+								Type:       api.StopType,
 							}
 
 							s.log(SupportBreakoutStrategyName, "Short order to be created -> "+utils.GetStringRepresentation(order))

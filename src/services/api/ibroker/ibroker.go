@@ -136,8 +136,10 @@ func (s *API) ModifyOrder(order *api.Order) (err error) {
 				setHeaders,
 				optionsRequest,
 				&modifyorder.RequestParameters{
-					AccessToken: s.accessToken.Token,
-					Order:       order,
+					AccessToken:  s.accessToken.Token,
+					Order:        order,
+					IsLimitOrder: s.IsLimitOrder,
+					IsStopOrder:  s.IsStopOrder,
 				},
 			)
 		},
@@ -352,6 +354,16 @@ func (s *API) IsOrderCancelledError(err error) bool {
 // IsOrderFilledError ...
 func (s *API) IsOrderFilledError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), OrderIsFilledErrorString)
+}
+
+// IsLimitOrder ...
+func (s *API) IsLimitOrder(order *api.Order) bool {
+	return order.Type == api.LimitType
+}
+
+// IsStopOrder ...
+func (s *API) IsStopOrder(order *api.Order) bool {
+	return order.Type == api.StopType
 }
 
 func (s *API) apiCall(
