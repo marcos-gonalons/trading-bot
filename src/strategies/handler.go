@@ -77,15 +77,21 @@ func (s *Handler) onReceiveMarketData(symbol string, data *tradingviewsocket.Quo
 		// TODO: Only call the strategy if the data is received for the symbol that the strategy expects.
 		// the breakout strategy that we have right now must only process FX:GER30 data
 		// So do that somehow
-		// Maybe each startegy will have "validSymbols" so I can check that from here
+		// Maybe each strategy will have "validSymbols" so I can check that from here
 		go strategy.OnReceiveMarketData(symbol, data)
 	}
 }
 
-func (s *Handler) onSocketError(err error) {
+func (s *Handler) onSocketError(err error, context string) {
 	s.Logger.Log("Socket error -> " + err.Error())
-	s.socket.Close()
-	s.initSocket()
+	s.Logger.Log("Context -> " + context)
+	err = s.socket.Close()
+	if err != nil {
+		s.Logger.Error("Error when closing the socket -> " + err.Error())
+	} else {
+		s.Logger.Error("Initializing the socket again ... ")
+		s.initSocket()
+	}
 }
 
 func (s *Handler) resetAtTwoAm() {

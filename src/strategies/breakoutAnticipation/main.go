@@ -160,6 +160,9 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			So when it's time to create an order
 			if spread  big, no no
 			else do it as it does it right now
+
+			Todo: take into account the bid and the ask and long and short orders when checking the sperad
+			For example
 		**/
 		s.log(MainStrategyName, "Doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
 		s.pendingOrder = nil
