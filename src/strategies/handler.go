@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper"
+	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
 // Handler ...

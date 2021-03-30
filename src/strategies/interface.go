@@ -5,7 +5,7 @@ import (
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 
-	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper"
+	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
 // Interface implemented by all the strategies
