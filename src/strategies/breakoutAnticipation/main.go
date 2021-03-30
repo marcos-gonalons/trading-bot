@@ -125,6 +125,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		}
 
 		s.lastCandlesAmount = len(s.CandlesHandler.GetCandles())
+		s.log(MainStrategyName, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
 	}()
 
 	s.log(MainStrategyName, "Updating candles... ")
@@ -179,6 +180,8 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	if s.lastCandlesAmount != len(s.CandlesHandler.GetCandles()) {
 		s.resistanceBreakoutAnticipationStrategy(s.CandlesHandler.GetCandles())
 		s.supportBreakoutAnticipationStrategy(s.CandlesHandler.GetCandles())
+	} else {
+		s.log(MainStrategyName, "Doing nothing - still same candle")
 	}
 }
 
