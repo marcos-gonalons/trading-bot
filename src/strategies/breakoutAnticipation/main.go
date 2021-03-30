@@ -133,7 +133,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	if s.isCurrentTimeOutsideTradingHours() {
 		s.log(MainStrategyName, "Doing nothing - Now it's not the time.")
 		s.APIRetryFacade.CloseOrders(
-			utils.GetWorkingOrders(s.orders),
+			s.API.GetWorkingOrders(s.orders),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,
@@ -167,7 +167,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		s.log(MainStrategyName, "Doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
 		s.pendingOrder = nil
 		s.APIRetryFacade.CloseOrders(
-			utils.GetWorkingOrders(s.orders),
+			s.API.GetWorkingOrders(s.orders),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,
@@ -188,7 +188,8 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 			s.currentPosition = s.positions[0]
 			var tp string
 			var sl string
-			if s.currentPosition.Side == api.ShortSide {
+
+			if s.API.IsShortPosition(s.currentPosition) {
 				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-27), 1)
 				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+12), 1)
 			} else {
@@ -277,7 +278,7 @@ func (s *Strategy) isExecutionTimeValid(
 
 func (s *Strategy) savePendingOrder(side string) {
 	// TODO: GetWorkingOrders should be an API method
-	workingOrders := utils.GetWorkingOrders(s.orders)
+	workingOrders := s.API.GetWorkingOrders(s.orders)
 
 	if len(workingOrders) == 0 {
 		return
@@ -316,7 +317,7 @@ func (s *Strategy) savePendingOrder(side string) {
 	}
 
 	s.APIRetryFacade.CloseOrders(
-		utils.GetWorkingOrders(s.orders),
+		s.API.GetWorkingOrders(s.orders),
 		retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          30,
@@ -350,7 +351,7 @@ func (s *Strategy) getSlAndTpOrders(
 	return slOrder, tpOrder
 }
 
-func (s *Strategy) createPendingOrder(side api.OrderSide) {
+func (s *Strategy) createPendingOrder(side string) {
 	s.log(MainStrategyName, "Trying to create the pending order "+utils.GetStringRepresentation(s.pendingOrder))
 
 	if s.pendingOrder.Side != side {
@@ -397,7 +398,7 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 	}
 
 	shouldBeAdjusted := false
-	if side == api.LongSide {
+	if s.API.IsLongPosition(position) {
 		shouldBeAdjusted = float64(*tpOrder.LimitPrice)-s.CandlesHandler.GetLastCandle().High < distanceToTp
 	} else {
 		shouldBeAdjusted = s.CandlesHandler.GetLastCandle().Low-float64(*tpOrder.LimitPrice) < distanceToTp

@@ -29,11 +29,11 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 
 	if !isValidTimeToOpenAPosition {
 		if len(s.positions) == 0 {
-			s.savePendingOrder(api.LongSide)
+			s.savePendingOrder(ibroker.LongSide)
 		}
 	} else {
 		if s.pendingOrder != nil {
-			s.createPendingOrder(api.LongSide)
+			s.createPendingOrder(ibroker.LongSide)
 			return
 		}
 		s.pendingOrder = nil
@@ -47,7 +47,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	priceOffset := -1
 
 	if len(s.positions) > 0 {
-		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), api.LongSide)
+		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), ibroker.LongSide)
 		return
 	}
 
@@ -76,7 +76,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	s.log(ResistanceBreakoutStrategyName, "Ok, we might have a long setup at price "+utils.FloatToString(price, 2))
 	s.log(ResistanceBreakoutStrategyName, "Closing all working orders first if any ...")
 	s.APIRetryFacade.CloseOrders(
-		utils.GetWorkingOrders(s.orders),
+		s.API.GetWorkingOrders(s.orders),
 		retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          30,
@@ -97,7 +97,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 				}
 
 				s.APIRetryFacade.CloseOrders(
-					utils.GetWorkingOrders(s.orders),
+					s.API.GetWorkingOrders(s.orders),
 					retryFacade.RetryParams{
 						DelayBetweenRetries: 5 * time.Second,
 						MaxRetries:          30,
@@ -115,10 +115,10 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 								Instrument: ibroker.GER30SymbolName,
 								StopPrice:  &float32Price,
 								Qty:        float32(size),
-								Side:       api.LongSide,
+								Side:       ibroker.LongSide,
 								StopLoss:   &stopLoss,
 								TakeProfit: &takeProfit,
-								Type:       api.StopType,
+								Type:       ibroker.StopType,
 							}
 
 							s.log(ResistanceBreakoutStrategyName, "Buy order to be created -> "+utils.GetStringRepresentation(order))

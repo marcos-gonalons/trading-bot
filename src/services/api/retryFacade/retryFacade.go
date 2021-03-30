@@ -131,7 +131,7 @@ func (s *APIFacade) CreateOrder(
 			currentQuote := getCurrentBrokerQuote()
 			s.Logger.Log("Current broker quote is" + utils.GetStringRepresentation(currentQuote))
 
-			if order.Side == api.LongSide {
+			if s.API.IsLongOrder(order) {
 				if s.API.IsLimitOrder(order) && *order.LimitPrice >= currentQuote.Bid {
 					s.Logger.Log("Can't create the limit buy order since the order price is bigger than the current bid")
 					return
@@ -141,7 +141,7 @@ func (s *APIFacade) CreateOrder(
 					return
 				}
 			}
-			if order.Side == api.ShortSide {
+			if s.API.IsShortOrder(order) {
 				if s.API.IsLimitOrder(order) && *order.LimitPrice <= currentQuote.Ask {
 					s.Logger.Log("Can't create the limit sell order since the order price is lower than the current ask")
 					return

@@ -8,6 +8,7 @@ type Interface interface {
 	GetQuote(symbol string) (*Quote, error)
 	CreateOrder(order *Order) error
 	GetOrders() ([]*Order, error)
+	GetWorkingOrders(orders []*Order) []*Order
 	ModifyOrder(order *Order) error
 	CloseOrder(orderID string) error
 	GetPositions() ([]*Position, error)
@@ -26,7 +27,12 @@ type Interface interface {
 	IsOrderPendingCancelError(err error) bool
 	IsOrderCancelledError(err error) bool
 	IsOrderFilledError(err error) bool
+	IsWorkingOrder(order *Order) bool
 
 	IsLimitOrder(order *Order) bool
 	IsStopOrder(order *Order) bool
+	IsLongOrder(order *Order) bool
+	IsShortOrder(order *Order) bool
+	IsLongPosition(position *Position) bool
+	IsShortPosition(position *Position) bool
 }

@@ -12,7 +12,6 @@ import (
 	modifyorder "TradingBot/src/services/api/ibroker/modifyOrder"
 	modifyposition "TradingBot/src/services/api/ibroker/modifyPosition"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/utils"
 	"errors"
 	"strings"
 
@@ -255,6 +254,17 @@ func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string
 	return
 }
 
+// GetWorkingOrders ...
+func (s *API) GetWorkingOrders(orders []*api.Order) []*api.Order {
+	var workingOrders []*api.Order
+	for _, order := range orders {
+		if order.Status == "working" {
+			workingOrders = append(workingOrders, order)
+		}
+	}
+	return workingOrders
+}
+
 // CloseAllOrders ...
 func (s *API) CloseAllOrders() (err error) {
 	if len(s.orders) == 0 {
@@ -263,7 +273,7 @@ func (s *API) CloseAllOrders() (err error) {
 
 	// First, close the main order that is not the TP nor the SL
 	errString := ""
-	workingOrders := utils.GetWorkingOrders(s.orders)
+	workingOrders := s.GetWorkingOrders(s.orders)
 	for _, order := range workingOrders {
 		if order.ParentID != nil {
 			continue
@@ -282,7 +292,7 @@ func (s *API) CloseAllOrders() (err error) {
 		return
 	}
 
-	workingOrders = utils.GetWorkingOrders(orders)
+	workingOrders = s.GetWorkingOrders(orders)
 	for _, order := range workingOrders {
 		err = s.CloseOrder(order.ID)
 		if err != nil {
@@ -351,19 +361,36 @@ func (s *API) IsOrderCancelledError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), OrderIsCancelledErrorString)
 }
 
-// IsOrderFilledError ...
 func (s *API) IsOrderFilledError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), OrderIsFilledErrorString)
 }
 
-// IsLimitOrder ...
 func (s *API) IsLimitOrder(order *api.Order) bool {
-	return order.Type == api.LimitType
+	return order.Type == LimitType
 }
 
-// IsStopOrder ...
 func (s *API) IsStopOrder(order *api.Order) bool {
-	return order.Type == api.StopType
+	return order.Type == StopType
+}
+
+func (s *API) IsLongOrder(order *api.Order) bool {
+	return order.Side == LongSide
+}
+
+func (s *API) IsShortOrder(order *api.Order) bool {
+	return order.Side == ShortSide
+}
+
+func (s *API) IsLongPosition(position *api.Position) bool {
+	return position.Side == LongSide
+}
+
+func (s *API) IsShortPosition(position *api.Position) bool {
+	return position.Side == ShortSide
+}
+
+func (s *API) IsWorkingOrder(order *api.Order) bool {
+	return order.Status == StatusWorkingOrder
 }
 
 func (s *API) apiCall(
@@ -402,7 +429,7 @@ func (s *API) setHeaders(rq *http.Request, isOptionsRequest bool, method string)
 	} else {
 		rq.Header.Set("Accept", "application/json")
 	}
-	rq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36")
+	rq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36")
 	rq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rq.Header.Set("Origin", "https://www.tradingview.com")
 	rq.Header.Set("Sec-Fetch-Site", "cross-site")

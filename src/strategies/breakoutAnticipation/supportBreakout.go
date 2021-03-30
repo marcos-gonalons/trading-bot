@@ -29,11 +29,11 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 
 	if !isValidTimeToOpenAPosition {
 		if len(s.positions) == 0 {
-			s.savePendingOrder(api.ShortSide)
+			s.savePendingOrder(ibroker.ShortSide)
 		}
 	} else {
 		if s.pendingOrder != nil {
-			s.createPendingOrder(api.ShortSide)
+			s.createPendingOrder(ibroker.ShortSide)
 			return
 		}
 		s.pendingOrder = nil
@@ -47,7 +47,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	priceOffset := 3
 
 	if len(s.positions) > 0 {
-		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), api.ShortSide)
+		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), ibroker.ShortSide)
 		return
 	}
 
@@ -76,7 +76,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	s.log(SupportBreakoutStrategyName, "Ok, we might have a short setup at price "+utils.FloatToString(price, 2))
 	s.log(SupportBreakoutStrategyName, "Closing all working orders first if any ...")
 	s.APIRetryFacade.CloseOrders(
-		utils.GetWorkingOrders(s.orders),
+		s.API.GetWorkingOrders(s.orders),
 		retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          30,
@@ -97,7 +97,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 				}
 
 				s.APIRetryFacade.CloseOrders(
-					utils.GetWorkingOrders(s.orders),
+					s.API.GetWorkingOrders(s.orders),
 					retryFacade.RetryParams{
 						DelayBetweenRetries: 5 * time.Second,
 						MaxRetries:          30,
@@ -117,10 +117,10 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 								Instrument: ibroker.GER30SymbolName,
 								StopPrice:  &float32Price,
 								Qty:        float32(size),
-								Side:       api.ShortSide,
+								Side:       ibroker.ShortSide,
 								StopLoss:   &stopLoss,
 								TakeProfit: &takeProfit,
-								Type:       api.StopType,
+								Type:       ibroker.StopType,
 							}
 
 							s.log(SupportBreakoutStrategyName, "Short order to be created -> "+utils.GetStringRepresentation(order))
