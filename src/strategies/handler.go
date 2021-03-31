@@ -11,6 +11,7 @@ import (
 	"TradingBot/src/utils"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -88,10 +89,13 @@ func (s *Handler) onSocketError(err error, context string) {
 	err = s.socket.Close()
 	if err != nil {
 		s.Logger.Error("Error when closing the socket -> " + err.Error())
-	} else {
-		s.Logger.Error("Initializing the socket again ... ")
-		s.initSocket()
+		if !strings.Contains(err.Error(), "use of closed network connection") {
+			return
+		}
 	}
+
+	s.Logger.Log("Initializing the socket again ... ")
+	s.initSocket()
 }
 
 func (s *Handler) resetAtTwoAm() {
