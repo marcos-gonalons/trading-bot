@@ -54,8 +54,6 @@ func (s *Service) UpdateCandles(
 	previousExecutionTime time.Time,
 	lastVolume float64,
 ) {
-	currentMinutes := currentExecutionTime.Format("04")
-	previousMinutes := previousExecutionTime.Format("04")
 
 	var currentPrice float64
 	if data.Price != nil {
@@ -67,16 +65,15 @@ func (s *Service) UpdateCandles(
 	var volume float64
 	if data.Volume != nil {
 		volume = *data.Volume - lastVolume
-		if volume < 0 {
+		if volume < 0 && len(s.candles) > 1 {
 			volume = *data.Volume
+			s.Logger.Log("Resetting volume... " + utils.GetStringRepresentation(data))
 		}
 	} else {
 		volume = 0
 	}
 
-	// Todo: Depending on the timeframe, I need to change this condition
-	// For 1m it can stay like this, for 15m, for example, it has to be done differently.
-	if currentMinutes != previousMinutes {
+	if s.shouldAddNewCandle(currentExecutionTime, previousExecutionTime) {
 		s.updateCSVWithLastCandle()
 		lastCandle, _ := json.Marshal(s.GetLastCandle())
 		s.Logger.Log("Adding new candle to the candles array -> " + string(lastCandle))
@@ -143,6 +140,9 @@ func (s *Service) updateCSVWithLastCandle() {
 	var err error
 
 	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		s.Logger.Error("Error when opening the csv file -> " + err.Error())
+	}
 	defer csvFile.Close()
 
 	s.csvFileMtx.Lock()
@@ -156,4 +156,22 @@ func (s *Service) updateCSVWithLastCandle() {
 func (s *Service) getCSVFileName() string {
 	now := time.Now()
 	return s.Symbol + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
+}
+
+func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time, previousExecutionTime time.Time) bool {
+	var multiplier uint
+
+	if s.Timeframe.Unit == "m" {
+		multiplier = 60
+	}
+	if s.Timeframe.Unit == "h" {
+		multiplier = 60 * 60
+	}
+	if s.Timeframe.Unit == "d" {
+		multiplier = 60 * 60 * 24
+	}
+
+	var candleDurationInSeconds = s.Timeframe.Value * multiplier
+
+	return currentExecutionTime.Unix()-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
 }
