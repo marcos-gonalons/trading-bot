@@ -29,9 +29,10 @@ type Strategy struct {
 	HorizontalLevelsService horizontalLevels.Interface
 	Mutex                   *sync.Mutex
 
-	Name      string
-	Symbol    string
-	Timeframe types.Timeframe
+	Name            string
+	SymbolForSocket string
+	SymbolForAPI    string
+	Timeframe       types.Timeframe
 
 	currentExecutionTime  time.Time
 	previousExecutionTime time.Time
@@ -54,6 +55,8 @@ type Strategy struct {
 	modifyingOrderTimestamp    int64
 	modifyingPositionTimestamp int64
 	closingOrdersTimestamp     int64
+
+	isReady bool
 }
 
 // SetCandlesHandler ...
@@ -66,12 +69,29 @@ func (s *Strategy) SetHorizontalLevelsService(horizontalLevelsService horizontal
 	s.HorizontalLevelsService = horizontalLevelsService
 }
 
+// GetTimeframe ...
+func (s *Strategy) GetTimeframe() *types.Timeframe {
+	return &s.Timeframe
+}
+
+// GetSymbolForSocket ...
+func (s *Strategy) GetSymbolForSocket() string {
+	return s.SymbolForSocket
+}
+
+// GetSymbolForAPI ...
+func (s *Strategy) GetSymbolForAPI() string {
+	return s.SymbolForAPI
+}
+
 // Initialize ...
 func (s *Strategy) Initialize() {
 	s.Mutex = &sync.Mutex{}
 
 	s.CandlesHandler.InitCandles()
 	go s.checkOpenPositionSLandTP()
+
+	s.isReady = true
 }
 
 // Reset ...
@@ -102,6 +122,10 @@ func (s *Strategy) SetState(state *api.State) {
 
 // OnReceiveMarketData ...
 func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
+	if !s.isReady {
+		return
+	}
+
 	s.Mutex.Lock()
 	defer func() {
 		s.Mutex.Unlock()
@@ -199,7 +223,7 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+27), 1)
 				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-12), 1)
 			}
-			s.APIRetryFacade.ModifyPosition(s.Symbol, tp, sl, retryFacade.RetryParams{
+			s.APIRetryFacade.ModifyPosition(s.SymbolForAPI, tp, sl, retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          20,
 			})
@@ -478,14 +502,16 @@ func GetStrategyInstance(
 	api api.Interface,
 	apiRetryFacade retryFacade.Interface,
 	logger logger.Interface,
-	symbol string,
 ) *Strategy {
+	var symbolForSocket = "FX:GER30"
+	var symbolForAPI = ibroker.GER30SymbolName
 	return &Strategy{
-		API:            api,
-		APIRetryFacade: apiRetryFacade,
-		Logger:         logger,
-		Name:           MainStrategyName,
-		Symbol:         symbol,
+		API:             api,
+		APIRetryFacade:  apiRetryFacade,
+		Logger:          logger,
+		Name:            MainStrategyName,
+		SymbolForSocket: symbolForSocket,
+		SymbolForAPI:    symbolForAPI,
 		Timeframe: types.Timeframe{
 			Value: 1,
 			Unit:  "m",

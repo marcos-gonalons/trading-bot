@@ -2,12 +2,8 @@ package strategies
 
 import (
 	"TradingBot/src/services/api"
-	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/api/retryFacade"
-	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
-	"TradingBot/src/strategies/breakoutAnticipation"
 	"TradingBot/src/utils"
 	"net"
 	"strconv"
@@ -30,16 +26,20 @@ type Handler struct {
 	fetchError        error
 	failedAPIRequests uint
 
-	symbol string
+	symbolsForAPI    []string
+	symbolsForSocket []string
 }
 
 // Run ...
 func (s *Handler) Run() {
-	s.symbol = ibroker.GER30SymbolName
-
 	s.strategies = s.getStrategies()
 	for _, strategy := range s.strategies {
-		strategy.Initialize()
+		go strategy.Initialize()
+	}
+
+	for _, strategy := range s.strategies {
+		s.symbolsForAPI = append(s.symbolsForAPI, strategy.GetSymbolForAPI())
+		s.symbolsForSocket = append(s.symbolsForSocket, strategy.GetSymbolForSocket())
 	}
 
 	s.initSocket()
@@ -60,8 +60,7 @@ func (s *Handler) initSocket() {
 		panic("Error while initializing the trading view socket -> " + err.Error())
 	}
 
-	var symbols = []string{"FX:GER30"}
-	for _, symbol := range symbols {
+	for _, symbol := range s.symbolsForSocket {
 		err = tradingviewsocket.AddSymbol(symbol)
 		if err != nil {
 			panic("Error while adding the symbol -> " + err.Error())
@@ -135,15 +134,31 @@ func (s *Handler) fetchDataLoop() {
 		if currentHour >= 7 && currentHour <= 21 {
 			fetchFuncs := []func(){
 				func() {
-					quote := s.fetch(func() (interface{}, error) {
-						defer waitingGroup.Done()
-						return s.API.GetQuote(s.symbol)
-					}).(*api.Quote)
-					if quote != nil {
-						for _, strategy := range s.strategies {
-							strategy.SetCurrentBrokerQuote(quote)
+					var getQuoteWaitingGroup sync.WaitGroup
+					getQuoteWaitingGroup.Add(len(s.symbolsForAPI))
+					for _, symbol := range s.symbolsForAPI {
+						if symbol == "__test__" {
+							getQuoteWaitingGroup.Done()
+							continue
 						}
+
+						go func(symbol string) {
+							quote := s.fetch(func() (interface{}, error) {
+								defer getQuoteWaitingGroup.Done()
+								return s.API.GetQuote(symbol)
+							}).(*api.Quote)
+							if quote != nil {
+								for _, strategy := range s.strategies {
+									if strategy.GetSymbolForAPI() != symbol {
+										continue
+									}
+									strategy.SetCurrentBrokerQuote(quote)
+								}
+							}
+						}(symbol)
 					}
+					getQuoteWaitingGroup.Wait()
+					waitingGroup.Done()
 				},
 				func() {
 					orders := s.fetch(func() (interface{}, error) {
@@ -242,22 +257,4 @@ func (s *Handler) panicIfTooManyAPIFails() {
 		s.failedAPIRequests = 0
 		time.Sleep(1 * time.Minute)
 	}
-}
-
-func (s *Handler) getStrategies() []Interface {
-	breakoutAnticipationStrategy := breakoutAnticipation.GetStrategyInstance(
-		s.API,
-		s.APIRetryFacade,
-		s.Logger,
-		s.symbol,
-	)
-	candlesHandler := &candlesHandler.Service{
-		Logger:    s.Logger,
-		Symbol:    s.symbol,
-		Timeframe: breakoutAnticipationStrategy.Timeframe,
-	}
-	breakoutAnticipationStrategy.SetCandlesHandler(candlesHandler)
-	breakoutAnticipationStrategy.SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
-
-	return []Interface{breakoutAnticipationStrategy}
 }

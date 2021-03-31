@@ -4,6 +4,7 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
+	"TradingBot/src/types"
 
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
@@ -19,4 +20,7 @@ type Interface interface {
 	SetCurrentBrokerQuote(quote *api.Quote)
 	SetPositions(positions []*api.Position)
 	SetState(state *api.State)
+	GetTimeframe() *types.Timeframe
+	GetSymbolForSocket() string
+	GetSymbolForAPI() string
 }
