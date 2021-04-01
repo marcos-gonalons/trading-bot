@@ -177,12 +177,10 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 	}
 
 	var candleDurationInSeconds = s.Timeframe.Value * multiplier
+	currentTimestamp := utils.GetTimestampWith0Seconds(currentExecutionTime)
 
-	s.Logger.Log("Timeframe -> " + utils.GetStringRepresentation(s.Timeframe))
-	s.Logger.Log("Mutliplier -> " + strconv.Itoa(int(multiplier)))
-	s.Logger.Log("candleDurationInSeconds -> " + strconv.Itoa(int(candleDurationInSeconds)))
 	s.Logger.Log("Current execution time timestamp -> " + strconv.Itoa(int(currentExecutionTime.Unix())))
 	s.Logger.Log("Last candle timestamp -> " + strconv.Itoa(int(s.GetLastCandle().Timestamp)))
 
-	return currentExecutionTime.Unix()-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
+	return currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
 }
