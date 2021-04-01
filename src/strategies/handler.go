@@ -135,6 +135,11 @@ func (s *Handler) fetchDataLoop() {
 				func() {
 					var getQuoteWaitingGroup sync.WaitGroup
 					getQuoteWaitingGroup.Add(len(s.symbolsForAPI))
+
+					// TODO: Same symbol can appear twice or more in symbolsForAPI
+					// No need to call getQuote twice or more for the same symbol
+					// Filter duplicates from this array first
+					// Do it where the array is created in Run()
 					for _, symbol := range s.symbolsForAPI {
 						if symbol == "__test__" {
 							getQuoteWaitingGroup.Done()

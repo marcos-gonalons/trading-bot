@@ -34,14 +34,13 @@ type Strategy struct {
 	SymbolForAPI    string
 	Timeframe       types.Timeframe
 
-	currentExecutionTime  time.Time
-	previousExecutionTime time.Time
-	lastCandlesAmount     int
-	lastVolume            float64
-	lastBid               *float64
-	lastAsk               *float64
-	spreads               []float64
-	averageSpread         float64
+	currentExecutionTime time.Time
+	lastCandlesAmount    int
+	lastVolume           float64
+	lastBid              *float64
+	lastAsk              *float64
+	spreads              []float64
+	averageSpread        float64
 
 	orders             []*api.Order
 	currentBrokerQuote *api.Quote
@@ -88,7 +87,7 @@ func (s *Strategy) GetSymbolForAPI() string {
 func (s *Strategy) Initialize() {
 	s.Mutex = &sync.Mutex{}
 
-	s.CandlesHandler.InitCandles()
+	s.CandlesHandler.InitCandles(time.Now())
 	go s.checkOpenPositionSLandTP()
 
 	s.isReady = true
@@ -96,7 +95,9 @@ func (s *Strategy) Initialize() {
 
 // Reset ...
 func (s *Strategy) Reset() {
-	s.CandlesHandler.InitCandles()
+	s.isReady = false
+	s.CandlesHandler.InitCandles(time.Now())
+	s.isReady = true
 	s.pendingOrder = nil
 }
 
@@ -136,8 +137,6 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	s.currentExecutionTime = time.Now()
 
 	defer func() {
-		s.previousExecutionTime = s.currentExecutionTime
-
 		if data.Volume != nil {
 			s.lastVolume = *data.Volume
 		}
@@ -153,7 +152,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}()
 
 	s.log(MainStrategyName, "Updating candles... ")
-	s.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.previousExecutionTime, s.lastVolume)
+	s.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.lastVolume)
 
 	if s.isCurrentTimeOutsideTradingHours() {
 		s.log(MainStrategyName, "Doing nothing - Now it's not the time.")

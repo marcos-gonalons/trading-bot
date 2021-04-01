@@ -31,10 +31,9 @@ type Strategy struct {
 	SymbolForAPI    string
 	Timeframe       types.Timeframe
 
-	currentExecutionTime  time.Time
-	previousExecutionTime time.Time
-	lastCandlesAmount     int
-	lastVolume            float64
+	currentExecutionTime time.Time
+	lastCandlesAmount    int
+	lastVolume           float64
 
 	orders             []*api.Order
 	currentBrokerQuote *api.Quote
@@ -89,7 +88,7 @@ func (s *Strategy) Initialize() {
 
 	s.Mutex = &sync.Mutex{}
 
-	s.CandlesHandler.InitCandles()
+	s.CandlesHandler.InitCandles(time.Now())
 	s.isReady = true
 }
 
@@ -105,7 +104,9 @@ func (s *Strategy) GetSymbolForAPI() string {
 
 // Reset ...
 func (s *Strategy) Reset() {
-	s.CandlesHandler.InitCandles()
+	s.isReady = false
+	s.CandlesHandler.InitCandles(time.Now())
+	s.isReady = true
 }
 
 // SetOrders ...
@@ -142,8 +143,6 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	s.currentExecutionTime = time.Now()
 
 	defer func() {
-		s.previousExecutionTime = s.currentExecutionTime
-
 		if data.Volume != nil {
 			s.lastVolume = *data.Volume
 		}
@@ -153,7 +152,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}()
 
 	s.log(TestStrategyName, "Updating candles... ")
-	s.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.previousExecutionTime, s.lastVolume)
+	s.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.lastVolume)
 
 	if s.lastCandlesAmount != len(s.CandlesHandler.GetCandles()) {
 		s.log(TestStrategyName, "New candle - time to execute strategy")

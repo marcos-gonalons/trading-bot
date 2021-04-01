@@ -25,9 +25,16 @@ type Service struct {
 }
 
 // InitCandles ...
-func (s *Service) InitCandles() {
+func (s *Service) InitCandles(currentExecutionTime time.Time) {
 	s.candles = nil
-	s.candles = []*types.Candle{&types.Candle{}}
+	s.candles = []*types.Candle{{
+		Open:      0,
+		High:      0,
+		Low:       0,
+		Close:     0,
+		Volume:    0,
+		Timestamp: utils.GetTimestampWith0Seconds(currentExecutionTime),
+	}}
 
 	s.csvFileName = s.getCSVFileName()
 	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
@@ -51,10 +58,8 @@ func (s *Service) InitCandles() {
 func (s *Service) UpdateCandles(
 	data *tradingviewsocket.QuoteData,
 	currentExecutionTime time.Time,
-	previousExecutionTime time.Time,
 	lastVolume float64,
 ) {
-
 	var currentPrice float64
 	if data.Price != nil {
 		currentPrice = *data.Price
@@ -73,7 +78,7 @@ func (s *Service) UpdateCandles(
 		volume = 0
 	}
 
-	if s.shouldAddNewCandle(currentExecutionTime, previousExecutionTime) {
+	if s.shouldAddNewCandle(currentExecutionTime) {
 		s.updateCSVWithLastCandle()
 		lastCandle, _ := json.Marshal(s.GetLastCandle())
 		s.Logger.Log("Adding new candle to the candles array -> " + string(lastCandle))
@@ -158,7 +163,7 @@ func (s *Service) getCSVFileName() string {
 	return s.Symbol + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
 }
 
-func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time, previousExecutionTime time.Time) bool {
+func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 	var multiplier uint
 
 	if s.Timeframe.Unit == "m" {
@@ -172,6 +177,12 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time, previousExe
 	}
 
 	var candleDurationInSeconds = s.Timeframe.Value * multiplier
+
+	s.Logger.Log("Timeframe -> " + utils.GetStringRepresentation(s.Timeframe))
+	s.Logger.Log("Mutliplier -> " + strconv.Itoa(int(multiplier)))
+	s.Logger.Log("candleDurationInSeconds -> " + strconv.Itoa(int(candleDurationInSeconds)))
+	s.Logger.Log("Current execution time timestamp -> " + strconv.Itoa(int(currentExecutionTime.Unix())))
+	s.Logger.Log("Last candle timestamp -> " + strconv.Itoa(int(s.GetLastCandle().Timestamp)))
 
 	return currentExecutionTime.Unix()-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
 }
