@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+/**
+	todo: separated class for resistance and support strategies?
+	Will have the main parent strategy class as dependency?
+**/
+
 // ResistanceBreakoutStrategyName ...
 const ResistanceBreakoutStrategyName = MainStrategyName + " - RBA"
 
@@ -95,6 +100,9 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 					s.log(ResistanceBreakoutStrategyName, "At the end it wasn't a good setup, doing nothing ...")
 					return
 				}
+
+				// todo: find out why i am closing the orders twice
+				// maybe it's not needed here
 
 				s.APIRetryFacade.CloseOrders(
 					s.API.GetWorkingOrders(s.orders),

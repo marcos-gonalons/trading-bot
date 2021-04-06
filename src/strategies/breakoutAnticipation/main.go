@@ -211,6 +211,9 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 func (s *Strategy) checkOpenPositionSLandTP() {
 	for {
 		if len(s.positions) > 0 && s.currentPosition == nil {
+			// todo: doesn't look is going to be soon,
+			// but maybe in the future I can have 2 different positions opened.
+			// In that case better check which one to use here
 			s.currentPosition = s.positions[0]
 			var tp string
 			var sl string
@@ -303,7 +306,6 @@ func (s *Strategy) isExecutionTimeValid(
 }
 
 func (s *Strategy) savePendingOrder(side string) {
-	// TODO: GetWorkingOrders should be an API method
 	workingOrders := s.API.GetWorkingOrders(s.orders)
 
 	if len(workingOrders) == 0 {
@@ -412,10 +414,17 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 	// meanwhile, for resistance breakoy anticipation, I do s.candles[i].High - 1
 	// So I must take that into consideration here when checking if I should move the SL to break even.
 
+	// todo: doesn't look is going to be soon,
+	// but maybe in the future I can have 2 different positions opened.
+	// In that case better check which one to use here
+
 	position := s.positions[0]
 	if position.Side != side {
 		return
 	}
+
+	s.log(MainStrategyName, "Checking if the current position needs to have the SL adjusted... ")
+	s.log(MainStrategyName, "Current position is "+utils.GetStringRepresentation(position))
 
 	_, tpOrder := s.getSlAndTpOrdersForCurrentOpenPosition()
 
@@ -431,7 +440,7 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 	}
 
 	if shouldBeAdjusted {
-		s.log(MainStrategyName, "The trade is very close to the TP. Adjusting SL to break even ...")
+		s.log(MainStrategyName, "The price is very close to the TP. Adjusting SL to break even ...")
 		s.modifyingPositionTimestamp = s.CandlesHandler.GetLastCandle().Timestamp
 
 		s.APIRetryFacade.ModifyPosition(
@@ -443,6 +452,8 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 				MaxRetries:          20,
 			},
 		)
+	} else {
+		s.log(MainStrategyName, "The price is not close to the TP yet. Doing nothing ...")
 	}
 }
 

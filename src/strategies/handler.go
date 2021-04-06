@@ -180,10 +180,12 @@ func (s *Handler) fetchDataLoop() {
 						defer waitingGroup.Done()
 						return s.API.GetPositions()
 					}).([]*api.Position)
+					var p []*api.Position
 					if positions != nil {
-						for _, strategy := range s.strategies {
-							strategy.SetPositions(positions)
-						}
+						p = positions
+					}
+					for _, strategy := range s.strategies {
+						strategy.SetPositions(p)
 					}
 				},
 				func() {
