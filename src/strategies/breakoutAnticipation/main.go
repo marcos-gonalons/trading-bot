@@ -429,6 +429,7 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 	_, tpOrder := s.getSlAndTpOrdersForCurrentOpenPosition()
 
 	if tpOrder == nil {
+		s.log(MainStrategyName, "Take Profit order not found ...")
 		return
 	}
 
