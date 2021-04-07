@@ -79,7 +79,7 @@ func (s *Service) UpdateCandles(
 	}
 
 	if s.shouldAddNewCandle(currentExecutionTime) {
-		go s.updateCSVWithLastCandle()
+		s.updateCSVWithLastCandle()
 		lastCandle, _ := json.Marshal(s.GetLastCandle())
 		s.Logger.Log("Adding new candle to the candles array -> " + string(lastCandle))
 		s.candles = append(s.candles, &types.Candle{
