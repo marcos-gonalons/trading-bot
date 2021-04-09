@@ -70,9 +70,8 @@ func (s *Service) UpdateCandles(
 	var volume float64
 	if data.Volume != nil {
 		volume = *data.Volume - lastVolume
-		if volume < 0 && len(s.candles) > 1 {
-			volume = *data.Volume
-			s.Logger.Log("Resetting volume... " + utils.GetStringRepresentation(data))
+		if volume < 0 {
+			volume = 0
 		}
 	} else {
 		volume = 0
