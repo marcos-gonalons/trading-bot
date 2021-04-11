@@ -53,8 +53,8 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 		return
 	}
 
-	lastCandlesIndex := len(candles) - 1
-	price, err := s.HorizontalLevelsService.GetSupportPrice(candlesAmountWithLowerPriceToBeConsideredBottom)
+	lastCompletedCandleIndex := len(candles) - 2
+	price, err := s.HorizontalLevelsService.GetSupportPrice(candlesAmountWithLowerPriceToBeConsideredBottom, lastCompletedCandleIndex)
 
 	if err != nil {
 		errorMessage := "Not a good short setup yet -> " + err.Error()
@@ -70,11 +70,11 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	}
 
 	// todo -> find a better name for closingOrdersTimestamp
-	if s.closingOrdersTimestamp == candles[lastCandlesIndex].Timestamp {
+	if s.closingOrdersTimestamp == candles[lastCompletedCandleIndex].Timestamp {
 		return
 	}
 
-	s.closingOrdersTimestamp = candles[lastCandlesIndex].Timestamp
+	s.closingOrdersTimestamp = candles[lastCompletedCandleIndex].Timestamp
 	s.log(SupportBreakoutStrategyName, "Ok, we might have a short setup at price "+utils.FloatToString(price, 2))
 	s.log(SupportBreakoutStrategyName, "Closing all working orders first if any ...")
 	s.APIRetryFacade.CloseOrders(
@@ -83,8 +83,8 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          30,
 			SuccessCallback: func() {
-				highestValue := candles[lastCandlesIndex-1].High
-				for i := lastCandlesIndex - 1; i > lastCandlesIndex-trendCandles; i-- {
+				highestValue := candles[lastCompletedCandleIndex].High
+				for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-trendCandles; i-- {
 					if i < 1 {
 						break
 					}
@@ -92,7 +92,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 						highestValue = candles[i].High
 					}
 				}
-				diff := highestValue - candles[lastCandlesIndex-1].High
+				diff := highestValue - candles[lastCompletedCandleIndex].High
 				if diff < trendDiff {
 					s.log(SupportBreakoutStrategyName, "At the end it wasn't a good short setup, doing nothing ...")
 					return

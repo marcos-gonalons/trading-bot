@@ -9,26 +9,35 @@ type Service struct {
 	CandlesHandler candlesHandler.Interface
 }
 
-func (s *Service) GetResistancePrice(candlesWithLowerPriceToBeConsideredTop int) (price float64, err error) {
-	return s.getPrice(candlesWithLowerPriceToBeConsideredTop, ResistanceName)
+func (s *Service) GetResistancePrice(
+	candlesWithLowerPriceToBeConsideredTop int,
+	lastCompletedCandleIndex int,
+) (price float64, err error) {
+	return s.getPrice(candlesWithLowerPriceToBeConsideredTop, lastCompletedCandleIndex, ResistanceName)
 }
 
-func (s *Service) GetSupportPrice(candlesWithHigherPriceToBeConsideredBottom int) (price float64, err error) {
-	return s.getPrice(candlesWithHigherPriceToBeConsideredBottom, SupportName)
+func (s *Service) GetSupportPrice(
+	candlesWithHigherPriceToBeConsideredBottom int,
+	lastCompletedCandleIndex int,
+) (price float64, err error) {
+	return s.getPrice(candlesWithHigherPriceToBeConsideredBottom, lastCompletedCandleIndex, SupportName)
 }
 
-func (s *Service) getPrice(candlesAmount int, supportOrResistance string) (price float64, err error) {
+func (s *Service) getPrice(
+	candlesAmount int,
+	lastCompletedCandleIndex int,
+	supportOrResistance string,
+) (price float64, err error) {
 	candles := s.CandlesHandler.GetCandles()
-	lastCandlesIndex := len(candles) - 1
 
-	horizontalLevelCandleIndex := lastCandlesIndex - candlesAmount
-	if horizontalLevelCandleIndex < 0 || lastCandlesIndex < candlesAmount*2 {
+	horizontalLevelCandleIndex := lastCompletedCandleIndex - candlesAmount
+	if horizontalLevelCandleIndex < 0 || lastCompletedCandleIndex < candlesAmount*2 {
 		err = errors.New(NotEnoughCandlesError)
 		return
 	}
 
 	futureCandlesOvercomePrice := false
-	for j := horizontalLevelCandleIndex + 1; j < lastCandlesIndex-1; j++ {
+	for j := horizontalLevelCandleIndex + 1; j < lastCompletedCandleIndex-1; j++ {
 		if supportOrResistance == ResistanceName {
 			if candles[j].High >= candles[horizontalLevelCandleIndex].High {
 				futureCandlesOvercomePrice = true
@@ -50,7 +59,7 @@ func (s *Service) getPrice(candlesAmount int, supportOrResistance string) (price
 
 	pastCandlesOvercomePrice := false
 	for j := horizontalLevelCandleIndex - candlesAmount; j < horizontalLevelCandleIndex; j++ {
-		if j < 1 || j > lastCandlesIndex {
+		if j < 1 || j > lastCompletedCandleIndex {
 			continue
 		}
 		if supportOrResistance == ResistanceName {

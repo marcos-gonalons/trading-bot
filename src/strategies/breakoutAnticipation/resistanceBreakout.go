@@ -58,7 +58,8 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		return
 	}
 
-	price, err := s.HorizontalLevelsService.GetResistancePrice(candlesAmountWithLowerPriceToBeConsideredTop)
+	lastCompletedCandleIndex := len(candles) - 2
+	price, err := s.HorizontalLevelsService.GetResistancePrice(candlesAmountWithLowerPriceToBeConsideredTop, lastCompletedCandleIndex)
 
 	if err != nil {
 		errorMessage := "Not a good long setup yet -> " + err.Error()
@@ -73,13 +74,12 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		return
 	}
 
-	lastCandlesIndex := len(candles) - 1
 	// todo -> find a better name for closingOrdersTimestamp
-	if s.closingOrdersTimestamp == candles[lastCandlesIndex].Timestamp {
+	if s.closingOrdersTimestamp == candles[lastCompletedCandleIndex].Timestamp {
 		return
 	}
 
-	s.closingOrdersTimestamp = candles[lastCandlesIndex].Timestamp
+	s.closingOrdersTimestamp = candles[lastCompletedCandleIndex].Timestamp
 	s.log(ResistanceBreakoutStrategyName, "Ok, we might have a long setup at price "+utils.FloatToString(price, 2))
 	s.log(ResistanceBreakoutStrategyName, "Closing all working orders first if any ...")
 	s.APIRetryFacade.CloseOrders(
@@ -88,8 +88,8 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          30,
 			SuccessCallback: func() {
-				lowestValue := candles[lastCandlesIndex-1].Low
-				for i := lastCandlesIndex - 1; i > lastCandlesIndex-trendCandles; i-- {
+				lowestValue := candles[lastCompletedCandleIndex].Low
+				for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-trendCandles; i-- {
 					if i < 1 {
 						break
 					}
@@ -97,7 +97,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 						lowestValue = candles[i].Low
 					}
 				}
-				diff := candles[lastCandlesIndex-1].Low - lowestValue
+				diff := candles[lastCompletedCandleIndex].Low - lowestValue
 				if diff < trendDiff {
 					s.log(ResistanceBreakoutStrategyName, "At the end it wasn't a good setup, doing nothing ...")
 					return

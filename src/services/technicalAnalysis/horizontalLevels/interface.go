@@ -2,6 +2,12 @@ package horizontalLevels
 
 // Interface ...
 type Interface interface {
-	GetResistancePrice(candlesWithLowerPriceToBeConsideredTop int) (float64, error)
-	GetSupportPrice(candlesWithHigherPriceToBeConsideredBottom int) (float64, error)
+	GetResistancePrice(
+		candlesWithLowerPriceToBeConsideredTop int,
+		lastCompletedCandleIndex int,
+	) (float64, error)
+	GetSupportPrice(
+		candlesWithHigherPriceToBeConsideredBottom int,
+		lastCompletedCandleIndex int,
+	) (float64, error)
 }
