@@ -45,11 +45,13 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	}
 
 	riskPercentage := float64(1)
-	stopLossDistance := 12
-	takeProfitDistance := 27
-	candlesAmountWithLowerPriceToBeConsideredTop := 18
-	tpDistanceShortForBreakEvenSL := 5
-	priceOffset := -1
+	stopLossDistance := 16
+	takeProfitDistance := 34
+	candlesAmountWithLowerPriceToBeConsideredTop := 21
+	tpDistanceShortForBreakEvenSL := 2
+	priceOffset := 1
+	trendCandles := 90
+	trendDiff := float64(5)
 
 	if len(s.positions) > 0 {
 		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), ibroker.LongSide)
@@ -87,7 +89,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 			MaxRetries:          30,
 			SuccessCallback: func() {
 				lowestValue := candles[lastCandlesIndex-1].Low
-				for i := lastCandlesIndex - 1; i > lastCandlesIndex-180; i-- {
+				for i := lastCandlesIndex - 1; i > lastCandlesIndex-trendCandles; i-- {
 					if i < 1 {
 						break
 					}
@@ -96,7 +98,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 					}
 				}
 				diff := candles[lastCandlesIndex-1].Low - lowestValue
-				if diff < 10 {
+				if diff < trendDiff {
 					s.log(ResistanceBreakoutStrategyName, "At the end it wasn't a good setup, doing nothing ...")
 					return
 				}
@@ -114,7 +116,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 
 							stopLoss := float32Price - float32(stopLossDistance)
 							takeProfit := float32Price + float32(takeProfitDistance)
-							size := math.Floor((s.state.Equity*(riskPercentage/100))/float64(stopLossDistance+2) + 1)
+							size := math.Floor((s.state.Equity*(riskPercentage/100))/float64(stopLossDistance+1) + 1)
 							if size == 0 {
 								size = 1
 							}
@@ -156,9 +158,9 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 }
 
 func getValidResistanceBreakoutTimes() ([]string, []string, []string) {
-	validMonths := []string{"January", "March", "April", "May", "June", "August", "September", "October"}
-	validWeekdays := []string{"Monday", "Tuesday", "Wednesday", "Friday"}
-	validHalfHours := []string{"9:00", "10:00", "11:30", "12:00", "12:30", "20:30"}
+	validMonths := []string{"January", "February", "March", "April", "May", "June"}
+	validWeekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}
+	validHalfHours := []string{"9:00", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "15:30", "16:00", "16:30", "17:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"}
 
 	return validMonths, validWeekdays, validHalfHours
 }
