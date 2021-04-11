@@ -152,6 +152,10 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}()
 
 	s.log(MainStrategyName, "Updating candles... ")
+	if data.Price != nil {
+		var price = *data.Price + .8
+		data.Price = &price
+	}
 	s.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.lastVolume)
 
 	if s.isCurrentTimeOutsideTradingHours() {
