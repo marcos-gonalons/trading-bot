@@ -67,7 +67,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		return
 	}
 
-	price = price + float64(priceOffset)
+	price = price - float64(priceOffset)
 	if price <= float64(s.currentBrokerQuote.Ask) {
 		s.log(ResistanceBreakoutStrategyName, "Price is lower than the current ask, so we can't create the long order now. Price is -> "+utils.FloatToString(price, 2))
 		s.log(ResistanceBreakoutStrategyName, "Quote is -> "+utils.GetStringRepresentation(s.currentBrokerQuote))
