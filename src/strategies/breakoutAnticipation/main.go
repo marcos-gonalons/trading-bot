@@ -413,12 +413,6 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 		return
 	}
 
-	// todo: fx:ger30 price is slightly different to ibroker:ger30 price
-	// I already make up for this difference when selecting the price of an order.
-	// For example, for support breakout anticipation, I do price := s.candles[i].Low + 3
-	// meanwhile, for resistance breakoy anticipation, I do s.candles[i].High - 1
-	// So I must take that into consideration here when checking if I should move the SL to break even.
-
 	// todo: doesn't look is going to be soon,
 	// but maybe in the future I can have 2 different positions opened.
 	// In that case better check which one to use here
