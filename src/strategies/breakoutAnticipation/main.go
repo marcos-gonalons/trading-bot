@@ -222,12 +222,13 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 			var tp string
 			var sl string
 
+			// todo: get the tp and sl accordingly
 			if s.API.IsShortPosition(s.currentPosition) {
-				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-27), 1)
-				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+12), 1)
+				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-34), 1)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+15), 1)
 			} else {
-				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+27), 1)
-				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-12), 1)
+				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+34), 1)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-16), 1)
 			}
 			s.APIRetryFacade.ModifyPosition(s.SymbolForAPI, tp, sl, retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
