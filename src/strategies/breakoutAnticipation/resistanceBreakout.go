@@ -81,80 +81,69 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 
 	s.closingOrdersTimestamp = candles[lastCompletedCandleIndex].Timestamp
 	s.log(ResistanceBreakoutStrategyName, "Ok, we might have a long setup at price "+utils.FloatToString(price, 2))
-	s.log(ResistanceBreakoutStrategyName, "Closing all working orders first if any ...")
+
+	lowestValue := candles[lastCompletedCandleIndex].Low
+	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-trendCandles; i-- {
+		if i < 1 {
+			break
+		}
+		if candles[i].Low < lowestValue {
+			lowestValue = candles[i].Low
+		}
+	}
+	diff := candles[lastCompletedCandleIndex].Low - lowestValue
+	if diff < trendDiff {
+		s.log(ResistanceBreakoutStrategyName, "At the end it wasn't a good long setup, doing nothing ...")
+		return
+	}
+
 	s.APIRetryFacade.CloseOrders(
 		s.API.GetWorkingOrders(s.orders),
 		retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          30,
 			SuccessCallback: func() {
-				lowestValue := candles[lastCompletedCandleIndex].Low
-				for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-trendCandles; i-- {
-					if i < 1 {
-						break
-					}
-					if candles[i].Low < lowestValue {
-						lowestValue = candles[i].Low
-					}
-				}
-				diff := candles[lastCompletedCandleIndex].Low - lowestValue
-				if diff < trendDiff {
-					s.log(ResistanceBreakoutStrategyName, "At the end it wasn't a good setup, doing nothing ...")
-					return
+				float32Price := float32(price)
+
+				stopLoss := float32Price - float32(stopLossDistance)
+				takeProfit := float32Price + float32(takeProfitDistance)
+				size := math.Floor((s.state.Equity*(riskPercentage/100))/float64(stopLossDistance+1) + 1)
+				if size == 0 {
+					size = 1
 				}
 
-				// todo: find out why i am closing the orders twice
-				// maybe it's not needed here
+				order := &api.Order{
+					Instrument: ibroker.GER30SymbolName,
+					StopPrice:  &float32Price,
+					Qty:        float32(size),
+					Side:       ibroker.LongSide,
+					StopLoss:   &stopLoss,
+					TakeProfit: &takeProfit,
+					Type:       ibroker.StopType,
+				}
 
-				s.APIRetryFacade.CloseOrders(
-					s.API.GetWorkingOrders(s.orders),
-					retryFacade.RetryParams{
-						DelayBetweenRetries: 5 * time.Second,
-						MaxRetries:          30,
-						SuccessCallback: func() {
-							float32Price := float32(price)
+				s.log(ResistanceBreakoutStrategyName, "Buy order to be created -> "+utils.GetStringRepresentation(order))
 
-							stopLoss := float32Price - float32(stopLossDistance)
-							takeProfit := float32Price + float32(takeProfitDistance)
-							size := math.Floor((s.state.Equity*(riskPercentage/100))/float64(stopLossDistance+1) + 1)
-							if size == 0 {
-								size = 1
-							}
-
-							order := &api.Order{
-								Instrument: ibroker.GER30SymbolName,
-								StopPrice:  &float32Price,
-								Qty:        float32(size),
-								Side:       ibroker.LongSide,
-								StopLoss:   &stopLoss,
-								TakeProfit: &takeProfit,
-								Type:       ibroker.StopType,
-							}
-
-							s.log(ResistanceBreakoutStrategyName, "Buy order to be created -> "+utils.GetStringRepresentation(order))
-
-							if !isValidTimeToOpenAPosition {
-								s.log(ResistanceBreakoutStrategyName, "Now is not the time for opening any buy orders, saving it for later ...")
-								s.pendingOrder = order
-							} else {
-								s.APIRetryFacade.CreateOrder(
-									order,
-									func() *api.Quote {
-										return s.currentBrokerQuote
-									},
-									s.setStringValues,
-									retryFacade.RetryParams{
-										DelayBetweenRetries: 10 * time.Second,
-										MaxRetries:          20,
-									},
-								)
-							}
+				if !isValidTimeToOpenAPosition {
+					s.log(ResistanceBreakoutStrategyName, "Now is not the time for opening any buy orders, saving it for later ...")
+					s.pendingOrder = order
+				} else {
+					s.APIRetryFacade.CreateOrder(
+						order,
+						func() *api.Quote {
+							return s.currentBrokerQuote
 						},
-					},
-				)
+						s.setStringValues,
+						retryFacade.RetryParams{
+							DelayBetweenRetries: 10 * time.Second,
+							MaxRetries:          20,
+						},
+					)
+				}
 			},
 		},
 	)
+
 }
 
 func getValidResistanceBreakoutTimes() ([]string, []string, []string) {

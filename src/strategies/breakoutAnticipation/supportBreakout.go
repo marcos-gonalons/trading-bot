@@ -76,76 +76,67 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 
 	s.closingOrdersTimestamp = candles[lastCompletedCandleIndex].Timestamp
 	s.log(SupportBreakoutStrategyName, "Ok, we might have a short setup at price "+utils.FloatToString(price, 2))
-	s.log(SupportBreakoutStrategyName, "Closing all working orders first if any ...")
+
+	highestValue := candles[lastCompletedCandleIndex].High
+	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-trendCandles; i-- {
+		if i < 1 {
+			break
+		}
+		if candles[i].High > highestValue {
+			highestValue = candles[i].High
+		}
+	}
+	diff := highestValue - candles[lastCompletedCandleIndex].High
+	if diff < trendDiff {
+		s.log(SupportBreakoutStrategyName, "At the end it wasn't a good short setup, doing nothing ...")
+		return
+	}
+
 	s.APIRetryFacade.CloseOrders(
 		s.API.GetWorkingOrders(s.orders),
 		retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          30,
 			SuccessCallback: func() {
-				highestValue := candles[lastCompletedCandleIndex].High
-				for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-trendCandles; i-- {
-					if i < 1 {
-						break
-					}
-					if candles[i].High > highestValue {
-						highestValue = candles[i].High
-					}
-				}
-				diff := highestValue - candles[lastCompletedCandleIndex].High
-				if diff < trendDiff {
-					s.log(SupportBreakoutStrategyName, "At the end it wasn't a good short setup, doing nothing ...")
-					return
+				float32Price := float32(price)
+
+				stopLoss := float32Price + float32(stopLossDistance)
+				takeProfit := float32Price - float32(takeProfitDistance)
+				size := math.Floor((s.state.Equity*(riskPercentage/100))/float64(stopLossDistance+1) + 1)
+				if size == 0 {
+					size = 1
 				}
 
-				s.APIRetryFacade.CloseOrders(
-					s.API.GetWorkingOrders(s.orders),
-					retryFacade.RetryParams{
-						DelayBetweenRetries: 5 * time.Second,
-						MaxRetries:          30,
-						SuccessCallback: func() {
-							float32Price := float32(price)
+				order := &api.Order{
+					CurrentAsk: &s.currentBrokerQuote.Ask,
+					CurrentBid: &s.currentBrokerQuote.Bid,
+					Instrument: ibroker.GER30SymbolName,
+					StopPrice:  &float32Price,
+					Qty:        float32(size),
+					Side:       ibroker.ShortSide,
+					StopLoss:   &stopLoss,
+					TakeProfit: &takeProfit,
+					Type:       ibroker.StopType,
+				}
 
-							stopLoss := float32Price + float32(stopLossDistance)
-							takeProfit := float32Price - float32(takeProfitDistance)
-							size := math.Floor((s.state.Equity*(riskPercentage/100))/float64(stopLossDistance+1) + 1)
-							if size == 0 {
-								size = 1
-							}
+				s.log(SupportBreakoutStrategyName, "Short order to be created -> "+utils.GetStringRepresentation(order))
 
-							order := &api.Order{
-								CurrentAsk: &s.currentBrokerQuote.Ask,
-								CurrentBid: &s.currentBrokerQuote.Bid,
-								Instrument: ibroker.GER30SymbolName,
-								StopPrice:  &float32Price,
-								Qty:        float32(size),
-								Side:       ibroker.ShortSide,
-								StopLoss:   &stopLoss,
-								TakeProfit: &takeProfit,
-								Type:       ibroker.StopType,
-							}
-
-							s.log(SupportBreakoutStrategyName, "Short order to be created -> "+utils.GetStringRepresentation(order))
-
-							if !isValidTimeToOpenAPosition {
-								s.log(SupportBreakoutStrategyName, "Now is not the time for opening any short orders, saving it for later ...")
-								s.pendingOrder = order
-							} else {
-								s.APIRetryFacade.CreateOrder(
-									order,
-									func() *api.Quote {
-										return s.currentBrokerQuote
-									},
-									s.setStringValues,
-									retryFacade.RetryParams{
-										DelayBetweenRetries: 10 * time.Second,
-										MaxRetries:          20,
-									},
-								)
-							}
+				if !isValidTimeToOpenAPosition {
+					s.log(SupportBreakoutStrategyName, "Now is not the time for opening any short orders, saving it for later ...")
+					s.pendingOrder = order
+				} else {
+					s.APIRetryFacade.CreateOrder(
+						order,
+						func() *api.Quote {
+							return s.currentBrokerQuote
 						},
-					},
-				)
+						s.setStringValues,
+						retryFacade.RetryParams{
+							DelayBetweenRetries: 10 * time.Second,
+							MaxRetries:          20,
+						},
+					)
+				}
 			},
 		},
 	)
