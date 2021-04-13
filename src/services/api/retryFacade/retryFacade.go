@@ -79,7 +79,6 @@ func (s *APIFacade) ClosePositions(retryParams RetryParams) {
 			err = s.API.CloseAllPositions()
 			if err != nil {
 				s.Logger.Error("An error happened while closing all positions -> " + err.Error())
-				retryParams.ErrorCallback(err)
 			}
 			return
 		},
