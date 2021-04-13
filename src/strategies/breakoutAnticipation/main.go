@@ -385,26 +385,51 @@ func (s *Strategy) getSlAndTpOrders(
 }
 
 func (s *Strategy) createPendingOrder(side string) {
-	s.log(MainStrategyName, "Trying to create the pending order "+utils.GetStringRepresentation(s.pendingOrder))
-
 	if s.pendingOrder.Side != side {
 		return
 	}
 
-	s.log(MainStrategyName, "Trying to create the pending order ..."+utils.GetStringRepresentation(s.pendingOrder))
-	// todo: creatependingordertimestamp
+	go func(pendingOrder *api.Order) {
+		s.log(MainStrategyName, "Sleeping 1 minute before creating the pending order -> "+utils.GetStringRepresentation(pendingOrder))
+		time.Sleep(1*time.Minute + 5*time.Second)
 
-	s.APIRetryFacade.CreateOrder(
-		s.pendingOrder,
-		func() *api.Quote {
-			return s.currentBrokerQuote
-		},
-		s.setStringValues,
-		retryFacade.RetryParams{
-			DelayBetweenRetries: 10 * time.Second,
-			MaxRetries:          20,
-		},
-	)
+		var price float32
+		if s.API.IsStopOrder(pendingOrder) {
+			price = *pendingOrder.StopPrice
+		} else {
+			price = *pendingOrder.LimitPrice
+		}
+
+		candles := s.CandlesHandler.GetCandles()
+		lastCompletedCandle := candles[len(candles)-2]
+		s.log(MainStrategyName, "Last completed candle -> "+utils.GetStringRepresentation(lastCompletedCandle))
+
+		if side == ibroker.LongSide {
+			if price <= float32(lastCompletedCandle.High) {
+				s.log(MainStrategyName, "Price is lower than last completed candle.high - Can't create the pending order")
+				return
+			}
+		} else {
+			if price >= float32(lastCompletedCandle.Low) {
+				s.log(MainStrategyName, "Price is greater than last completed candle.low - Can't create the pending order")
+				return
+			}
+		}
+
+		s.log(MainStrategyName, "Everything is good - Creating the pending order")
+		s.APIRetryFacade.CreateOrder(
+			pendingOrder,
+			func() *api.Quote {
+				return s.currentBrokerQuote
+			},
+			s.setStringValues,
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 10 * time.Second,
+				MaxRetries:          20,
+			},
+		)
+	}(s.pendingOrder)
+
 	s.pendingOrder = nil
 }
 
