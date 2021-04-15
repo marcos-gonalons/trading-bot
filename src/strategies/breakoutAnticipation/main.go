@@ -50,8 +50,6 @@ type Strategy struct {
 	pendingOrder    *api.Order
 	currentPosition *api.Position
 
-	creatingOrderTimestamp     int64
-	modifyingOrderTimestamp    int64
 	modifyingPositionTimestamp int64
 	closingOrdersTimestamp     int64
 
@@ -311,55 +309,65 @@ func (s *Strategy) isExecutionTimeValid(
 }
 
 func (s *Strategy) savePendingOrder(side string) {
-	workingOrders := s.API.GetWorkingOrders(s.orders)
+	go func() {
+		time.Sleep(1 * time.Minute)
 
-	if len(workingOrders) == 0 {
-		return
-	}
-
-	var mainOrder *api.Order
-	for _, workingOrder := range workingOrders {
-		if workingOrder.Side == side && workingOrder.ParentID == nil {
-			mainOrder = workingOrder
+		if len(s.positions) > 0 {
+			s.log(MainStrategyName, "Can't save pending order since there is an open position")
+			return
 		}
-	}
 
-	if mainOrder == nil {
-		return
-	}
+		workingOrders := s.API.GetWorkingOrders(s.orders)
 
-	// TODO: savingPendingOrderTimestamp
+		if len(workingOrders) == 0 {
+			return
+		}
 
-	s.log(MainStrategyName, "Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
-	s.log(MainStrategyName, "This is the current order -> "+utils.GetStringRepresentation(mainOrder))
+		var mainOrder *api.Order
+		for _, workingOrder := range workingOrders {
+			if workingOrder.Side == side && workingOrder.ParentID == nil {
+				mainOrder = workingOrder
+			}
+		}
 
-	slOrder, tpOrder := s.getSlAndTpOrders(mainOrder.ID, workingOrders)
+		if mainOrder == nil {
+			return
+		}
 
-	if slOrder != nil {
-		mainOrder.StopLoss = slOrder.StopPrice
-	}
-	if tpOrder != nil {
-		mainOrder.TakeProfit = tpOrder.LimitPrice
-	}
+		// TODO: savingPendingOrderTimestamp
 
-	if s.API.IsLimitOrder(mainOrder) {
-		mainOrder.StopPrice = nil
-	}
-	if s.API.IsStopOrder(mainOrder) {
-		mainOrder.LimitPrice = nil
-	}
+		s.log(MainStrategyName, "Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
+		s.log(MainStrategyName, "This is the current order -> "+utils.GetStringRepresentation(mainOrder))
 
-	s.APIRetryFacade.CloseOrders(
-		s.API.GetWorkingOrders(s.orders),
-		retryFacade.RetryParams{
-			DelayBetweenRetries: 5 * time.Second,
-			MaxRetries:          30,
-			SuccessCallback: func() {
-				s.orders = nil
-				s.pendingOrder = mainOrder
-				s.log(MainStrategyName, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.pendingOrder))
+		slOrder, tpOrder := s.getSlAndTpOrders(mainOrder.ID, workingOrders)
+
+		if slOrder != nil {
+			mainOrder.StopLoss = slOrder.StopPrice
+		}
+		if tpOrder != nil {
+			mainOrder.TakeProfit = tpOrder.LimitPrice
+		}
+
+		if s.API.IsLimitOrder(mainOrder) {
+			mainOrder.StopPrice = nil
+		}
+		if s.API.IsStopOrder(mainOrder) {
+			mainOrder.LimitPrice = nil
+		}
+
+		s.APIRetryFacade.CloseOrders(
+			s.API.GetWorkingOrders(s.orders),
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 5 * time.Second,
+				MaxRetries:          30,
+				SuccessCallback: func() {
+					s.orders = nil
+					s.pendingOrder = mainOrder
+					s.log(MainStrategyName, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.pendingOrder))
+				},
 			},
-		})
+		)
+	}()
 }
 
 func (s *Strategy) getSlAndTpOrders(
@@ -390,8 +398,15 @@ func (s *Strategy) createPendingOrder(side string) {
 	}
 
 	go func(pendingOrder *api.Order) {
+		candlesAmountBeforeSleeping := len(s.CandlesHandler.GetCandles())
+
 		s.log(MainStrategyName, "Sleeping 1 minute before creating the pending order -> "+utils.GetStringRepresentation(pendingOrder))
-		time.Sleep(1*time.Minute + 5*time.Second)
+		time.Sleep(1 * time.Minute)
+
+		for candlesAmountBeforeSleeping == len(s.CandlesHandler.GetCandles()) {
+			s.log(MainStrategyName, "Still same candle, sleeping 1 more second ... (current amount is "+strconv.Itoa(candlesAmountBeforeSleeping)+")")
+			time.Sleep(1 * time.Second)
+		}
 
 		var price float32
 		if s.API.IsStopOrder(pendingOrder) {

@@ -33,9 +33,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	)
 
 	if !isValidTimeToOpenAPosition {
-		if len(s.positions) == 0 {
-			s.savePendingOrder(ibroker.LongSide)
-		}
+		s.savePendingOrder(ibroker.LongSide)
 	} else {
 		if s.pendingOrder != nil {
 			s.createPendingOrder(ibroker.LongSide)
