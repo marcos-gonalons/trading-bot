@@ -37,7 +37,6 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	} else {
 		if s.pendingOrder != nil {
 			s.createPendingOrder(ibroker.LongSide)
-			return
 		}
 		s.pendingOrder = nil
 	}
