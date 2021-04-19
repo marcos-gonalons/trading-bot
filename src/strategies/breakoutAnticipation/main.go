@@ -311,6 +311,7 @@ func (s *Strategy) isExecutionTimeValid(
 func (s *Strategy) savePendingOrder(side string) {
 	go func() {
 		time.Sleep(1 * time.Minute)
+		s.log(MainStrategyName, "Save pending order called for side "+side)
 
 		if len(s.positions) > 0 {
 			s.log(MainStrategyName, "Can't save pending order since there is an open position")
@@ -320,6 +321,7 @@ func (s *Strategy) savePendingOrder(side string) {
 		workingOrders := s.API.GetWorkingOrders(s.orders)
 
 		if len(workingOrders) == 0 {
+			s.log(MainStrategyName, "There aren't any working orders, doing nothing ...")
 			return
 		}
 
@@ -331,6 +333,23 @@ func (s *Strategy) savePendingOrder(side string) {
 		}
 
 		if mainOrder == nil {
+			s.log(MainStrategyName, "There isn't an active order for this side "+side)
+			return
+		}
+
+		var validHalfHours []string
+		if side == ibroker.LongSide {
+			_, _, validHalfHours = getValidResistanceBreakoutTimes()
+		} else {
+			_, _, validHalfHours = getValidSupportBreakoutTimes()
+		}
+
+		if s.isExecutionTimeValid(
+			[]string{},
+			[]string{},
+			validHalfHours,
+		) {
+			s.log(MainStrategyName, "No need to save the pending order since we are in the right time")
 			return
 		}
 
