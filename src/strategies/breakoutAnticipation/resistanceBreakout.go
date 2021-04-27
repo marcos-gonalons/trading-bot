@@ -42,13 +42,13 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	}
 
 	riskPercentage := float64(1)
-	stopLossDistance := 16
+	stopLossDistance := 24
 	takeProfitDistance := 34
-	candlesAmountWithLowerPriceToBeConsideredTop := 21
+	candlesAmountWithLowerPriceToBeConsideredTop := 24
 	tpDistanceShortForBreakEvenSL := 2
 	priceOffset := 1
-	trendCandles := 90
-	trendDiff := float64(5)
+	trendCandles := 60
+	trendDiff := float64(15)
 
 	if len(s.positions) > 0 {
 		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), ibroker.LongSide)
@@ -144,9 +144,27 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 }
 
 func getValidResistanceBreakoutTimes() ([]string, []string, []string) {
-	validMonths := []string{"January", "February", "March", "April", "May", "June"}
+	validMonths := []string{"January", "February", "March", "April", "May", "June", "July", "August", "September"}
 	validWeekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}
-	validHalfHours := []string{"9:00", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "15:30", "16:00", "16:30", "17:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"}
+	validHalfHours := []string{
+		"9:00",
+		"9:30",
+		"10:00",
+		"10:30",
+		"11:00",
+		"11:30",
+		"12:00",
+		"12:30",
+		"13:00",
+		"13:30",
+		"14:00",
+		"16:00",
+		"16:30",
+		"17:00",
+		"17:30",
+		"20:00",
+		"20:30",
+	}
 
 	return validMonths, validWeekdays, validHalfHours
 }
