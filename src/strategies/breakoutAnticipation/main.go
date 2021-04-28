@@ -226,7 +226,7 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+15), 1)
 			} else {
 				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+34), 1)
-				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-16), 1)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-24), 1)
 			}
 			s.APIRetryFacade.ModifyPosition(s.SymbolForAPI, tp, sl, retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
