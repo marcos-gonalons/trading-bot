@@ -265,8 +265,10 @@ func (s *Strategy) isCurrentTimeOutsideTradingHours() bool {
 }
 
 func (s *Strategy) getCurrentTimeHourAndMinutes() (int, int) {
-	currentHour, _ := strconv.Atoi(s.currentExecutionTime.Format("15"))
-	currentMinutes, _ := strconv.Atoi(s.currentExecutionTime.Format("04"))
+	t := s.currentExecutionTime.Add(time.Minute * -1)
+
+	currentHour, _ := strconv.Atoi(t.Format("15"))
+	currentMinutes, _ := strconv.Atoi(t.Format("04"))
 
 	return currentHour, currentMinutes
 }
