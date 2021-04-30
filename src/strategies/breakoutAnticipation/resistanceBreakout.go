@@ -45,14 +45,13 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	stopLossDistance := 24
 	takeProfitDistance := 34
 	candlesAmountWithLowerPriceToBeConsideredTop := 24
-	tpDistanceShortForBreakEvenSL := 2
+	tpDistanceShortForBreakEvenSL := 0
 	priceOffset := 1
 	trendCandles := 60
 	trendDiff := float64(15)
 
 	if len(s.positions) > 0 {
 		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), ibroker.LongSide)
-		return
 	}
 
 	lastCompletedCandleIndex := len(candles) - 2
@@ -121,22 +120,29 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 
 				s.log(ResistanceBreakoutStrategyName, "Buy order to be created -> "+utils.GetStringRepresentation(order))
 
+				if len(s.positions) > 0 {
+					s.log(ResistanceBreakoutStrategyName, "There is an open position, saving the order for later ...")
+					s.pendingOrder = order
+					return
+				}
+
 				if !isValidTimeToOpenAPosition {
 					s.log(ResistanceBreakoutStrategyName, "Now is not the time for opening any buy orders, saving it for later ...")
 					s.pendingOrder = order
-				} else {
-					s.APIRetryFacade.CreateOrder(
-						order,
-						func() *api.Quote {
-							return s.currentBrokerQuote
-						},
-						s.setStringValues,
-						retryFacade.RetryParams{
-							DelayBetweenRetries: 10 * time.Second,
-							MaxRetries:          20,
-						},
-					)
+					return
 				}
+
+				s.APIRetryFacade.CreateOrder(
+					order,
+					func() *api.Quote {
+						return s.currentBrokerQuote
+					},
+					s.setStringValues,
+					retryFacade.RetryParams{
+						DelayBetweenRetries: 10 * time.Second,
+						MaxRetries:          20,
+					},
+				)
 			},
 		},
 	)

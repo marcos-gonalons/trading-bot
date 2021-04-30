@@ -470,6 +470,10 @@ func (s *Strategy) createPendingOrder(side string) {
 }
 
 func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side string) {
+	if distanceToTp <= 0 {
+		return
+	}
+
 	if s.modifyingPositionTimestamp == s.CandlesHandler.GetLastCandle().Timestamp {
 		return
 	}

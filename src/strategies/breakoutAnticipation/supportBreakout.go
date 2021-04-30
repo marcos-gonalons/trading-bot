@@ -47,7 +47,6 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 
 	if len(s.positions) > 0 {
 		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), ibroker.ShortSide)
-		return
 	}
 
 	lastCompletedCandleIndex := len(candles) - 2
@@ -118,22 +117,29 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 
 				s.log(SupportBreakoutStrategyName, "Short order to be created -> "+utils.GetStringRepresentation(order))
 
+				if len(s.positions) > 0 {
+					s.log(SupportBreakoutStrategyName, "There is an open position, saving the order for later ...")
+					s.pendingOrder = order
+					return
+				}
+
 				if !isValidTimeToOpenAPosition {
 					s.log(SupportBreakoutStrategyName, "Now is not the time for opening any short orders, saving it for later ...")
 					s.pendingOrder = order
-				} else {
-					s.APIRetryFacade.CreateOrder(
-						order,
-						func() *api.Quote {
-							return s.currentBrokerQuote
-						},
-						s.setStringValues,
-						retryFacade.RetryParams{
-							DelayBetweenRetries: 10 * time.Second,
-							MaxRetries:          20,
-						},
-					)
+					return
 				}
+
+				s.APIRetryFacade.CreateOrder(
+					order,
+					func() *api.Quote {
+						return s.currentBrokerQuote
+					},
+					s.setStringValues,
+					retryFacade.RetryParams{
+						DelayBetweenRetries: 10 * time.Second,
+						MaxRetries:          20,
+					},
+				)
 			},
 		},
 	)
