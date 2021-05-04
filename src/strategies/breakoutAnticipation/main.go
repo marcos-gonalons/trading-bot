@@ -418,6 +418,11 @@ func (s *Strategy) createPendingOrder(side string) {
 		return
 	}
 
+	if len(s.positions) > 0 {
+		s.log(MainStrategyName, "Can't create the pending order since there is an open position -> "+utils.GetStringRepresentation(s.positions[0]))
+		return
+	}
+
 	go func(pendingOrder *api.Order) {
 		candlesAmountBeforeSleeping := len(s.CandlesHandler.GetCandles())
 
