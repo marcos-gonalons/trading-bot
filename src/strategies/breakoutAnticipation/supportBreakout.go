@@ -37,8 +37,8 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	}
 
 	riskPercentage := float64(1)
-	stopLossDistance := 15
-	takeProfitDistance := 34
+	stopLossDistance := float32(15)
+	takeProfitDistance := float32(34)
 	candlesAmountWithLowerPriceToBeConsideredBottom := 14
 	tpDistanceShortForBreakEvenSL := 1
 	priceOffset := 2
@@ -88,59 +88,87 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 		return
 	}
 
-	s.APIRetryFacade.CloseOrders(
-		s.API.GetWorkingOrders(s.orders),
-		retryFacade.RetryParams{
-			DelayBetweenRetries: 5 * time.Second,
-			MaxRetries:          30,
-			SuccessCallback: func() {
-				float32Price := float32(price)
+	params := CreateShortOrderParams{
+		Price:              price,
+		StopLossDistance:   stopLossDistance,
+		TakeProfitDistance: takeProfitDistance,
+		RiskPercentage:     riskPercentage,
+		IsValidTime:        isValidTimeToOpenAPosition,
+	}
 
-				stopLoss := float32Price + float32(stopLossDistance)
-				takeProfit := float32Price - float32(takeProfitDistance)
-				size := math.Floor((s.state.Equity*(riskPercentage/100))/float64(stopLossDistance+1) + 1)
-				if size == 0 {
-					size = 1
-				}
-
-				order := &api.Order{
-					CurrentAsk: &s.currentBrokerQuote.Ask,
-					CurrentBid: &s.currentBrokerQuote.Bid,
-					Instrument: ibroker.GER30SymbolName,
-					StopPrice:  &float32Price,
-					Qty:        float32(size),
-					Side:       ibroker.ShortSide,
-					StopLoss:   &stopLoss,
-					TakeProfit: &takeProfit,
-					Type:       ibroker.StopType,
-				}
-
-				s.log(SupportBreakoutStrategyName, "Short order to be created -> "+utils.GetStringRepresentation(order))
-
-				if len(s.positions) > 0 {
-					s.log(SupportBreakoutStrategyName, "There is an open position, saving the order for later ...")
-					s.pendingOrder = order
-					return
-				}
-
-				if !isValidTimeToOpenAPosition {
-					s.log(SupportBreakoutStrategyName, "Now is not the time for opening any short orders, saving it for later ...")
-					s.pendingOrder = order
-					return
-				}
-
-				s.APIRetryFacade.CreateOrder(
-					order,
-					func() *api.Quote {
-						return s.currentBrokerQuote
-					},
-					s.setStringValues,
-					retryFacade.RetryParams{
-						DelayBetweenRetries: 10 * time.Second,
-						MaxRetries:          20,
-					},
-				)
+	if len(s.positions) > 0 {
+		s.log(SupportBreakoutStrategyName, "There is an open position, no need to close any orders ...")
+		s.createShortOrder(params)
+	} else {
+		s.log(SupportBreakoutStrategyName, "There isn't any open position. Closing orders first ...")
+		s.APIRetryFacade.CloseOrders(
+			s.API.GetWorkingOrders(s.orders),
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 5 * time.Second,
+				MaxRetries:          30,
+				SuccessCallback: func() {
+					s.createShortOrder(params)
+				},
 			},
+		)
+	}
+
+}
+
+// TODO: refactor this, since this method is the same as createLongOrder
+type CreateShortOrderParams struct {
+	Price              float64
+	StopLossDistance   float32
+	TakeProfitDistance float32
+	RiskPercentage     float64
+	IsValidTime        bool
+}
+
+func (s *Strategy) createShortOrder(params CreateShortOrderParams) {
+	float32Price := float32(params.Price)
+
+	stopLoss := float32Price + float32(params.StopLossDistance)
+	takeProfit := float32Price - float32(params.TakeProfitDistance)
+	size := math.Floor((s.state.Equity*(params.RiskPercentage/100))/float64(params.StopLossDistance+1) + 1)
+	if size == 0 {
+		size = 1
+	}
+
+	order := &api.Order{
+		CurrentAsk: &s.currentBrokerQuote.Ask,
+		CurrentBid: &s.currentBrokerQuote.Bid,
+		Instrument: ibroker.GER30SymbolName,
+		StopPrice:  &float32Price,
+		Qty:        float32(size),
+		Side:       ibroker.ShortSide,
+		StopLoss:   &stopLoss,
+		TakeProfit: &takeProfit,
+		Type:       ibroker.StopType,
+	}
+
+	s.log(SupportBreakoutStrategyName, "Short order to be created -> "+utils.GetStringRepresentation(order))
+
+	if len(s.positions) > 0 {
+		s.log(SupportBreakoutStrategyName, "There is an open position, saving the order for later ...")
+		s.pendingOrder = order
+		return
+	}
+
+	if !params.IsValidTime {
+		s.log(SupportBreakoutStrategyName, "Now is not the time for opening any short orders, saving it for later ...")
+		s.pendingOrder = order
+		return
+	}
+
+	s.APIRetryFacade.CreateOrder(
+		order,
+		func() *api.Quote {
+			return s.currentBrokerQuote
+		},
+		s.setStringValues,
+		retryFacade.RetryParams{
+			DelayBetweenRetries: 10 * time.Second,
+			MaxRetries:          20,
 		},
 	)
 }
