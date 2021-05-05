@@ -312,7 +312,6 @@ func (s *Strategy) isExecutionTimeValid(
 
 func (s *Strategy) savePendingOrder(side string) {
 	go func() {
-		time.Sleep(1 * time.Minute)
 		s.log(MainStrategyName, "Save pending order called for side "+side)
 
 		if len(s.positions) > 0 {
@@ -424,16 +423,6 @@ func (s *Strategy) createPendingOrder(side string) {
 	}
 
 	go func(pendingOrder *api.Order) {
-		candlesAmountBeforeSleeping := len(s.CandlesHandler.GetCandles())
-
-		s.log(MainStrategyName, "Sleeping 1 minute before creating the pending order -> "+utils.GetStringRepresentation(pendingOrder))
-		time.Sleep(1 * time.Minute)
-
-		for candlesAmountBeforeSleeping == len(s.CandlesHandler.GetCandles()) {
-			s.log(MainStrategyName, "Still same candle, sleeping 1 more second ... (current amount is "+strconv.Itoa(candlesAmountBeforeSleeping)+")")
-			time.Sleep(1 * time.Second)
-		}
-
 		var price float32
 		if s.API.IsStopOrder(pendingOrder) {
 			price = *pendingOrder.StopPrice
