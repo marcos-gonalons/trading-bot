@@ -198,7 +198,8 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,
 				SuccessCallback:     func() { s.orders = nil },
-			})
+			},
+		)
 		return
 	}
 
