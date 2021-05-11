@@ -37,7 +37,7 @@ func (s *Service) getPrice(
 	}
 
 	futureCandlesOvercomePrice := false
-	for j := horizontalLevelCandleIndex + 1; j < lastCompletedCandleIndex-1; j++ {
+	for j := horizontalLevelCandleIndex + 1; j < lastCompletedCandleIndex; j++ {
 		if supportOrResistance == ResistanceName {
 			if candles[j].High >= candles[horizontalLevelCandleIndex].High {
 				futureCandlesOvercomePrice = true
