@@ -204,7 +204,9 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}
 
 	if s.lastCandlesAmount != len(s.CandlesHandler.GetCandles()) {
+		s.log(MainStrategyName, "Calling supportBreakoutAnticipationStrategy")
 		s.supportBreakoutAnticipationStrategy(s.CandlesHandler.GetCandles())
+		s.log(MainStrategyName, "Calling resistanceBreakoutAnticipationStrategy")
 		s.resistanceBreakoutAnticipationStrategy(s.CandlesHandler.GetCandles())
 	} else {
 		s.log(MainStrategyName, "Doing nothing - still same candle")

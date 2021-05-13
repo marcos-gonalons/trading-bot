@@ -19,6 +19,11 @@ import (
 const ResistanceBreakoutStrategyName = MainStrategyName + " - RBA"
 
 func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candle) {
+	s.log(ResistanceBreakoutStrategyName, "resistanceBreakoutAnticipationStrategy started")
+	defer func() {
+		s.log(ResistanceBreakoutStrategyName, "resistanceBreakoutAnticipationStrategy ended")
+	}()
+
 	validMonths, validWeekdays, validHalfHours := getValidResistanceBreakoutTimes()
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {

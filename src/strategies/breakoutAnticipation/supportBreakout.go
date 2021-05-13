@@ -14,6 +14,11 @@ import (
 const SupportBreakoutStrategyName = MainStrategyName + " - SBA"
 
 func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) {
+	s.log(SupportBreakoutStrategyName, "supportBreakoutAnticipationStrategy started")
+	defer func() {
+		s.log(SupportBreakoutStrategyName, "supportBreakoutAnticipationStrategy ended")
+	}()
+
 	validMonths, validWeekdays, validHalfHours := getValidSupportBreakoutTimes()
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
