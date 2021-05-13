@@ -84,15 +84,18 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	}
 	diff := highestValue - candles[lastCompletedCandleIndex].High
 	if diff < trendDiff {
-		s.log(SupportBreakoutStrategyName, "At the end it wasn't a good short setup, closing orders ...")
-		s.APIRetryFacade.CloseOrders(
-			s.API.GetWorkingOrders(s.orders),
-			retryFacade.RetryParams{
-				DelayBetweenRetries: 5 * time.Second,
-				MaxRetries:          30,
-				SuccessCallback:     func() { s.orders = nil },
-			},
-		)
+		s.log(SupportBreakoutStrategyName, "At the end it wasn't a good short setup")
+		if len(s.positions) == 0 {
+			s.log(SupportBreakoutStrategyName, "There isn't an open position, closing orders ...")
+			s.APIRetryFacade.CloseOrders(
+				s.API.GetWorkingOrders(s.orders),
+				retryFacade.RetryParams{
+					DelayBetweenRetries: 5 * time.Second,
+					MaxRetries:          30,
+					SuccessCallback:     func() { s.orders = nil },
+				},
+			)
+		}
 		return
 	}
 
