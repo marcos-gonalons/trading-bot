@@ -438,7 +438,7 @@ func (s *Strategy) createPendingOrder(side string) {
 		s.log(MainStrategyName, "Last completed candle -> "+utils.GetStringRepresentation(lastCompletedCandle))
 
 		if side == ibroker.LongSide {
-			if price <= float32(lastCompletedCandle.High) {
+			if price <= float32(lastCompletedCandle.Close) {
 				s.log(MainStrategyName, "Price is lower than last completed candle.high - Can't create the pending order")
 				return
 			}
@@ -519,6 +519,7 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 	}
 }
 
+// todo: should be API method probably
 func (s *Strategy) getSlAndTpOrdersForCurrentOpenPosition() (
 	slOrder *api.Order,
 	tpOrder *api.Order,
@@ -535,6 +536,31 @@ func (s *Strategy) getSlAndTpOrdersForCurrentOpenPosition() (
 		}
 	}
 	return
+}
+
+// todo: should be API method probably
+func (s *Strategy) getWorkingOrderWithBracketOrders(side string, symbol string, orders []*api.Order) []*api.Order {
+	var workingOrders []*api.Order
+
+	for _, order := range s.orders {
+		if order.Status != "working" || order.Side != side || order.Instrument != symbol || order.ParentID != nil {
+			continue
+		}
+
+		workingOrders = append(workingOrders, order)
+	}
+
+	if len(workingOrders) > 0 {
+		for _, order := range s.orders {
+			if order.Status != "working" || *order.ParentID != workingOrders[0].ID {
+				continue
+			}
+
+			workingOrders = append(workingOrders, order)
+		}
+	}
+
+	return workingOrders
 }
 
 func (s *Strategy) setStringValues(order *api.Order) {
