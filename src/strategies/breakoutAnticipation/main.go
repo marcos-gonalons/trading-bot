@@ -552,7 +552,7 @@ func (s *Strategy) getWorkingOrderWithBracketOrders(side string, symbol string, 
 
 	if len(workingOrders) > 0 {
 		for _, order := range s.orders {
-			if order.Status != "working" || *order.ParentID != workingOrders[0].ID {
+			if order.Status != "working" || order.ParentID == nil || *order.ParentID != workingOrders[0].ID {
 				continue
 			}
 
