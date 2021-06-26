@@ -27,6 +27,7 @@ import (
 type API struct {
 	httpclient httpclient.Interface
 	logger     logger.Interface
+	url        string
 
 	timeout     time.Duration
 	accessToken *api.AccessToken
@@ -414,7 +415,7 @@ func (s *API) apiCall(
 }
 
 func (s *API) getURL(endpoint string) string {
-	return "https://www.ibroker.es/tradingview/api/" + endpoint
+	return s.url + endpoint
 }
 
 func (s *API) setHeaders(rq *http.Request, isOptionsRequest bool, method string) {
@@ -479,7 +480,7 @@ func (s *API) setCredentials(credentials *api.Credentials) {
 }
 
 // CreateAPIServiceInstance ...
-func CreateAPIServiceInstance(credentials *api.Credentials) api.Interface {
+func CreateAPIServiceInstance(credentials *api.Credentials, apiURL string) api.Interface {
 	httpclient := &httpclient.Service{
 		Logger: logger.GetInstance(),
 	}
@@ -487,6 +488,7 @@ func CreateAPIServiceInstance(credentials *api.Credentials) api.Interface {
 	instance := &API{
 		httpclient: httpclient,
 		logger:     logger.GetInstance(),
+		url:        apiURL,
 	}
 	instance.setCredentials(credentials)
 	instance.SetTimeout(time.Second * 10)

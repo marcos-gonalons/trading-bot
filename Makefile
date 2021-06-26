@@ -2,7 +2,8 @@ build:
 	docker build ./ -t trading-bot \
 		--build-arg username=${username} \
 		--build-arg password=${password} \
-		--build-arg account_id=${account_id}
+		--build-arg account_id=${account_id} \
+		--build-arg api_url=${api_url}
 
 up:
 	docker-compose up

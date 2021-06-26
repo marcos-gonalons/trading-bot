@@ -9,6 +9,9 @@ ENV PASSWORD $password
 ARG account_id
 ENV ACCOUNT_ID $account_id
 
+ARG api_url
+ENV API_URL $api_url
+
 COPY ./ /TradingBot
 WORKDIR /TradingBot
 

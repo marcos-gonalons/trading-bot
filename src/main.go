@@ -25,7 +25,7 @@ func main() {
 		panicCatcher(recover(), ibrokerAPI)
 	}()
 
-	user, password, accountID, err := getEnvVars()
+	user, password, accountID, apiURL, err := getEnvVars()
 	if err != nil {
 		fmt.Printf("%#v", err.Error())
 		return
@@ -37,6 +37,7 @@ func main() {
 			Password:  password,
 			AccountID: accountID,
 		},
+		apiURL,
 	)
 	setupOSSignalsNotifications(ibrokerAPI)
 
@@ -61,19 +62,23 @@ func main() {
 	waitingGroup.Wait() // Wait forever, this script should never die
 }
 
-func getEnvVars() (user, password, accountID string, err error) {
+func getEnvVars() (user, password, accountID, apiURL string, err error) {
 	user = os.Getenv("USERNAME")
 	password = os.Getenv("PASSWORD")
 	accountID = os.Getenv("ACCOUNT_ID")
+	apiURL = os.Getenv("API_URL")
 
 	if user == "" {
-		err = errors.New("Empty USER env var")
+		err = errors.New("empty USER env var")
 	}
 	if password == "" {
-		err = errors.New("Empty PASSWORD env var")
+		err = errors.New("empty PASSWORD env var")
 	}
 	if accountID == "" {
-		err = errors.New("Empty ACCOUNT_ID env var")
+		err = errors.New("empty ACCOUNT_ID env var")
+	}
+	if apiURL == "" {
+		err = errors.New("empty API_URL env var")
 	}
 
 	return
