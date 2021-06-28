@@ -32,16 +32,9 @@ type Handler struct {
 
 // Run ...
 func (s *Handler) Run() {
-	s.strategies = s.getStrategies()
-	for _, strategy := range s.strategies {
-		go strategy.Initialize()
-	}
 
-	for _, strategy := range s.strategies {
-		s.symbolsForAPI = append(s.symbolsForAPI, strategy.GetSymbolForAPI())
-		s.symbolsForSocket = append(s.symbolsForSocket, strategy.GetSymbolForSocket())
-	}
-
+	s.initSymbolsArrays()
+	s.initStrategies()
 	s.initSocket()
 
 	go s.resetAtTwoAm()
@@ -136,10 +129,6 @@ func (s *Handler) fetchDataLoop() {
 					var getQuoteWaitingGroup sync.WaitGroup
 					getQuoteWaitingGroup.Add(len(s.symbolsForAPI))
 
-					// TODO: Same symbol can appear twice or more in symbolsForAPI
-					// No need to call getQuote twice or more for the same symbol
-					// Filter duplicates from this array first
-					// Do it where the array is created in Run()
 					for _, symbol := range s.symbolsForAPI {
 						if symbol == "__test__" {
 							getQuoteWaitingGroup.Done()
@@ -262,5 +251,26 @@ func (s *Handler) panicIfTooManyAPIFails() {
 		}
 		s.failedAPIRequests = 0
 		time.Sleep(1 * time.Minute)
+	}
+}
+
+func (s *Handler) initStrategies() {
+	s.strategies = s.getStrategies()
+	for _, strategy := range s.strategies {
+		go strategy.Initialize()
+	}
+}
+
+func (s *Handler) initSymbolsArrays() {
+	for _, strategy := range s.strategies {
+		var symbol string
+		symbol = strategy.GetSymbolForAPI()
+		if !utils.IsInArray(symbol, s.symbolsForAPI) {
+			s.symbolsForAPI = append(s.symbolsForAPI, strategy.GetSymbolForAPI())
+		}
+		symbol = strategy.GetSymbolForSocket()
+		if !utils.IsInArray(symbol, s.symbolsForSocket) {
+			s.symbolsForSocket = append(s.symbolsForSocket, strategy.GetSymbolForSocket())
+		}
 	}
 }
