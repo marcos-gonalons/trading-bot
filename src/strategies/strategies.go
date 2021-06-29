@@ -4,7 +4,7 @@ import (
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/strategies/breakoutAnticipation"
-	"TradingBot/src/strategies/test"
+	"TradingBot/src/strategies/testStrategy"
 )
 
 func (s *Handler) getStrategies() []Interface {
@@ -22,7 +22,7 @@ func (s *Handler) getBreakoutAnticipationStrategy() Interface {
 	)
 	candlesHandler := &candlesHandler.Service{
 		Logger:    s.Logger,
-		Symbol:    breakoutAnticipationStrategy.GetSymbolForAPI(),
+		Symbol:    breakoutAnticipationStrategy.GetSymbol().BrokerAPIName,
 		Timeframe: *breakoutAnticipationStrategy.GetTimeframe(),
 	}
 	breakoutAnticipationStrategy.SetCandlesHandler(candlesHandler)
@@ -32,14 +32,14 @@ func (s *Handler) getBreakoutAnticipationStrategy() Interface {
 }
 
 func (s *Handler) getTestStrategy() Interface {
-	testStrategy := test.GetStrategyInstance(
+	testStrategy := testStrategy.GetStrategyInstance(
 		s.API,
 		s.APIRetryFacade,
 		s.Logger,
 	)
 	candlesHandler := &candlesHandler.Service{
 		Logger:    s.Logger,
-		Symbol:    testStrategy.GetSymbolForAPI(),
+		Symbol:    testStrategy.GetSymbol().BrokerAPIName,
 		Timeframe: *testStrategy.GetTimeframe(),
 	}
 	testStrategy.SetCandlesHandler(candlesHandler)

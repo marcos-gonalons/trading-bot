@@ -1,6 +1,7 @@
 package breakoutAnticipation
 
 import (
+	"TradingBot/src/constants"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/api/retryFacade"
@@ -13,6 +14,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	funk "github.com/thoas/go-funk"
 
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
@@ -29,10 +32,9 @@ type Strategy struct {
 	HorizontalLevelsService horizontalLevels.Interface
 	Mutex                   *sync.Mutex
 
-	Name            string
-	SymbolForSocket string
-	SymbolForAPI    string
-	Timeframe       types.Timeframe
+	Name      string
+	Symbol    types.Symbol
+	Timeframe types.Timeframe
 
 	currentExecutionTime time.Time
 	lastCandlesAmount    int
@@ -71,14 +73,9 @@ func (s *Strategy) GetTimeframe() *types.Timeframe {
 	return &s.Timeframe
 }
 
-// GetSymbolForSocket ...
-func (s *Strategy) GetSymbolForSocket() string {
-	return s.SymbolForSocket
-}
-
-// GetSymbolForAPI ...
-func (s *Strategy) GetSymbolForAPI() string {
-	return s.SymbolForAPI
+// GetSymbol ...
+func (s *Strategy) GetSymbol() *types.Symbol {
+	return &s.Symbol
 }
 
 // Initialize ...
@@ -231,7 +228,7 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+34), 1)
 				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-24), 1)
 			}
-			s.APIRetryFacade.ModifyPosition(s.SymbolForAPI, tp, sl, retryFacade.RetryParams{
+			s.APIRetryFacade.ModifyPosition(s.Symbol.BrokerAPIName, tp, sl, retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          20,
 			})
@@ -263,6 +260,7 @@ func (s *Strategy) updateAverageSpread() {
 }
 
 func (s *Strategy) isCurrentTimeOutsideTradingHours() bool {
+	// todo: use time from s.GetSymbol().etc
 	currentHour, currentMinutes := s.getCurrentTimeHourAndMinutes()
 	return (currentHour < 7) || (currentHour > 21) || (currentHour == 21 && currentMinutes > 57)
 }
@@ -601,15 +599,17 @@ func GetStrategyInstance(
 	apiRetryFacade retryFacade.Interface,
 	logger logger.Interface,
 ) *Strategy {
-	var symbolForSocket = "FX:GER30"
-	var symbolForAPI = ibroker.GER30SymbolName
 	return &Strategy{
-		API:             api,
-		APIRetryFacade:  apiRetryFacade,
-		Logger:          logger,
-		Name:            MainStrategyName,
-		SymbolForSocket: symbolForSocket,
-		SymbolForAPI:    symbolForAPI,
+		API:            api,
+		APIRetryFacade: apiRetryFacade,
+		Logger:         logger,
+		Name:           MainStrategyName,
+		Symbol: funk.Find(
+			constants.Symbols,
+			func(s *types.Symbol) bool {
+				return s.BrokerAPIName == ibroker.GER30SymbolName
+			},
+		).(types.Symbol),
 		Timeframe: types.Timeframe{
 			Value: 1,
 			Unit:  "m",

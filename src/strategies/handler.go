@@ -4,6 +4,7 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"net"
 	"strconv"
@@ -26,8 +27,8 @@ type Handler struct {
 	fetchError        error
 	failedAPIRequests uint
 
-	symbolsForAPI    []string
-	symbolsForSocket []string
+	symbolsForAPI    []*types.Symbol
+	symbolsForSocket []*types.Symbol
 }
 
 // Run ...
@@ -54,7 +55,7 @@ func (s *Handler) initSocket() {
 	}
 
 	for _, symbol := range s.symbolsForSocket {
-		err = tradingviewsocket.AddSymbol(symbol)
+		err = tradingviewsocket.AddSymbol(symbol.SocketName)
 		if err != nil {
 			panic("Error while adding the symbol -> " + err.Error())
 		}
@@ -67,7 +68,7 @@ func (s *Handler) onReceiveMarketData(symbol string, data *tradingviewsocket.Quo
 	s.Logger.Log("Received data -> " + symbol + " -> " + utils.GetStringRepresentation(data))
 
 	for _, strategy := range s.strategies {
-		if symbol != strategy.GetSymbolForSocket() {
+		if symbol != strategy.GetSymbol().SocketName {
 			continue
 		}
 		go strategy.OnReceiveMarketData(symbol, data)
@@ -119,40 +120,38 @@ func (s *Handler) resetAtTwoAm() {
 func (s *Handler) fetchDataLoop() {
 	for {
 		var waitingGroup sync.WaitGroup
+		var fetchFuncs []func()
+
 		now := time.Now()
 		currentHour, _ := strconv.Atoi(now.Format("15"))
-		// TODO: Function somewhere to check if we are inside the time range
-		// Check function in strategies/main.go (isCurrentTimeOutsideTradingHours), refactor this somehow
-		if currentHour >= 7 && currentHour <= 21 {
-			fetchFuncs := []func(){
+
+		for _, symbol := range s.symbolsForAPI {
+			if currentHour < int(symbol.TradingHours.Start) || currentHour >= int(symbol.TradingHours.End) {
+				continue
+			}
+
+			fetchFuncs = append(fetchFuncs,
 				func() {
-					var getQuoteWaitingGroup sync.WaitGroup
-					getQuoteWaitingGroup.Add(len(s.symbolsForAPI))
-
-					for _, symbol := range s.symbolsForAPI {
-						if symbol == "__test__" {
-							getQuoteWaitingGroup.Done()
-							continue
-						}
-
-						go func(symbol string) {
-							quote := s.fetch(func() (interface{}, error) {
-								defer getQuoteWaitingGroup.Done()
-								return s.API.GetQuote(symbol)
-							}).(*api.Quote)
-							if quote != nil {
-								for _, strategy := range s.strategies {
-									if strategy.GetSymbolForAPI() != symbol {
-										continue
-									}
-									strategy.SetCurrentBrokerQuote(quote)
+					go func(symbol string) {
+						quote := s.fetch(func() (interface{}, error) {
+							defer waitingGroup.Done()
+							return s.API.GetQuote(symbol)
+						}).(*api.Quote)
+						if quote != nil {
+							for _, strategy := range s.strategies {
+								if strategy.GetSymbol().BrokerAPIName != symbol {
+									continue
 								}
+								strategy.SetCurrentBrokerQuote(quote)
 							}
-						}(symbol)
-					}
-					getQuoteWaitingGroup.Wait()
-					waitingGroup.Done()
+						}
+					}(symbol.BrokerAPIName)
 				},
+			)
+		}
+
+		if len(fetchFuncs) > 0 {
+			fetchFuncs = append(fetchFuncs,
 				func() {
 					orders := s.fetch(func() (interface{}, error) {
 						defer waitingGroup.Done()
@@ -188,16 +187,20 @@ func (s *Handler) fetchDataLoop() {
 						}
 					}
 				},
-			}
+			)
+		}
 
-			waitingGroup.Add(len(fetchFuncs))
-			for _, fetchFunc := range fetchFuncs {
-				go fetchFunc()
-			}
-		} else {
+		if len(fetchFuncs) == 0 {
 			waitingGroup.Add(1)
 			waitingGroup.Done()
+		} else {
+			waitingGroup.Add(len(fetchFuncs))
 		}
+
+		for _, fetchFunc := range fetchFuncs {
+			go fetchFunc()
+		}
+
 		waitingGroup.Wait()
 		time.Sleep(1666666 * time.Microsecond)
 	}
@@ -263,14 +266,28 @@ func (s *Handler) initStrategies() {
 
 func (s *Handler) initSymbolsArrays() {
 	for _, strategy := range s.strategies {
-		var symbol string
-		symbol = strategy.GetSymbolForAPI()
-		if !utils.IsInArray(symbol, s.symbolsForAPI) {
-			s.symbolsForAPI = append(s.symbolsForAPI, strategy.GetSymbolForAPI())
+		symbol := strategy.GetSymbol()
+
+		exists := false
+		for _, s := range s.symbolsForAPI {
+			if s.BrokerAPIName == symbol.BrokerAPIName {
+				exists = true
+				break
+			}
 		}
-		symbol = strategy.GetSymbolForSocket()
-		if !utils.IsInArray(symbol, s.symbolsForSocket) {
-			s.symbolsForSocket = append(s.symbolsForSocket, strategy.GetSymbolForSocket())
+		if !exists {
+			s.symbolsForAPI = append(s.symbolsForAPI, symbol)
+		}
+
+		exists = false
+		for _, s := range s.symbolsForSocket {
+			if s.BrokerAPIName == symbol.SocketName {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			s.symbolsForSocket = append(s.symbolsForSocket, symbol)
 		}
 	}
 }

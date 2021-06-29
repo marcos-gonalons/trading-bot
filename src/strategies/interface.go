@@ -21,6 +21,5 @@ type Interface interface {
 	SetPositions(positions []*api.Position)
 	SetState(state *api.State)
 	GetTimeframe() *types.Timeframe
-	GetSymbolForSocket() string
-	GetSymbolForAPI() string
+	GetSymbol() *types.Symbol
 }

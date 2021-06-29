@@ -1,6 +1,7 @@
-package test
+package testStrategy
 
 import (
+	"TradingBot/src/constants"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/candlesHandler"
@@ -10,6 +11,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	funk "github.com/thoas/go-funk"
 
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
@@ -26,10 +29,9 @@ type Strategy struct {
 	HorizontalLevelsService horizontalLevels.Interface
 	Mutex                   *sync.Mutex
 
-	Name            string
-	SymbolForSocket string
-	SymbolForAPI    string
-	Timeframe       types.Timeframe
+	Name      string
+	Symbol    types.Symbol
+	Timeframe types.Timeframe
 
 	currentExecutionTime time.Time
 	lastCandlesAmount    int
@@ -92,14 +94,9 @@ func (s *Strategy) Initialize() {
 	s.isReady = true
 }
 
-// GetSymbolForSocket ...
-func (s *Strategy) GetSymbolForSocket() string {
-	return s.SymbolForSocket
-}
-
-// GetSymbolForAPI ...
-func (s *Strategy) GetSymbolForAPI() string {
-	return s.SymbolForAPI
+// GetSymbol ...
+func (s *Strategy) GetSymbol() *types.Symbol {
+	return &s.Symbol
 }
 
 // Reset ...
@@ -171,15 +168,18 @@ func GetStrategyInstance(
 	apiRetryFacade retryFacade.Interface,
 	logger logger.Interface,
 ) *Strategy {
-	var symbolForSocket = "BINANCE:BTCUSD"
-	var symbolForAPI = "__test__"
+
 	return &Strategy{
-		API:             api,
-		APIRetryFacade:  apiRetryFacade,
-		Logger:          logger,
-		Name:            TestStrategyName,
-		SymbolForSocket: symbolForSocket,
-		SymbolForAPI:    symbolForAPI,
+		API:            api,
+		APIRetryFacade: apiRetryFacade,
+		Logger:         logger,
+		Name:           TestStrategyName,
+		Symbol: funk.Find(
+			constants.Symbols,
+			func(s *types.Symbol) bool {
+				return s.BrokerAPIName == "__test__"
+			},
+		).(types.Symbol),
 		Timeframe: types.Timeframe{
 			Value: 3,
 			Unit:  "m",
