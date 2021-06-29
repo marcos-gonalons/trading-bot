@@ -148,12 +148,13 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 	s.log(MainStrategyName, "Updating candles... ")
 	if data.Price != nil {
+		// There is more or less a discrepancy of .8 between the price of ibroker and the price of fx:ger30 on tradingview
 		var price = *data.Price + .8
 		data.Price = &price
 	}
 	s.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.lastVolume)
 
-	if s.isCurrentTimeOutsideTradingHours() {
+	if !utils.IsNowWithinTradingHours(&s.GetSymbol().TradingHours) {
 		s.log(MainStrategyName, "Doing nothing - Now it's not the time.")
 		s.APIRetryFacade.CloseOrders(
 			s.API.GetWorkingOrders(s.orders),
@@ -259,21 +260,6 @@ func (s *Strategy) updateAverageSpread() {
 	s.averageSpread = sum / float64(len(s.spreads))
 }
 
-func (s *Strategy) isCurrentTimeOutsideTradingHours() bool {
-	// todo: use time from s.GetSymbol().etc
-	currentHour, currentMinutes := s.getCurrentTimeHourAndMinutes()
-	return (currentHour < 7) || (currentHour > 21) || (currentHour == 21 && currentMinutes > 57)
-}
-
-func (s *Strategy) getCurrentTimeHourAndMinutes() (int, int) {
-	t := s.currentExecutionTime.Add(time.Minute * -1)
-
-	currentHour, _ := strconv.Atoi(t.Format("15"))
-	currentMinutes, _ := strconv.Atoi(t.Format("04"))
-
-	return currentHour, currentMinutes
-}
-
 func (s *Strategy) isExecutionTimeValid(
 	validMonths []string,
 	validWeekDays []string,
@@ -292,7 +278,7 @@ func (s *Strategy) isExecutionTimeValid(
 	}
 
 	if len(validHalfHours) > 0 {
-		currentHour, currentMinutes := s.getCurrentTimeHourAndMinutes()
+		currentHour, currentMinutes := utils.GetCurrentTimeHourAndMinutes()
 		if currentMinutes >= 30 {
 			currentMinutes = 30
 		} else {

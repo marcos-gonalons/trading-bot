@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"TradingBot/src/types"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -106,4 +107,21 @@ func IsInArray(element string, arr []string) bool {
 // GetBodyForHTTPRequest ...
 func GetBodyForHTTPRequest(body string) io.Reader {
 	return bytes.NewBuffer([]byte(body))
+}
+
+// GetCurrentTimeHourAndMinutes ...
+func GetCurrentTimeHourAndMinutes() (int, int) {
+	n := time.Now()
+	t := n.Add(time.Minute * -1)
+
+	currentHour, _ := strconv.Atoi(t.Format("15"))
+	currentMinutes, _ := strconv.Atoi(t.Format("04"))
+
+	return currentHour, currentMinutes
+}
+
+// IsNowWithinTradingHours ...
+func IsNowWithinTradingHours(tradingHours *types.TradingHours) bool {
+	currentHour, currentMinutes := GetCurrentTimeHourAndMinutes()
+	return !((currentHour < int(tradingHours.Start)) || (currentHour > int(tradingHours.End-1)) || (currentHour == int(tradingHours.End-1) && currentMinutes > 57))
 }

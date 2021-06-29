@@ -122,11 +122,8 @@ func (s *Handler) fetchDataLoop() {
 		var waitingGroup sync.WaitGroup
 		var fetchFuncs []func()
 
-		now := time.Now()
-		currentHour, _ := strconv.Atoi(now.Format("15"))
-
 		for _, symbol := range s.symbolsForAPI {
-			if currentHour < int(symbol.TradingHours.Start) || currentHour >= int(symbol.TradingHours.End) {
+			if !utils.IsNowWithinTradingHours(&symbol.TradingHours) {
 				continue
 			}
 
