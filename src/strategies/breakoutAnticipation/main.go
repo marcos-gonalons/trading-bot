@@ -591,7 +591,7 @@ func GetStrategyInstance(
 		Name:           MainStrategyName,
 		Symbol: funk.Find(
 			constants.Symbols,
-			func(s *types.Symbol) bool {
+			func(s types.Symbol) bool {
 				return s.BrokerAPIName == ibroker.GER30SymbolName
 			},
 		).(types.Symbol),

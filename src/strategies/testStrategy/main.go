@@ -176,7 +176,7 @@ func GetStrategyInstance(
 		Name:           TestStrategyName,
 		Symbol: funk.Find(
 			constants.Symbols,
-			func(s *types.Symbol) bool {
+			func(s types.Symbol) bool {
 				return s.BrokerAPIName == "__test__"
 			},
 		).(types.Symbol),
