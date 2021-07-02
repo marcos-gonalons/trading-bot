@@ -153,7 +153,7 @@ func (s *Strategy) createShortOrder(params CreateShortOrderParams) {
 	order := &api.Order{
 		CurrentAsk: &s.currentBrokerQuote.Ask,
 		CurrentBid: &s.currentBrokerQuote.Bid,
-		Instrument: ibroker.GER30SymbolName,
+		Instrument: s.GetSymbol().BrokerAPIName,
 		StopPrice:  &float32Price,
 		Qty:        float32(size),
 		Side:       ibroker.ShortSide,

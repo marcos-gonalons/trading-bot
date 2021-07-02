@@ -122,6 +122,28 @@ func GetCurrentTimeHourAndMinutes() (int, int) {
 
 // IsNowWithinTradingHours ...
 func IsNowWithinTradingHours(tradingHours *types.TradingHours) bool {
-	currentHour, currentMinutes := GetCurrentTimeHourAndMinutes()
-	return !((currentHour < int(tradingHours.Start)) || (currentHour > int(tradingHours.End-1)) || (currentHour == int(tradingHours.End-1) && currentMinutes > 57))
+	var currentHourTime, timeStartingHour, timeEndingHour time.Time
+
+	if tradingHours.Start == tradingHours.End {
+		return true
+	}
+
+	currentHour, _ := GetCurrentTimeHourAndMinutes()
+	currentHourTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02 15:00:00"))
+
+	timeStartingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(tradingHours.Start), 0, 0, 0, currentHourTime.Location())
+	timeEndingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(tradingHours.End), 0, 0, 0, currentHourTime.Location())
+
+	if tradingHours.End < tradingHours.Start {
+		if currentHour < int(tradingHours.End) {
+			timeStartingHour = timeStartingHour.Add(-24 * time.Hour)
+		} else if currentHour >= int(tradingHours.Start) {
+			timeEndingHour = timeEndingHour.Add(24 * time.Hour)
+		}
+	}
+
+	timeEndingHour = timeEndingHour.Add(-3 * time.Minute)
+	currentHourTime = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), currentHourTime.Hour(), time.Now().Minute(), 0, 0, currentHourTime.Location())
+
+	return currentHourTime.Unix() >= timeStartingHour.Unix() && currentHourTime.Unix() < timeEndingHour.Unix()
 }

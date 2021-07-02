@@ -145,7 +145,7 @@ func (s *Strategy) createLongOrder(params CreateLongOrderParams) {
 	}
 
 	order := &api.Order{
-		Instrument: ibroker.GER30SymbolName,
+		Instrument: s.GetSymbol().BrokerAPIName,
 		StopPrice:  &float32Price,
 		Qty:        float32(size),
 		Side:       ibroker.LongSide,

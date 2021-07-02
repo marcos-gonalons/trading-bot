@@ -25,7 +25,7 @@ var Symbols = []types.Symbol{
 		SocketName:    "BINANCE:BTCUSD",
 		TradingHours: types.TradingHours{
 			Start: 0,
-			End:   24,
+			End:   0,
 		},
 	},
 }

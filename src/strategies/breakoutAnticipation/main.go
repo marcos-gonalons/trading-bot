@@ -490,7 +490,7 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side 
 		s.modifyingPositionTimestamp = s.CandlesHandler.GetLastCandle().Timestamp
 
 		s.APIRetryFacade.ModifyPosition(
-			ibroker.GER30SymbolName,
+			s.GetSymbol().BrokerAPIName,
 			utils.FloatToString(float64(*tpOrder.LimitPrice), 2),
 			utils.FloatToString(float64(position.AvgPrice), 2),
 			retryFacade.RetryParams{

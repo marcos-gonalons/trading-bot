@@ -15,3 +15,6 @@ restart: down up
 
 ssh:
 	docker-compose exec trading-bot bash
+
+test:
+	docker-compose exec trading-bot go test ./src/...
