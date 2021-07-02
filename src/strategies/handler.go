@@ -54,7 +54,9 @@ func (s *Handler) initSocket() {
 		panic("Error while initializing the trading view socket -> " + err.Error())
 	}
 
+	s.Logger.Log("Adding symbols to socket " + utils.GetStringRepresentation(s.symbolsForSocket))
 	for _, symbol := range s.symbolsForSocket {
+		s.Logger.Log("Adding symbol to socket ... " + symbol.SocketName)
 		err = tradingviewsocket.AddSymbol(symbol.SocketName)
 		if err != nil {
 			panic("Error while adding the symbol -> " + err.Error())
