@@ -175,7 +175,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		return
 	}
 
-	if s.averageSpread > 3 {
+	if s.averageSpread > s.GetSymbol().MaxSpread {
 		/**
 			Todo:
 			Do not create the order if the spread is big, but still save the pending orders for the future
@@ -223,11 +223,11 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 
 			// todo: get the tp and sl accordingly
 			if s.API.IsShortPosition(s.currentPosition) {
-				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-34), 1)
-				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+15), 1)
+				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-34), s.GetSymbol().PriceDecimals)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+15), s.GetSymbol().PriceDecimals)
 			} else {
-				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+34), 1)
-				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-24), 1)
+				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+34), s.GetSymbol().PriceDecimals)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-24), s.GetSymbol().PriceDecimals)
 			}
 			s.APIRetryFacade.ModifyPosition(s.Symbol.BrokerAPIName, tp, sl, retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
@@ -548,9 +548,8 @@ func (s *Strategy) getWorkingOrderWithBracketOrders(side string, symbol string, 
 }
 
 func (s *Strategy) setStringValues(order *api.Order) {
-	// TODO: The decimals amount depends on the symbol. For ger 30, it uses 1 decimal, for SPX500, it uses 2.
-	currentAsk := utils.FloatToString(float64(s.currentBrokerQuote.Ask), 1)
-	currentBid := utils.FloatToString(float64(s.currentBrokerQuote.Bid), 1)
+	currentAsk := utils.FloatToString(float64(s.currentBrokerQuote.Ask), s.GetSymbol().PriceDecimals)
+	currentBid := utils.FloatToString(float64(s.currentBrokerQuote.Bid), s.GetSymbol().PriceDecimals)
 	qty := utils.IntToString(int64(order.Qty))
 	order.StringValues = &api.OrderStringValues{
 		CurrentAsk: &currentAsk,
@@ -559,18 +558,18 @@ func (s *Strategy) setStringValues(order *api.Order) {
 	}
 
 	if s.API.IsLimitOrder(order) {
-		limitPrice := utils.FloatToString(math.Round(float64(*order.LimitPrice)*10)/10, 1)
+		limitPrice := utils.FloatToString(math.Round(float64(*order.LimitPrice)*10)/10, s.GetSymbol().PriceDecimals)
 		order.StringValues.LimitPrice = &limitPrice
 	} else {
-		stopPrice := utils.FloatToString(math.Round(float64(*order.StopPrice)*10)/10, 1)
+		stopPrice := utils.FloatToString(math.Round(float64(*order.StopPrice)*10)/10, s.GetSymbol().PriceDecimals)
 		order.StringValues.StopPrice = &stopPrice
 	}
 	if order.StopLoss != nil {
-		stopLossPrice := utils.FloatToString(math.Round(float64(*order.StopLoss)*10)/10, 1)
+		stopLossPrice := utils.FloatToString(math.Round(float64(*order.StopLoss)*10)/10, s.GetSymbol().PriceDecimals)
 		order.StringValues.StopLoss = &stopLossPrice
 	}
 	if order.TakeProfit != nil {
-		takeProfitPrice := utils.FloatToString(math.Round(float64(*order.TakeProfit)*10)/10, 1)
+		takeProfitPrice := utils.FloatToString(math.Round(float64(*order.TakeProfit)*10)/10, s.GetSymbol().PriceDecimals)
 		order.StringValues.TakeProfit = &takeProfitPrice
 	}
 }
