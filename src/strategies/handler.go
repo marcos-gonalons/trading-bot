@@ -34,6 +34,8 @@ type Handler struct {
 // Run ...
 func (s *Handler) Run() {
 
+	s.strategies = s.getStrategies()
+
 	s.initSymbolsArrays()
 	s.initStrategies()
 	s.initSocket()
@@ -257,15 +259,16 @@ func (s *Handler) panicIfTooManyAPIFails() {
 }
 
 func (s *Handler) initStrategies() {
-	s.strategies = s.getStrategies()
 	for _, strategy := range s.strategies {
 		go strategy.Initialize()
 	}
 }
 
 func (s *Handler) initSymbolsArrays() {
+	s.Logger.Log("Initializing symbols arrays ...")
 	for _, strategy := range s.strategies {
 		symbol := strategy.GetSymbol()
+		s.Logger.Log("Symbol: " + utils.GetStringRepresentation(symbol))
 
 		exists := false
 		for _, s := range s.symbolsForAPI {
@@ -280,7 +283,7 @@ func (s *Handler) initSymbolsArrays() {
 
 		exists = false
 		for _, s := range s.symbolsForSocket {
-			if s.BrokerAPIName == symbol.SocketName {
+			if s.SocketName == symbol.SocketName {
 				exists = true
 				break
 			}

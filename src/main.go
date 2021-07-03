@@ -41,11 +41,11 @@ func main() {
 	)
 	setupOSSignalsNotifications(ibrokerAPI)
 
-	_, err = ibrokerAPI.Login()
+	/*_, err = ibrokerAPI.Login()
 	if err != nil {
 		fmt.Printf("%#v", "Login error -> "+err.Error())
 		return
-	}
+	}*/
 
 	var waitingGroup sync.WaitGroup
 	waitingGroup.Add(1)

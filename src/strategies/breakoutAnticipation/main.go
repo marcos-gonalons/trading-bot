@@ -327,9 +327,9 @@ func (s *Strategy) savePendingOrder(side string) {
 
 		var validHalfHours []string
 		if side == ibroker.LongSide {
-			_, _, validHalfHours = getValidResistanceBreakoutTimes()
+			validHalfHours = s.GetSymbol().ValidTradingTimes.Longs.ValidHalfHours
 		} else {
-			_, _, validHalfHours = getValidSupportBreakoutTimes()
+			validHalfHours = s.GetSymbol().ValidTradingTimes.Shorts.ValidHalfHours
 		}
 
 		if s.isExecutionTimeValid(

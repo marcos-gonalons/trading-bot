@@ -24,7 +24,9 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		s.log(ResistanceBreakoutStrategyName, "resistanceBreakoutAnticipationStrategy ended")
 	}()
 
-	validMonths, validWeekdays, validHalfHours := getValidResistanceBreakoutTimes()
+	validMonths := s.GetSymbol().ValidTradingTimes.Longs.ValidMonths
+	validWeekdays := s.GetSymbol().ValidTradingTimes.Longs.ValidWeekdays
+	validHalfHours := s.GetSymbol().ValidTradingTimes.Longs.ValidHalfHours
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
 		s.log(ResistanceBreakoutStrategyName, "Today it's not the day for resistance breakout anticipation")
@@ -179,30 +181,4 @@ func (s *Strategy) createLongOrder(params CreateLongOrderParams) {
 			MaxRetries:          20,
 		},
 	)
-}
-
-func getValidResistanceBreakoutTimes() ([]string, []string, []string) {
-	validMonths := []string{"January", "February", "March", "April", "May", "June", "July", "August", "September"}
-	validWeekdays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"}
-	validHalfHours := []string{
-		"9:00",
-		"9:30",
-		"10:00",
-		"10:30",
-		"11:00",
-		"11:30",
-		"12:00",
-		"12:30",
-		"13:00",
-		"13:30",
-		"14:00",
-		"16:00",
-		"16:30",
-		"17:00",
-		"17:30",
-		"20:00",
-		"20:30",
-	}
-
-	return validMonths, validWeekdays, validHalfHours
 }

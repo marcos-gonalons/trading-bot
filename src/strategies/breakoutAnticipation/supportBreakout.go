@@ -19,7 +19,9 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 		s.log(SupportBreakoutStrategyName, "supportBreakoutAnticipationStrategy ended")
 	}()
 
-	validMonths, validWeekdays, validHalfHours := getValidSupportBreakoutTimes()
+	validMonths := s.GetSymbol().ValidTradingTimes.Shorts.ValidMonths
+	validWeekdays := s.GetSymbol().ValidTradingTimes.Shorts.ValidWeekdays
+	validHalfHours := s.GetSymbol().ValidTradingTimes.Shorts.ValidHalfHours
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
 		s.log(SupportBreakoutStrategyName, "Today it's not the day for support breakout anticipation")
@@ -187,12 +189,4 @@ func (s *Strategy) createShortOrder(params CreateShortOrderParams) {
 			MaxRetries:          20,
 		},
 	)
-}
-
-func getValidSupportBreakoutTimes() ([]string, []string, []string) {
-	validMonths := []string{"January", "March", "April", "May", "June", "August", "September", "October", "December"}
-	validWeekdays := []string{"Monday", "Tuesday", "Thursday", "Friday"}
-	validHalfHours := []string{"8:00", "8:30", "9:00", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "18:00"}
-
-	return validMonths, validWeekdays, validHalfHours
 }
