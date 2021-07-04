@@ -121,23 +121,27 @@ func GetCurrentTimeHourAndMinutes() (int, int) {
 }
 
 // IsNowWithinTradingHours ...
-func IsNowWithinTradingHours(tradingHours *types.TradingHours) bool {
-	var currentHourTime, timeStartingHour, timeEndingHour time.Time
+func IsNowWithinTradingHours(symbol *types.Symbol) bool {
+	if IsNowWeekend() && !symbol.ActiveOnWeekends {
+		return false
+	}
 
-	if tradingHours.Start == tradingHours.End {
+	if symbol.TradingHours.Start == symbol.TradingHours.End {
 		return true
 	}
+
+	var currentHourTime, timeStartingHour, timeEndingHour time.Time
 
 	currentHour, _ := GetCurrentTimeHourAndMinutes()
 	currentHourTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02 15:00:00"))
 
-	timeStartingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(tradingHours.Start), 0, 0, 0, currentHourTime.Location())
-	timeEndingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(tradingHours.End), 0, 0, 0, currentHourTime.Location())
+	timeStartingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(symbol.TradingHours.Start), 0, 0, 0, currentHourTime.Location())
+	timeEndingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(symbol.TradingHours.End), 0, 0, 0, currentHourTime.Location())
 
-	if tradingHours.End < tradingHours.Start {
-		if currentHour < int(tradingHours.End) {
+	if symbol.TradingHours.End < symbol.TradingHours.Start {
+		if currentHour < int(symbol.TradingHours.End) {
 			timeStartingHour = timeStartingHour.Add(-24 * time.Hour)
-		} else if currentHour >= int(tradingHours.Start) {
+		} else if currentHour >= int(symbol.TradingHours.Start) {
 			timeEndingHour = timeEndingHour.Add(24 * time.Hour)
 		}
 	}
@@ -146,4 +150,10 @@ func IsNowWithinTradingHours(tradingHours *types.TradingHours) bool {
 	currentHourTime = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), currentHourTime.Hour(), time.Now().Minute(), 0, 0, currentHourTime.Location())
 
 	return currentHourTime.Unix() >= timeStartingHour.Unix() && currentHourTime.Unix() < timeEndingHour.Unix()
+}
+
+// IsNowWeekend ...
+func IsNowWeekend() bool {
+	weekDay := time.Now().Weekday()
+	return weekDay == 0 || weekDay == 6
 }

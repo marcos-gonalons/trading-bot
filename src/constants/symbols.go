@@ -33,6 +33,7 @@ var Symbols = []types.Symbol{
 				ValidHalfHours: []string{"8:00", "8:30", "9:00", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "18:00"},
 			},
 		},
+		ActiveOnWeekends: false,
 	},
 	{
 		BrokerAPIName: ibroker.SP500SymbolName,
@@ -43,6 +44,7 @@ var Symbols = []types.Symbol{
 			Start: 0,
 			End:   0,
 		},
+		ActiveOnWeekends: false,
 	},
 	{
 		BrokerAPIName: "__test__",
@@ -53,5 +55,6 @@ var Symbols = []types.Symbol{
 			Start: 0,
 			End:   0,
 		},
+		ActiveOnWeekends: true,
 	},
 }

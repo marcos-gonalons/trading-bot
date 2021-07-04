@@ -127,7 +127,7 @@ func (s *Handler) fetchDataLoop() {
 		var fetchFuncs []func()
 
 		for _, symbol := range s.symbolsForAPI {
-			if !utils.IsNowWithinTradingHours(&symbol.TradingHours) {
+			if !utils.IsNowWithinTradingHours(symbol) {
 				continue
 			}
 

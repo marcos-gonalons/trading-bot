@@ -154,7 +154,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}
 	s.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.lastVolume)
 
-	if !utils.IsNowWithinTradingHours(&s.GetSymbol().TradingHours) {
+	if !utils.IsNowWithinTradingHours(s.GetSymbol()) {
 		s.log(MainStrategyName, "Doing nothing - Now it's not the time.")
 		s.APIRetryFacade.CloseOrders(
 			s.API.GetWorkingOrders(s.orders),

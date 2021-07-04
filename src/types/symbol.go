@@ -7,6 +7,12 @@ type Symbol struct {
 	PriceDecimals     int64
 	TradingHours      TradingHours
 	ValidTradingTimes ValidTradingTimes
+	ActiveOnWeekends  bool
+}
+
+type TradingHours struct {
+	Start uint
+	End   uint
 }
 
 type ValidTradingTimes struct {
@@ -18,9 +24,4 @@ type TradingTimes struct {
 	ValidMonths    []string
 	ValidWeekdays  []string
 	ValidHalfHours []string
-}
-
-type TradingHours struct {
-	Start uint
-	End   uint
 }

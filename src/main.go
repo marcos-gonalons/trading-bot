@@ -6,6 +6,7 @@ import (
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/strategies"
+	"TradingBot/src/utils"
 	"errors"
 	"fmt"
 	"os"
@@ -20,7 +21,9 @@ func main() {
 	var ibrokerAPI api.Interface
 
 	// TODO: Add functionality to pause/resume the bot with os signals
-
+	r := utils.IsNowWeekend()
+	fmt.Printf("%#v\n\n\n", r)
+	panic("ok")
 	defer func() {
 		panicCatcher(recover(), ibrokerAPI)
 	}()
