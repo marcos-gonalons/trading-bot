@@ -188,7 +188,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			Todo: take into account the bid and the ask and long and short orders when checking the sperad
 			For example
 		**/
-		s.log(MainStrategyName, "Doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
+		s.log(MainStrategyName, "Closing working orders and doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
 		s.pendingOrder = nil
 		s.APIRetryFacade.CloseOrders(
 			s.API.GetWorkingOrders(s.orders),

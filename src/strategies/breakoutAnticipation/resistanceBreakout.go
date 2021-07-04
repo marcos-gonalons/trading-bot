@@ -77,14 +77,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		return
 	}
 
-	// todo -> find a better name for closingOrdersTimestamp
-	if s.closingOrdersTimestamp == candles[lastCompletedCandleIndex].Timestamp {
-		return
-	}
-
-	s.closingOrdersTimestamp = candles[lastCompletedCandleIndex].Timestamp
 	s.log(ResistanceBreakoutStrategyName, "Ok, we might have a long setup at price "+utils.FloatToString(price, 2))
-
 	lowestValue := candles[lastCompletedCandleIndex].Low
 	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-trendCandles; i-- {
 		if i < 1 {

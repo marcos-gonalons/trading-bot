@@ -72,14 +72,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 		return
 	}
 
-	// todo -> find a better name for closingOrdersTimestamp
-	if s.closingOrdersTimestamp == candles[lastCompletedCandleIndex].Timestamp {
-		return
-	}
-
-	s.closingOrdersTimestamp = candles[lastCompletedCandleIndex].Timestamp
 	s.log(SupportBreakoutStrategyName, "Ok, we might have a short setup at price "+utils.FloatToString(price, 2))
-
 	highestValue := candles[lastCompletedCandleIndex].High
 	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-trendCandles; i-- {
 		if i < 1 {
