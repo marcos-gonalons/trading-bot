@@ -37,4 +37,7 @@ type Interface interface {
 	IsShortOrder(order *Order) bool
 	IsLongPosition(position *Position) bool
 	IsShortPosition(position *Position) bool
+
+	GetBracketOrdersForOpenedPosition(position *Position) (slOrder, tpOrder *Order)
+	GetWorkingOrderWithBracketOrders(side string, symbol string, orders []*Order) []*Order
 }

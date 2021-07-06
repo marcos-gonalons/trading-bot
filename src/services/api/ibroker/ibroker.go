@@ -405,6 +405,48 @@ func (s *API) IsWorkingOrder(order *api.Order) bool {
 	return order.Status == StatusWorkingOrder
 }
 
+func (s *API) GetBracketOrdersForOpenedPosition(position *api.Position) (
+	slOrder *api.Order,
+	tpOrder *api.Order,
+) {
+	for _, order := range s.orders {
+		if order.Status != "working" || order.Instrument != position.Instrument {
+			continue
+		}
+		if s.IsLimitOrder(order) {
+			tpOrder = order
+		}
+		if s.IsStopOrder(order) {
+			slOrder = order
+		}
+	}
+	return
+}
+
+func (s *API) GetWorkingOrderWithBracketOrders(side string, symbol string, orders []*api.Order) []*api.Order {
+	var workingOrders []*api.Order
+
+	for _, order := range s.orders {
+		if order.Status != "working" || order.Side != side || order.Instrument != symbol || order.ParentID != nil {
+			continue
+		}
+
+		workingOrders = append(workingOrders, order)
+	}
+
+	if len(workingOrders) > 0 {
+		for _, order := range s.orders {
+			if order.Status != "working" || order.ParentID == nil || *order.ParentID != workingOrders[0].ID {
+				continue
+			}
+
+			workingOrders = append(workingOrders, order)
+		}
+	}
+
+	return workingOrders
+}
+
 func (s *API) apiCall(
 	logType logger.LogType,
 	call func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (interface{}, error),

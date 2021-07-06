@@ -89,7 +89,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 		if s.getOpenPosition() == nil {
 			s.log(SupportBreakoutStrategyName, "There isn't an open position, closing short orders ...")
 			s.APIRetryFacade.CloseOrders(
-				s.getWorkingOrderWithBracketOrders(ibroker.ShortSide, s.GetSymbol().BrokerAPIName, s.orders),
+				s.API.GetWorkingOrderWithBracketOrders(ibroker.ShortSide, s.GetSymbol().BrokerAPIName, s.orders),
 				retryFacade.RetryParams{
 					DelayBetweenRetries: 5 * time.Second,
 					MaxRetries:          30,

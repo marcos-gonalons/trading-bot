@@ -463,7 +463,7 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(
 	s.log(MainStrategyName, "Checking if the current position needs to have the SL adjusted... ")
 	s.log(MainStrategyName, "Current position is "+utils.GetStringRepresentation(position))
 
-	_, tpOrder := s.getSlAndTpOrdersForCurrentOpenPosition()
+	_, tpOrder := s.API.GetBracketOrdersForOpenedPosition(position)
 
 	if tpOrder == nil {
 		s.log(MainStrategyName, "Take Profit order not found ...")
@@ -493,50 +493,6 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(
 	} else {
 		s.log(MainStrategyName, "The price is not close to the TP yet. Doing nothing ...")
 	}
-}
-
-// todo: should be API method probably
-func (s *Strategy) getSlAndTpOrdersForCurrentOpenPosition() (
-	slOrder *api.Order,
-	tpOrder *api.Order,
-) {
-	for _, order := range s.orders {
-		if order.Status != "working" {
-			continue
-		}
-		if s.API.IsLimitOrder(order) {
-			tpOrder = order
-		}
-		if s.API.IsStopOrder(order) {
-			slOrder = order
-		}
-	}
-	return
-}
-
-// todo: should be API method probably
-func (s *Strategy) getWorkingOrderWithBracketOrders(side string, symbol string, orders []*api.Order) []*api.Order {
-	var workingOrders []*api.Order
-
-	for _, order := range s.orders {
-		if order.Status != "working" || order.Side != side || order.Instrument != symbol || order.ParentID != nil {
-			continue
-		}
-
-		workingOrders = append(workingOrders, order)
-	}
-
-	if len(workingOrders) > 0 {
-		for _, order := range s.orders {
-			if order.Status != "working" || order.ParentID == nil || *order.ParentID != workingOrders[0].ID {
-				continue
-			}
-
-			workingOrders = append(workingOrders, order)
-		}
-	}
-
-	return workingOrders
 }
 
 func (s *Strategy) setStringValues(order *api.Order) {
