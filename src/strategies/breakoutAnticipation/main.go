@@ -217,13 +217,12 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 			var tp string
 			var sl string
 
-			// todo: get the tp and sl accordingly
 			if s.API.IsShortPosition(s.currentPosition) {
-				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-34), s.GetSymbol().PriceDecimals)
-				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+15), s.GetSymbol().PriceDecimals)
+				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-SupportBreakoutParams.TakeProfitDistance), s.GetSymbol().PriceDecimals)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+SupportBreakoutParams.StopLossDistance), s.GetSymbol().PriceDecimals)
 			} else {
-				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+34), s.GetSymbol().PriceDecimals)
-				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-24), s.GetSymbol().PriceDecimals)
+				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+ResistanceBreakoutParams.TakeProfitDistance), s.GetSymbol().PriceDecimals)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-ResistanceBreakoutParams.StopLossDistance), s.GetSymbol().PriceDecimals)
 			}
 			s.APIRetryFacade.ModifyPosition(s.Symbol.BrokerAPIName, tp, sl, retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,

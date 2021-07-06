@@ -48,22 +48,13 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		s.pendingOrder = nil
 	}
 
-	riskPercentage := float64(1.5)
-	stopLossDistance := float32(24)
-	takeProfitDistance := float32(34)
-	candlesAmountWithLowerPriceToBeConsideredTop := 24
-	tpDistanceShortForBreakEvenSL := 0
-	priceOffset := 1
-	trendCandles := 60
-	trendDiff := float64(15)
-
 	p := s.getOpenPosition()
 	if p != nil && p.Side == ibroker.LongSide {
-		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), p)
+		s.checkIfSLShouldBeMovedToBreakEven(ResistanceBreakoutParams.TPDistanceShortForBreakEvenSL, p)
 	}
 
 	lastCompletedCandleIndex := len(candles) - 2
-	price, err := s.HorizontalLevelsService.GetResistancePrice(candlesAmountWithLowerPriceToBeConsideredTop, lastCompletedCandleIndex)
+	price, err := s.HorizontalLevelsService.GetResistancePrice(ResistanceBreakoutParams.CandlesAmountForHorizontalLevel, lastCompletedCandleIndex)
 
 	if err != nil {
 		errorMessage := "Not a good long setup yet -> " + err.Error()
@@ -71,7 +62,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		return
 	}
 
-	price = price - float64(priceOffset)
+	price = price - ResistanceBreakoutParams.PriceOffset
 	if price <= float64(s.currentBrokerQuote.Ask) {
 		s.log(ResistanceBreakoutStrategyName, "Price is lower than the current ask, so we can't create the long order now. Price is -> "+utils.FloatToString(price, 2))
 		s.log(ResistanceBreakoutStrategyName, "Quote is -> "+utils.GetStringRepresentation(s.currentBrokerQuote))
@@ -80,7 +71,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 
 	s.log(ResistanceBreakoutStrategyName, "Ok, we might have a long setup at price "+utils.FloatToString(price, 2))
 	lowestValue := candles[lastCompletedCandleIndex].Low
-	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-trendCandles; i-- {
+	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-ResistanceBreakoutParams.TrendCandles; i-- {
 		if i < 1 {
 			break
 		}
@@ -89,16 +80,16 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		}
 	}
 	diff := candles[lastCompletedCandleIndex].Low - lowestValue
-	if diff < trendDiff {
+	if diff < ResistanceBreakoutParams.TrendDiff {
 		s.log(ResistanceBreakoutStrategyName, "At the end it wasn't a good long setup, doing nothing ...")
 		return
 	}
 
 	params := CreateLongOrderParams{
 		Price:              price,
-		StopLossDistance:   stopLossDistance,
-		TakeProfitDistance: takeProfitDistance,
-		RiskPercentage:     riskPercentage,
+		StopLossDistance:   ResistanceBreakoutParams.StopLossDistance,
+		TakeProfitDistance: ResistanceBreakoutParams.TakeProfitDistance,
+		RiskPercentage:     ResistanceBreakoutParams.RiskPercentage,
 		IsValidTime:        isValidTimeToOpenAPosition,
 	}
 

@@ -43,22 +43,13 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 		s.pendingOrder = nil
 	}
 
-	riskPercentage := float64(1)
-	stopLossDistance := float32(15)
-	takeProfitDistance := float32(34)
-	candlesAmountWithLowerPriceToBeConsideredBottom := 14
-	tpDistanceShortForBreakEvenSL := 1
-	priceOffset := 2
-	trendCandles := 90
-	trendDiff := float64(30)
-
 	p := s.getOpenPosition()
 	if p != nil && p.Side == ibroker.ShortSide {
-		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), p)
+		s.checkIfSLShouldBeMovedToBreakEven(SupportBreakoutParams.TPDistanceShortForBreakEvenSL, p)
 	}
 
 	lastCompletedCandleIndex := len(candles) - 2
-	price, err := s.HorizontalLevelsService.GetSupportPrice(candlesAmountWithLowerPriceToBeConsideredBottom, lastCompletedCandleIndex)
+	price, err := s.HorizontalLevelsService.GetSupportPrice(SupportBreakoutParams.CandlesAmountForHorizontalLevel, lastCompletedCandleIndex)
 
 	if err != nil {
 		errorMessage := "Not a good short setup yet -> " + err.Error()
@@ -66,7 +57,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 		return
 	}
 
-	price = price + float64(priceOffset)
+	price = price + SupportBreakoutParams.PriceOffset
 	if price >= float64(s.currentBrokerQuote.Bid) {
 		s.log(SupportBreakoutStrategyName, "Price is lower than the current ask, so we can't create the short order now. Price is -> "+utils.FloatToString(price, 2))
 		s.log(SupportBreakoutStrategyName, "Quote is -> "+utils.GetStringRepresentation(s.currentBrokerQuote))
@@ -75,7 +66,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 
 	s.log(SupportBreakoutStrategyName, "Ok, we might have a short setup at price "+utils.FloatToString(price, 2))
 	highestValue := candles[lastCompletedCandleIndex].High
-	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-trendCandles; i-- {
+	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-SupportBreakoutParams.TrendCandles; i-- {
 		if i < 1 {
 			break
 		}
@@ -84,7 +75,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 		}
 	}
 	diff := highestValue - candles[lastCompletedCandleIndex].High
-	if diff < trendDiff {
+	if diff < SupportBreakoutParams.TrendDiff {
 		s.log(SupportBreakoutStrategyName, "At the end it wasn't a good short setup")
 		if s.getOpenPosition() == nil {
 			s.log(SupportBreakoutStrategyName, "There isn't an open position, closing short orders ...")
@@ -102,9 +93,9 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 
 	params := CreateShortOrderParams{
 		Price:              price,
-		StopLossDistance:   stopLossDistance,
-		TakeProfitDistance: takeProfitDistance,
-		RiskPercentage:     riskPercentage,
+		StopLossDistance:   SupportBreakoutParams.StopLossDistance,
+		TakeProfitDistance: SupportBreakoutParams.TakeProfitDistance,
+		RiskPercentage:     SupportBreakoutParams.RiskPercentage,
 		IsValidTime:        isValidTimeToOpenAPosition,
 	}
 
