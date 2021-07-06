@@ -74,11 +74,33 @@ func (s *APIFacade) ClosePositions(retryParams RetryParams) {
 	s.Logger.Log("Closing all positions ...")
 
 	go utils.RepeatUntilSuccess(
-		"CloseAllPositions",
+		"ClosePositions",
 		func() (err error) {
 			err = s.API.CloseAllPositions()
 			if err != nil {
 				s.Logger.Error("An error happened while closing all positions -> " + err.Error())
+			}
+			if s.API.IsInvalidHoursError(err) || s.API.IsClosePositionRequestInProgressError(err) {
+				err = nil
+			}
+			return
+		},
+		retryParams.DelayBetweenRetries,
+		retryParams.MaxRetries,
+		retryParams.SuccessCallback,
+	)
+}
+
+// ClosePosition ...
+func (s *APIFacade) ClosePosition(symbol string, retryParams RetryParams) {
+	s.Logger.Log("Closing the specified position ..." + symbol)
+
+	go utils.RepeatUntilSuccess(
+		"ClosePosition",
+		func() (err error) {
+			err = s.API.ClosePosition(symbol)
+			if err != nil {
+				s.Logger.Error("An error happened while closing the position for " + symbol + " -> " + err.Error())
 			}
 			if s.API.IsInvalidHoursError(err) || s.API.IsClosePositionRequestInProgressError(err) {
 				err = nil

@@ -57,8 +57,9 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	trendCandles := 60
 	trendDiff := float64(15)
 
-	if len(s.positions) > 0 {
-		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), ibroker.LongSide)
+	p := s.getOpenPosition()
+	if p != nil && p.Side == ibroker.LongSide {
+		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), p)
 	}
 
 	lastCompletedCandleIndex := len(candles) - 2
@@ -101,7 +102,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		IsValidTime:        isValidTimeToOpenAPosition,
 	}
 
-	if len(s.positions) > 0 {
+	if s.getOpenPosition() != nil {
 		s.log(ResistanceBreakoutStrategyName, "There is an open position, no need to close any orders ...")
 		s.createLongOrder(params)
 	} else {
@@ -151,7 +152,7 @@ func (s *Strategy) createLongOrder(params CreateLongOrderParams) {
 
 	s.log(ResistanceBreakoutStrategyName, "Buy order to be created -> "+utils.GetStringRepresentation(order))
 
-	if len(s.positions) > 0 {
+	if s.getOpenPosition() != nil {
 		s.log(ResistanceBreakoutStrategyName, "There is an open position, saving the order for later ...")
 		s.pendingOrder = order
 		return

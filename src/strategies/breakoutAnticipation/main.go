@@ -164,11 +164,19 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 					SuccessCallback: func() {
 						s.orders = nil
 						s.pendingOrder = nil
-						s.APIRetryFacade.ClosePositions(retryFacade.RetryParams{
-							DelayBetweenRetries: 5 * time.Second,
-							MaxRetries:          30,
-							SuccessCallback:     func() { s.positions = nil },
-						})
+
+						p := s.getOpenPosition()
+						if p != nil {
+							s.log(MainStrategyName, "Closing the open position ... "+utils.GetStringRepresentation(p))
+							s.APIRetryFacade.ClosePosition(
+								p.Instrument,
+								retryFacade.RetryParams{
+									DelayBetweenRetries: 5 * time.Second,
+									MaxRetries:          30,
+									SuccessCallback:     func() { s.positions = nil },
+								},
+							)
+						}
 					},
 				})
 
@@ -200,11 +208,11 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 func (s *Strategy) checkOpenPositionSLandTP() {
 	for {
-		if len(s.positions) > 0 && s.currentPosition == nil {
-			// todo: doesn't look is going to be soon,
-			// but maybe in the future I can have 2 different positions opened.
-			// In that case better check which one to use here
-			s.currentPosition = s.positions[0]
+		p := s.getOpenPosition()
+
+		if p != nil && s.currentPosition == nil {
+			s.currentPosition = p
+
 			var tp string
 			var sl string
 
@@ -221,9 +229,11 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 				MaxRetries:          20,
 			})
 		}
-		if len(s.positions) == 0 {
+
+		if p == nil {
 			s.currentPosition = nil
 		}
+
 		time.Sleep(5 * time.Second)
 	}
 }
@@ -288,7 +298,7 @@ func (s *Strategy) savePendingOrder(side string) {
 	go func() {
 		s.log(MainStrategyName, "Save pending order called for side "+side)
 
-		if len(s.positions) > 0 {
+		if s.getOpenPosition() != nil {
 			s.log(MainStrategyName, "Can't save pending order since there is an open position")
 			return
 		}
@@ -391,8 +401,9 @@ func (s *Strategy) createPendingOrder(side string) {
 		return
 	}
 
-	if len(s.positions) > 0 {
-		s.log(MainStrategyName, "Can't create the pending order since there is an open position -> "+utils.GetStringRepresentation(s.positions[0]))
+	p := s.getOpenPosition()
+	if p != nil {
+		s.log(MainStrategyName, "Can't create the pending order since there is an open position -> "+utils.GetStringRepresentation(p))
 		return
 	}
 
@@ -437,21 +448,15 @@ func (s *Strategy) createPendingOrder(side string) {
 	s.pendingOrder = nil
 }
 
-func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(distanceToTp float64, side string) {
+func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(
+	distanceToTp float64,
+	position *api.Position,
+) {
 	if distanceToTp <= 0 {
 		return
 	}
 
 	if s.modifyingPositionTimestamp == s.CandlesHandler.GetLastCandle().Timestamp {
-		return
-	}
-
-	// todo: doesn't look is going to be soon,
-	// but maybe in the future I can have 2 different positions opened.
-	// In that case better check which one to use here
-
-	position := s.positions[0]
-	if position.Side != side {
 		return
 	}
 
@@ -563,6 +568,18 @@ func (s *Strategy) setStringValues(order *api.Order) {
 
 func (s *Strategy) log(strategyName string, message string) {
 	s.Logger.Log(strategyName + " - " + message)
+}
+
+func (s *Strategy) getOpenPosition() *api.Position {
+	p := funk.Find(s.positions, func(p *api.Position) bool {
+		return p.Instrument == s.GetSymbol().BrokerAPIName
+	})
+
+	if p == nil {
+		return nil
+	}
+
+	return p.(*api.Position)
 }
 
 // GetStrategyInstance ...

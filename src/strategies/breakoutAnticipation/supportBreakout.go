@@ -52,8 +52,9 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	trendCandles := 90
 	trendDiff := float64(30)
 
-	if len(s.positions) > 0 {
-		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), ibroker.ShortSide)
+	p := s.getOpenPosition()
+	if p != nil && p.Side == ibroker.ShortSide {
+		s.checkIfSLShouldBeMovedToBreakEven(float64(tpDistanceShortForBreakEvenSL), p)
 	}
 
 	lastCompletedCandleIndex := len(candles) - 2
@@ -85,7 +86,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	diff := highestValue - candles[lastCompletedCandleIndex].High
 	if diff < trendDiff {
 		s.log(SupportBreakoutStrategyName, "At the end it wasn't a good short setup")
-		if len(s.positions) == 0 {
+		if s.getOpenPosition() == nil {
 			s.log(SupportBreakoutStrategyName, "There isn't an open position, closing short orders ...")
 			s.APIRetryFacade.CloseOrders(
 				s.getWorkingOrderWithBracketOrders(ibroker.ShortSide, s.GetSymbol().BrokerAPIName, s.orders),
@@ -107,7 +108,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 		IsValidTime:        isValidTimeToOpenAPosition,
 	}
 
-	if len(s.positions) > 0 {
+	if s.getOpenPosition() != nil {
 		s.log(SupportBreakoutStrategyName, "There is an open position, no need to close any orders ...")
 		s.createShortOrder(params)
 	} else {
@@ -159,7 +160,7 @@ func (s *Strategy) createShortOrder(params CreateShortOrderParams) {
 
 	s.log(SupportBreakoutStrategyName, "Short order to be created -> "+utils.GetStringRepresentation(order))
 
-	if len(s.positions) > 0 {
+	if s.getOpenPosition() != nil {
 		s.log(SupportBreakoutStrategyName, "There is an open position, saving the order for later ...")
 		s.pendingOrder = order
 		return
