@@ -108,7 +108,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	} else {
 		s.log(ResistanceBreakoutStrategyName, "There isn't any open position. Closing orders first ...")
 		s.APIRetryFacade.CloseOrders(
-			s.API.GetWorkingOrders(s.orders),
+			s.API.GetWorkingOrders(s.filterOrders(s.GetSymbol().BrokerAPIName)),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,

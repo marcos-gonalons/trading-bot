@@ -114,7 +114,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	} else {
 		s.log(SupportBreakoutStrategyName, "There isn't any open position. Closing orders first ...")
 		s.APIRetryFacade.CloseOrders(
-			s.API.GetWorkingOrders(s.orders),
+			s.API.GetWorkingOrders(s.filterOrders(s.GetSymbol().BrokerAPIName)),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,
