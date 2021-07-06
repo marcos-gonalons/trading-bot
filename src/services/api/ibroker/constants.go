@@ -16,6 +16,10 @@ const OrderIsCancelledErrorString = "Order Status is Cancelled"
 
 const OrderIsFilledErrorString = "Order Status is Filled"
 
+const InvalidHoursErrorString = "Horario incorrecto"
+
+const ClosePositionRequestInProgressErrorString = "Orden de cerrar no procesada porque existe otra orden en curso"
+
 const StatusWorkingOrder = "working"
 
 const LongSide = "buy"

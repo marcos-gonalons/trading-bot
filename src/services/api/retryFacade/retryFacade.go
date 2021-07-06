@@ -80,6 +80,9 @@ func (s *APIFacade) ClosePositions(retryParams RetryParams) {
 			if err != nil {
 				s.Logger.Error("An error happened while closing all positions -> " + err.Error())
 			}
+			if s.API.IsInvalidHoursError(err) || s.API.IsClosePositionRequestInProgressError(err) {
+				err = nil
+			}
 			return
 		},
 		retryParams.DelayBetweenRetries,

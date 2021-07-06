@@ -362,8 +362,19 @@ func (s *API) IsOrderCancelledError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), OrderIsCancelledErrorString)
 }
 
+// IsOrderFilledError ...
 func (s *API) IsOrderFilledError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), OrderIsFilledErrorString)
+}
+
+// IsInvalidHoursError ...
+func (s *API) IsInvalidHoursError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), InvalidHoursErrorString)
+}
+
+// IsClosePositionRequestInProgressError ...
+func (s *API) IsClosePositionRequestInProgressError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), ClosePositionRequestInProgressErrorString)
 }
 
 func (s *API) IsLimitOrder(order *api.Order) bool {

@@ -27,8 +27,10 @@ type Interface interface {
 	IsOrderPendingCancelError(err error) bool
 	IsOrderCancelledError(err error) bool
 	IsOrderFilledError(err error) bool
-	IsWorkingOrder(order *Order) bool
+	IsInvalidHoursError(err error) bool
+	IsClosePositionRequestInProgressError(err error) bool
 
+	IsWorkingOrder(order *Order) bool
 	IsLimitOrder(order *Order) bool
 	IsStopOrder(order *Order) bool
 	IsLongOrder(order *Order) bool
