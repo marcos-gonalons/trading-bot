@@ -205,7 +205,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}
 }
 
-// TODO: Probably, all methods below this comment can be reused for all the strategies
+// TODO: Probably, most methods below this comment can be reused for all the strategies
 
 func (s *Strategy) checkOpenPositionSLandTP() {
 	for {
@@ -513,6 +513,77 @@ func (s *Strategy) setStringValues(order *api.Order) {
 		takeProfitPrice := utils.FloatToString(math.Round(float64(*order.TakeProfit)*10)/10, s.GetSymbol().PriceDecimals)
 		order.StringValues.TakeProfit = &takeProfitPrice
 	}
+}
+
+type OnValidTradeSetupParams struct {
+	Price              float64
+	StopLossDistance   float32
+	TakeProfitDistance float32
+	RiskPercentage     float64
+	IsValidTime        bool
+	Side               string
+}
+
+func (s *Strategy) onValidTradeSetup(params OnValidTradeSetupParams) {
+	float32Price := float32(params.Price)
+
+	var strategyName string
+	var stopLoss float32
+	var takeProfit float32
+
+	if params.Side == ibroker.LongSide {
+		strategyName = ResistanceBreakoutStrategyName
+		stopLoss = float32Price - float32(params.StopLossDistance)
+		takeProfit = float32Price + float32(params.TakeProfitDistance)
+	} else {
+		strategyName = SupportBreakoutStrategyName
+		stopLoss = float32Price + float32(params.StopLossDistance)
+		takeProfit = float32Price - float32(params.TakeProfitDistance)
+	}
+
+	// TOOD: move the getsize to another function somewhere
+	size := math.Floor((s.state.Equity*(params.RiskPercentage/100))/float64(params.StopLossDistance+1) + 1)
+	if size == 0 {
+		size = 1
+	}
+
+	order := &api.Order{
+		CurrentAsk: &s.currentBrokerQuote.Ask,
+		CurrentBid: &s.currentBrokerQuote.Bid,
+		Instrument: s.GetSymbol().BrokerAPIName,
+		StopPrice:  &float32Price,
+		Qty:        float32(size),
+		Side:       params.Side,
+		StopLoss:   &stopLoss,
+		TakeProfit: &takeProfit,
+		Type:       ibroker.StopType,
+	}
+
+	s.log(strategyName, params.Side+" order to be created -> "+utils.GetStringRepresentation(order))
+
+	if s.getOpenPosition() != nil {
+		s.log(strategyName, "There is an open position, saving the order for later ...")
+		s.pendingOrder = order
+		return
+	}
+
+	if !params.IsValidTime {
+		s.log(strategyName, "Now is not the time for opening any "+params.Side+" orders, saving it for later ...")
+		s.pendingOrder = order
+		return
+	}
+
+	s.APIRetryFacade.CreateOrder(
+		order,
+		func() *api.Quote {
+			return s.currentBrokerQuote
+		},
+		s.setStringValues,
+		retryFacade.RetryParams{
+			DelayBetweenRetries: 10 * time.Second,
+			MaxRetries:          20,
+		},
+	)
 }
 
 func (s *Strategy) log(strategyName string, message string) {

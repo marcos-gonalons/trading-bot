@@ -1,12 +1,10 @@
 package breakoutAnticipation
 
 import (
-	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
-	"math"
 	"time"
 )
 
@@ -85,17 +83,18 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		return
 	}
 
-	params := CreateLongOrderParams{
+	params := OnValidTradeSetupParams{
 		Price:              price,
 		StopLossDistance:   ResistanceBreakoutParams.StopLossDistance,
 		TakeProfitDistance: ResistanceBreakoutParams.TakeProfitDistance,
 		RiskPercentage:     ResistanceBreakoutParams.RiskPercentage,
 		IsValidTime:        isValidTimeToOpenAPosition,
+		Side:               ibroker.LongSide,
 	}
 
 	if s.getOpenPosition() != nil {
 		s.log(ResistanceBreakoutStrategyName, "There is an open position, no need to close any orders ...")
-		s.createLongOrder(params)
+		s.onValidTradeSetup(params)
 	} else {
 		s.log(ResistanceBreakoutStrategyName, "There isn't any open position. Closing orders first ...")
 		s.APIRetryFacade.CloseOrders(
@@ -104,66 +103,9 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,
 				SuccessCallback: func() {
-					s.createLongOrder(params)
+					s.onValidTradeSetup(params)
 				},
 			},
 		)
 	}
-
-}
-
-// TODO: refactor this, since this method is the same as createShortOrder
-type CreateLongOrderParams struct {
-	Price              float64
-	StopLossDistance   float32
-	TakeProfitDistance float32
-	RiskPercentage     float64
-	IsValidTime        bool
-}
-
-func (s *Strategy) createLongOrder(params CreateLongOrderParams) {
-	float32Price := float32(params.Price)
-
-	stopLoss := float32Price - float32(params.StopLossDistance)
-	takeProfit := float32Price + float32(params.TakeProfitDistance)
-	size := math.Floor((s.state.Equity*(params.RiskPercentage/100))/float64(params.StopLossDistance+1) + 1)
-	if size == 0 {
-		size = 1
-	}
-
-	order := &api.Order{
-		Instrument: s.GetSymbol().BrokerAPIName,
-		StopPrice:  &float32Price,
-		Qty:        float32(size),
-		Side:       ibroker.LongSide,
-		StopLoss:   &stopLoss,
-		TakeProfit: &takeProfit,
-		Type:       ibroker.StopType,
-	}
-
-	s.log(ResistanceBreakoutStrategyName, "Buy order to be created -> "+utils.GetStringRepresentation(order))
-
-	if s.getOpenPosition() != nil {
-		s.log(ResistanceBreakoutStrategyName, "There is an open position, saving the order for later ...")
-		s.pendingOrder = order
-		return
-	}
-
-	if !params.IsValidTime {
-		s.log(ResistanceBreakoutStrategyName, "Now is not the time for opening any buy orders, saving it for later ...")
-		s.pendingOrder = order
-		return
-	}
-
-	s.APIRetryFacade.CreateOrder(
-		order,
-		func() *api.Quote {
-			return s.currentBrokerQuote
-		},
-		s.setStringValues,
-		retryFacade.RetryParams{
-			DelayBetweenRetries: 10 * time.Second,
-			MaxRetries:          20,
-		},
-	)
 }
