@@ -52,8 +52,6 @@ type Strategy struct {
 	pendingOrder    *api.Order
 	currentPosition *api.Position
 
-	modifyingPositionTimestamp int64
-
 	isReady bool
 }
 
@@ -206,6 +204,8 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}
 }
 
+// TODO: Probably, all methods below this comment can be reused for all the strategies
+
 func (s *Strategy) checkOpenPositionSLandTP() {
 	for {
 		p := s.getOpenPosition()
@@ -338,8 +338,6 @@ func (s *Strategy) savePendingOrder(side string) {
 			return
 		}
 
-		// TODO: savingPendingOrderTimestamp
-
 		s.log(MainStrategyName, "Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
 		s.log(MainStrategyName, "This is the current order -> "+utils.GetStringRepresentation(mainOrder))
 
@@ -456,10 +454,6 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(
 		return
 	}
 
-	if s.modifyingPositionTimestamp == s.CandlesHandler.GetLastCandle().Timestamp {
-		return
-	}
-
 	s.log(MainStrategyName, "Checking if the current position needs to have the SL adjusted... ")
 	s.log(MainStrategyName, "Current position is "+utils.GetStringRepresentation(position))
 
@@ -479,7 +473,6 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(
 
 	if shouldBeAdjusted {
 		s.log(MainStrategyName, "The price is very close to the TP. Adjusting SL to break even ...")
-		s.modifyingPositionTimestamp = s.CandlesHandler.GetLastCandle().Timestamp
 
 		s.APIRetryFacade.ModifyPosition(
 			s.GetSymbol().BrokerAPIName,
