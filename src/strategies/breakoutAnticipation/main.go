@@ -53,7 +53,6 @@ type Strategy struct {
 	currentPosition *api.Position
 
 	modifyingPositionTimestamp int64
-	closingOrdersTimestamp     int64
 
 	isReady bool
 }
@@ -177,18 +176,6 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		}
 
 		if s.averageSpread > s.GetSymbol().MaxSpread {
-			/**
-				Todo:
-				Do not create the order if the spread is big, but still save the pending orders for the future
-				Maybe when the time is right, the spread will be ok and the order can be created.
-
-				So when it's time to create an order
-				if spread  big, no no
-				else do it as it does it right now
-
-				Todo: take into account the bid and the ask and long and short orders when checking the sperad
-				For example
-			**/
 			s.log(MainStrategyName, "Closing working orders and doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
 			s.pendingOrder = nil
 			s.APIRetryFacade.CloseOrders(
