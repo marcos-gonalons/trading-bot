@@ -17,9 +17,9 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 		s.log(SupportBreakoutStrategyName, "supportBreakoutAnticipationStrategy ended")
 	}()
 
-	validMonths := s.GetSymbol().ValidTradingTimes.Shorts.ValidMonths
-	validWeekdays := s.GetSymbol().ValidTradingTimes.Shorts.ValidWeekdays
-	validHalfHours := s.GetSymbol().ValidTradingTimes.Shorts.ValidHalfHours
+	validMonths := SupportBreakoutParams.ValidTradingTimes.ValidMonths
+	validWeekdays := SupportBreakoutParams.ValidTradingTimes.ValidWeekdays
+	validHalfHours := SupportBreakoutParams.ValidTradingTimes.ValidHalfHours
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
 		s.log(SupportBreakoutStrategyName, "Today it's not the day for support breakout anticipation")
@@ -104,7 +104,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	} else {
 		s.log(SupportBreakoutStrategyName, "There isn't any open position. Closing orders first ...")
 		s.APIRetryFacade.CloseOrders(
-			s.API.GetWorkingOrders(s.filterOrders(s.GetSymbol().BrokerAPIName)),
+			s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.orders, s.GetSymbol().BrokerAPIName)),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,

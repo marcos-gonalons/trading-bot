@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"TradingBot/src/services/api"
 	"TradingBot/src/types"
 	"bytes"
 	"encoding/json"
@@ -9,6 +10,8 @@ import (
 	"math/rand"
 	"strconv"
 	"time"
+
+	funk "github.com/thoas/go-funk"
 )
 
 // FloatToString ...
@@ -122,7 +125,7 @@ func GetCurrentTimeHourAndMinutes() (int, int) {
 
 // IsNowWithinTradingHours ...
 func IsNowWithinTradingHours(symbol *types.Symbol) bool {
-	if IsNowWeekend() && !symbol.ActiveOnWeekends {
+	if IsNowWeekend() && !symbol.TradeableOnWeekends {
 		return false
 	}
 
@@ -156,4 +159,22 @@ func IsNowWithinTradingHours(symbol *types.Symbol) bool {
 func IsNowWeekend() bool {
 	weekDay := time.Now().Weekday()
 	return weekDay == 0 || weekDay == 6
+}
+
+// FilterOrdersBySymbol ...
+func FilterOrdersBySymbol(orders []*api.Order, symbol string) []*api.Order {
+	filteredOrders := funk.Filter(orders, func(o *api.Order) bool {
+		return o.Instrument == symbol
+	})
+
+	return filteredOrders.([]*api.Order)
+}
+
+// FilterOrdersBySymbol ...
+func FilterOrdersBySide(orders []*api.Order, side string) []*api.Order {
+	filteredOrders := funk.Filter(orders, func(o *api.Order) bool {
+		return o.Side == side
+	})
+
+	return filteredOrders.([]*api.Order)
 }

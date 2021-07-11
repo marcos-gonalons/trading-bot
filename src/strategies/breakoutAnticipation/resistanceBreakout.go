@@ -22,9 +22,9 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		s.log(ResistanceBreakoutStrategyName, "resistanceBreakoutAnticipationStrategy ended")
 	}()
 
-	validMonths := s.GetSymbol().ValidTradingTimes.Longs.ValidMonths
-	validWeekdays := s.GetSymbol().ValidTradingTimes.Longs.ValidWeekdays
-	validHalfHours := s.GetSymbol().ValidTradingTimes.Longs.ValidHalfHours
+	validMonths := ResistanceBreakoutParams.ValidTradingTimes.ValidMonths
+	validWeekdays := ResistanceBreakoutParams.ValidTradingTimes.ValidWeekdays
+	validHalfHours := ResistanceBreakoutParams.ValidTradingTimes.ValidHalfHours
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
 		s.log(ResistanceBreakoutStrategyName, "Today it's not the day for resistance breakout anticipation")
@@ -98,7 +98,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	} else {
 		s.log(ResistanceBreakoutStrategyName, "There isn't any open position. Closing orders first ...")
 		s.APIRetryFacade.CloseOrders(
-			s.API.GetWorkingOrders(s.filterOrders(s.GetSymbol().BrokerAPIName)),
+			s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.orders, s.GetSymbol().BrokerAPIName)),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,

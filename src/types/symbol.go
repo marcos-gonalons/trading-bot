@@ -1,27 +1,15 @@
 package types
 
 type Symbol struct {
-	BrokerAPIName     string
-	SocketName        string
-	MaxSpread         float64
-	PriceDecimals     int64
-	TradingHours      TradingHours
-	ValidTradingTimes ValidTradingTimes
-	ActiveOnWeekends  bool
+	BrokerAPIName       string
+	SocketName          string
+	PriceDecimals       int64
+	TradingHours        TradingHours
+	TradeableOnWeekends bool
+	MaxSpread           float64
 }
 
 type TradingHours struct {
 	Start uint
 	End   uint
-}
-
-type ValidTradingTimes struct {
-	Longs  TradingTimes
-	Shorts TradingTimes
-}
-
-type TradingTimes struct {
-	ValidMonths    []string
-	ValidWeekdays  []string
-	ValidHalfHours []string
 }

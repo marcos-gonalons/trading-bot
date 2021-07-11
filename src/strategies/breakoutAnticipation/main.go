@@ -156,7 +156,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			s.log(MainStrategyName, "Doing nothing - Now it's not the time.")
 
 			s.APIRetryFacade.CloseOrders(
-				s.API.GetWorkingOrders(s.filterOrders(s.GetSymbol().BrokerAPIName)),
+				s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.orders, s.GetSymbol().BrokerAPIName)),
 				retryFacade.RetryParams{
 					DelayBetweenRetries: 5 * time.Second,
 					MaxRetries:          30,
@@ -186,7 +186,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			s.log(MainStrategyName, "Closing working orders and doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
 			s.pendingOrder = nil
 			s.APIRetryFacade.CloseOrders(
-				s.API.GetWorkingOrders(s.filterOrders(s.GetSymbol().BrokerAPIName)),
+				s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.orders, s.GetSymbol().BrokerAPIName)),
 				retryFacade.RetryParams{
 					DelayBetweenRetries: 5 * time.Second,
 					MaxRetries:          30,
@@ -324,9 +324,9 @@ func (s *Strategy) savePendingOrder(side string) {
 
 		var validHalfHours []string
 		if side == ibroker.LongSide {
-			validHalfHours = s.GetSymbol().ValidTradingTimes.Longs.ValidHalfHours
+			validHalfHours = ResistanceBreakoutParams.ValidTradingTimes.ValidHalfHours
 		} else {
-			validHalfHours = s.GetSymbol().ValidTradingTimes.Shorts.ValidHalfHours
+			validHalfHours = SupportBreakoutParams.ValidTradingTimes.ValidHalfHours
 		}
 
 		if s.isExecutionTimeValid(
@@ -358,7 +358,7 @@ func (s *Strategy) savePendingOrder(side string) {
 		}
 
 		s.APIRetryFacade.CloseOrders(
-			s.API.GetWorkingOrders(s.filterOrders(s.GetSymbol().BrokerAPIName)),
+			s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.orders, s.GetSymbol().BrokerAPIName)),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,
@@ -600,14 +600,6 @@ func (s *Strategy) getOpenPosition() *api.Position {
 	}
 
 	return p.(*api.Position)
-}
-
-func (s *Strategy) filterOrders(symbol string) []*api.Order {
-	orders := funk.Filter(s.orders, func(o *api.Order) bool {
-		return o.Instrument == s.GetSymbol().BrokerAPIName
-	})
-
-	return orders.([]*api.Order)
 }
 
 // GetStrategyInstance ...
