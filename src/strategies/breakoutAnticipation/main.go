@@ -51,6 +51,7 @@ type Strategy struct {
 
 	pendingOrder    *api.Order
 	currentPosition *api.Position
+	currentOrder    *api.Order
 
 	isReady bool
 }
@@ -209,28 +210,49 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 func (s *Strategy) checkOpenPositionSLandTP() {
 	for {
-		p := s.getOpenPosition()
+		position := s.getOpenPosition()
 
-		if p != nil && s.currentPosition == nil {
-			s.currentPosition = p
+		if position != nil && s.currentPosition == nil {
+			s.currentPosition = position
 
 			var tp string
 			var sl string
+			var closePosition bool = false
 
 			if s.API.IsShortPosition(s.currentPosition) {
+				if s.API.IsStopOrder(s.currentOrder) && float64(*s.currentOrder.StopPrice-s.currentPosition.AvgPrice) > SupportBreakoutParams.MaxTradeExecutionPriceDifference {
+					closePosition = true
+				}
 				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-SupportBreakoutParams.TakeProfitDistance), s.GetSymbol().PriceDecimals)
 				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+SupportBreakoutParams.StopLossDistance), s.GetSymbol().PriceDecimals)
 			} else {
+				if s.API.IsStopOrder(s.currentOrder) && float64(s.currentPosition.AvgPrice-*s.currentOrder.StopPrice) > SupportBreakoutParams.MaxTradeExecutionPriceDifference {
+					closePosition = true
+				}
 				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+ResistanceBreakoutParams.TakeProfitDistance), s.GetSymbol().PriceDecimals)
 				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-ResistanceBreakoutParams.StopLossDistance), s.GetSymbol().PriceDecimals)
 			}
-			s.APIRetryFacade.ModifyPosition(s.Symbol.BrokerAPIName, tp, sl, retryFacade.RetryParams{
-				DelayBetweenRetries: 5 * time.Second,
-				MaxRetries:          20,
-			})
+
+			if closePosition {
+				s.log(MainStrategyName, "Will immediately close the position since it was executed very far away from the stop price")
+				s.log(MainStrategyName, "Order is "+utils.GetStringRepresentation(s.currentOrder))
+				s.log(MainStrategyName, "Position is "+utils.GetStringRepresentation(s.currentPosition))
+				s.APIRetryFacade.ClosePosition(s.GetSymbol().BrokerAPIName, retryFacade.RetryParams{
+					DelayBetweenRetries: 5 * time.Second,
+					MaxRetries:          20,
+				})
+			} else {
+				s.log(MainStrategyName, "Modifying the SL and TP of the recently open position ... ")
+				s.APIRetryFacade.ModifyPosition(s.Symbol.BrokerAPIName, tp, sl, retryFacade.RetryParams{
+					DelayBetweenRetries: 5 * time.Second,
+					MaxRetries:          20,
+				})
+			}
+
+			s.currentOrder = nil
 		}
 
-		if p == nil {
+		if position == nil {
 			s.currentPosition = nil
 		}
 
@@ -430,6 +452,7 @@ func (s *Strategy) createPendingOrder(side string) {
 		}
 
 		s.log(MainStrategyName, "Everything is good - Creating the pending order")
+		order := s.pendingOrder
 		s.APIRetryFacade.CreateOrder(
 			pendingOrder,
 			func() *api.Quote {
@@ -439,6 +462,12 @@ func (s *Strategy) createPendingOrder(side string) {
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 10 * time.Second,
 				MaxRetries:          20,
+				SuccessCallback: func(order *api.Order) func() {
+					return func() {
+						s.currentOrder = order
+						s.log(MainStrategyName, "Pending order successfully created ... "+utils.GetStringRepresentation(s.currentOrder))
+					}
+				}(order),
 			},
 		)
 	}(s.pendingOrder)
@@ -582,6 +611,12 @@ func (s *Strategy) onValidTradeSetup(params OnValidTradeSetupParams) {
 		retryFacade.RetryParams{
 			DelayBetweenRetries: 10 * time.Second,
 			MaxRetries:          20,
+			SuccessCallback: func(order *api.Order) func() {
+				return func() {
+					s.currentOrder = order
+					s.log(strategyName, "New order successfully created ... "+utils.GetStringRepresentation(s.currentOrder))
+				}
+			}(order),
 		},
 	)
 }
