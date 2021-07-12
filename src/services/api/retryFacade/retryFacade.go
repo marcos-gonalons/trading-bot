@@ -102,7 +102,7 @@ func (s *APIFacade) ClosePosition(symbol string, retryParams RetryParams) {
 			if err != nil {
 				s.Logger.Error("An error happened while closing the position for " + symbol + " -> " + err.Error())
 			}
-			if s.API.IsInvalidHoursError(err) || s.API.IsClosePositionRequestInProgressError(err) {
+			if s.API.IsInvalidHoursError(err) {
 				err = nil
 			}
 			return

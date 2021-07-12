@@ -237,10 +237,26 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 				s.log(MainStrategyName, "Will immediately close the position since it was executed very far away from the stop price")
 				s.log(MainStrategyName, "Order is "+utils.GetStringRepresentation(s.currentOrder))
 				s.log(MainStrategyName, "Position is "+utils.GetStringRepresentation(s.currentPosition))
-				s.APIRetryFacade.ClosePosition(s.GetSymbol().BrokerAPIName, retryFacade.RetryParams{
-					DelayBetweenRetries: 5 * time.Second,
-					MaxRetries:          20,
-				})
+
+				workingOrders := s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.orders, s.GetSymbol().BrokerAPIName))
+				s.log(MainStrategyName, "Closing working orders first ... "+utils.GetStringRepresentation(workingOrders))
+
+				s.APIRetryFacade.CloseOrders(
+					workingOrders,
+					retryFacade.RetryParams{
+						DelayBetweenRetries: 5 * time.Second,
+						MaxRetries:          30,
+						SuccessCallback: func() {
+							s.orders = nil
+							s.pendingOrder = nil
+
+							s.log(MainStrategyName, "Closed all orders. Closing the position now ... ")
+							s.APIRetryFacade.ClosePosition(s.currentPosition.Instrument, retryFacade.RetryParams{
+								DelayBetweenRetries: 5 * time.Second,
+								MaxRetries:          20,
+							})
+						},
+					})
 			} else {
 				s.log(MainStrategyName, "Modifying the SL and TP of the recently open position ... ")
 				s.APIRetryFacade.ModifyPosition(s.Symbol.BrokerAPIName, tp, sl, retryFacade.RetryParams{
