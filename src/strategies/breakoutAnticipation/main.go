@@ -264,8 +264,6 @@ func (s *Strategy) checkOpenPositionSLandTP() {
 					MaxRetries:          20,
 				})
 			}
-
-			s.currentOrder = nil
 		}
 
 		if position == nil {
