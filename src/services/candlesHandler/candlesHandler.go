@@ -26,7 +26,6 @@ type Service struct {
 
 // InitCandles ...
 func (s *Service) InitCandles(currentExecutionTime time.Time) {
-	s.candles = nil
 	s.candles = []*types.Candle{{
 		Open:      0,
 		High:      0,
@@ -36,22 +35,7 @@ func (s *Service) InitCandles(currentExecutionTime time.Time) {
 		Timestamp: utils.GetTimestampWith0Seconds(currentExecutionTime),
 	}}
 
-	s.csvFileName = s.getCSVFileName()
-	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	defer csvFile.Close()
-	if err != nil {
-		s.csvFileMtx.Lock()
-		csvFile, err = os.Create(s.csvFileName)
-		defer csvFile.Close()
-		if err != nil {
-			s.csvFileMtx.Unlock()
-			s.Logger.Error("Error while creating the csv file -> " + err.Error())
-		} else {
-			csvFile.Write([]byte("Time,Open,High,Low,Close,Volume\n"))
-			s.csvFileMtx.Unlock()
-		}
-	}
-
+	s.initCSV()
 }
 
 // UpdateCandles ...
@@ -179,4 +163,22 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 	currentTimestamp := utils.GetTimestampWith0Seconds(currentExecutionTime)
 
 	return currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
+}
+
+func (s *Service) initCSV() {
+	s.csvFileName = s.getCSVFileName()
+	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	defer csvFile.Close()
+	if err != nil {
+		s.csvFileMtx.Lock()
+		csvFile, err = os.Create(s.csvFileName)
+		defer csvFile.Close()
+		if err != nil {
+			s.csvFileMtx.Unlock()
+			s.Logger.Error("Error while creating the csv file -> " + err.Error())
+		} else {
+			csvFile.Write([]byte("Time,Open,High,Low,Close,Volume\n"))
+			s.csvFileMtx.Unlock()
+		}
+	}
 }

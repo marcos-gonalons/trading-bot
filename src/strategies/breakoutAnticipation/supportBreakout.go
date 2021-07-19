@@ -63,17 +63,13 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	}
 
 	s.log(SupportBreakoutStrategyName, "Ok, we might have a short setup at price "+utils.FloatToString(price, 2))
-	highestValue := candles[lastCompletedCandleIndex].High
-	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-SupportBreakoutParams.TrendCandles; i-- {
-		if i < 1 {
-			break
-		}
-		if candles[i].High > highestValue {
-			highestValue = candles[i].High
-		}
-	}
-	diff := highestValue - candles[lastCompletedCandleIndex].High
-	if diff < SupportBreakoutParams.TrendDiff {
+
+	if !s.TrendsService.IsBearishTrend(
+		SupportBreakoutParams.TrendCandles,
+		SupportBreakoutParams.TrendDiff,
+		candles,
+		lastCompletedCandleIndex,
+	) {
 		s.log(SupportBreakoutStrategyName, "At the end it wasn't a good short setup")
 		if s.getOpenPosition() == nil {
 			s.log(SupportBreakoutStrategyName, "There isn't an open position, closing short orders ...")

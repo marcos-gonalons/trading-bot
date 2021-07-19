@@ -4,6 +4,7 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
+	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/types"
 
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
@@ -15,6 +16,7 @@ type Interface interface {
 	Reset()
 	SetCandlesHandler(candlesHandler candlesHandler.Interface)
 	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
+	SetTrendsService(trendsService trends.Interface)
 	OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData)
 	SetOrders(orders []*api.Order)
 	SetCurrentBrokerQuote(quote *api.Quote)

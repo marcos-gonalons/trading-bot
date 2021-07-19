@@ -3,6 +3,7 @@ package strategies
 import (
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
+	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/strategies/breakoutAnticipation"
 	"TradingBot/src/strategies/testStrategy"
 )
@@ -27,6 +28,7 @@ func (s *Handler) getBreakoutAnticipationStrategy() Interface {
 	}
 	breakoutAnticipationStrategy.SetCandlesHandler(candlesHandler)
 	breakoutAnticipationStrategy.SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
+	breakoutAnticipationStrategy.SetTrendsService(trends.GetServiceInstance())
 
 	return breakoutAnticipationStrategy
 }
@@ -44,6 +46,7 @@ func (s *Handler) getTestStrategy() Interface {
 	}
 	testStrategy.SetCandlesHandler(candlesHandler)
 	testStrategy.SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
+	testStrategy.SetTrendsService(trends.GetServiceInstance())
 
 	return testStrategy
 }

@@ -8,6 +8,7 @@ import (
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
+	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"math"
@@ -30,6 +31,7 @@ type Strategy struct {
 	Logger                  logger.Interface
 	CandlesHandler          candlesHandler.Interface
 	HorizontalLevelsService horizontalLevels.Interface
+	TrendsService           trends.Interface
 	Mutex                   *sync.Mutex
 
 	Name      string
@@ -64,6 +66,11 @@ func (s *Strategy) SetCandlesHandler(candlesHandler candlesHandler.Interface) {
 // SetHorizontalLevelsService ...
 func (s *Strategy) SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface) {
 	s.HorizontalLevelsService = horizontalLevelsService
+}
+
+// SetTrendsService ...
+func (s *Strategy) SetTrendsService(trendsService trends.Interface) {
+	s.TrendsService = trendsService
 }
 
 // GetTimeframe ...

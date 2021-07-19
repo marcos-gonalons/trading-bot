@@ -68,17 +68,12 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	}
 
 	s.log(ResistanceBreakoutStrategyName, "Ok, we might have a long setup at price "+utils.FloatToString(price, 2))
-	lowestValue := candles[lastCompletedCandleIndex].Low
-	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-ResistanceBreakoutParams.TrendCandles; i-- {
-		if i < 1 {
-			break
-		}
-		if candles[i].Low < lowestValue {
-			lowestValue = candles[i].Low
-		}
-	}
-	diff := candles[lastCompletedCandleIndex].Low - lowestValue
-	if diff < ResistanceBreakoutParams.TrendDiff {
+	if !s.TrendsService.IsBullishTrend(
+		ResistanceBreakoutParams.TrendCandles,
+		ResistanceBreakoutParams.TrendDiff,
+		candles,
+		lastCompletedCandleIndex,
+	) {
 		s.log(ResistanceBreakoutStrategyName, "At the end it wasn't a good long setup, doing nothing ...")
 		return
 	}

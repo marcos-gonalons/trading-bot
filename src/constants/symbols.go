@@ -21,7 +21,7 @@ var Symbols = []types.Symbol{
 			End:   22,
 		},
 		TradeableOnWeekends: false,
-		MaxSpread:           3,
+		MaxSpread:           4,
 	},
 	{
 		BrokerAPIName: ibroker.SP500SymbolName,
