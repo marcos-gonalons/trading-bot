@@ -22,7 +22,7 @@ import (
 )
 
 // MainStrategyName ...
-const MainStrategyName = "Breakout Anticipation Strategy"
+const MainStrategyName = "GER30 Strategy"
 
 // Strategy ...
 type Strategy struct {

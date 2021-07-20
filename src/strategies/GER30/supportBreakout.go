@@ -22,7 +22,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	validHalfHours := SupportBreakoutParams.ValidTradingTimes.ValidHalfHours
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
-		s.log(SupportBreakoutStrategyName, "Today it's not the day for support breakout anticipation")
+		s.log(SupportBreakoutStrategyName, "Today it's not the day for support breakout anticipation for GER30")
 		return
 	}
 

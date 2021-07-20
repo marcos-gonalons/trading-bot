@@ -27,7 +27,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	validHalfHours := ResistanceBreakoutParams.ValidTradingTimes.ValidHalfHours
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
-		s.log(ResistanceBreakoutStrategyName, "Today it's not the day for resistance breakout anticipation")
+		s.log(ResistanceBreakoutStrategyName, "Today it's not the day for resistance breakout anticipation for GER30")
 		return
 	}
 
