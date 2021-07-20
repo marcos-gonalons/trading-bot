@@ -25,7 +25,10 @@ type Service struct {
 }
 
 // InitCandles ...
-func (s *Service) InitCandles(currentExecutionTime time.Time) {
+func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
+	// if fileName, s.csvFileName will be the fileName, so no need to call initCSV
+	// and then read the file and init s.candles with the info from the file
+
 	s.candles = []*types.Candle{{
 		Open:      0,
 		High:      0,

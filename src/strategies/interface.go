@@ -13,7 +13,7 @@ import (
 // Interface implemented by all the strategies
 type Interface interface {
 	Initialize()
-	Reset()
+	DailyReset()
 	SetCandlesHandler(candlesHandler candlesHandler.Interface)
 	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
 	SetTrendsService(trendsService trends.Interface)

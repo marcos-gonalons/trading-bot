@@ -63,7 +63,6 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	}
 
 	s.log(SupportBreakoutStrategyName, "Ok, we might have a short setup at price "+utils.FloatToString(price, 2))
-
 	if !s.TrendsService.IsBearishTrend(
 		SupportBreakoutParams.TrendCandles,
 		SupportBreakoutParams.TrendDiff,

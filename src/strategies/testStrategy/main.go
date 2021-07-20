@@ -97,7 +97,7 @@ func (s *Strategy) Initialize() {
 
 	s.Mutex = &sync.Mutex{}
 
-	s.CandlesHandler.InitCandles(time.Now())
+	s.CandlesHandler.InitCandles(time.Now(), "")
 	s.isReady = true
 }
 
@@ -106,10 +106,10 @@ func (s *Strategy) GetSymbol() *types.Symbol {
 	return &s.Symbol
 }
 
-// Reset ...
-func (s *Strategy) Reset() {
+// DailyReset ...
+func (s *Strategy) DailyReset() {
 	s.isReady = false
-	s.CandlesHandler.InitCandles(time.Now())
+	s.CandlesHandler.InitCandles(time.Now(), "")
 	s.isReady = true
 }
 

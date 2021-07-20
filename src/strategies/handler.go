@@ -107,7 +107,7 @@ func (s *Handler) resetAtTwoAm() {
 			}
 
 			for _, strategy := range s.strategies {
-				go strategy.Reset()
+				go strategy.DailyReset()
 			}
 
 			s.Logger.Log("Refreshing access token by calling API.Login")
