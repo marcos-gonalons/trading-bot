@@ -194,7 +194,7 @@ func FindPositionBySymbol(positions []*api.Position, symbol string) *api.Positio
 }
 
 // SetStringValues ...
-func SetStringValues(order *api.Order, symbol *types.Symbol) {
+func SetStringValues(order *api.Order, symbol *types.Symbol, APIInstance api.Interface) {
 	currentAsk := FloatToString(float64(*order.CurrentAsk), symbol.PriceDecimals)
 	currentBid := FloatToString(float64(*order.CurrentBid), symbol.PriceDecimals)
 	qty := IntToString(int64(order.Qty))
@@ -204,7 +204,7 @@ func SetStringValues(order *api.Order, symbol *types.Symbol) {
 		Qty:        &qty,
 	}
 
-	if s.API.IsLimitOrder(order) {
+	if APIInstance.IsLimitOrder(order) {
 		limitPrice := FloatToString(math.Round(float64(*order.LimitPrice)*10)/10, symbol.PriceDecimals)
 		order.StringValues.LimitPrice = &limitPrice
 	} else {

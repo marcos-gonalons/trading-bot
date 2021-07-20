@@ -1,4 +1,4 @@
-package strategies
+package interfaces
 
 import (
 	"TradingBot/src/services/api"
@@ -10,8 +10,13 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
-// Interface implemented by all the strategies
-type Interface interface {
+// StrategyInterface ...
+type StrategyInterface interface {
+	Parent() BaseClassInterface
+}
+
+// BaseClassInterface ...
+type BaseClassInterface interface {
 	Initialize()
 	DailyReset()
 	SetCandlesHandler(candlesHandler candlesHandler.Interface)
@@ -19,9 +24,13 @@ type Interface interface {
 	SetTrendsService(trendsService trends.Interface)
 	OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData)
 	SetOrders(orders []*api.Order)
+	GetOrders() []*api.Order
 	SetCurrentBrokerQuote(quote *api.Quote)
+	GetCurrentBrokerQuote() *api.Quote
 	SetPositions(positions []*api.Position)
+	GetPositions() []*api.Position
 	SetState(state *api.State)
+	GetState() *api.State
 	GetTimeframe() *types.Timeframe
 	GetSymbol() *types.Symbol
 }

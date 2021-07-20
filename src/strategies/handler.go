@@ -4,6 +4,7 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/strategies/interfaces"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"net"
@@ -21,7 +22,7 @@ type Handler struct {
 	APIRetryFacade retryFacade.Interface
 	Logger         logger.Interface
 
-	strategies []Interface
+	strategies []interfaces.StrategyInterface
 	socket     tradingviewsocket.SocketInterface
 
 	fetchError        error
@@ -34,7 +35,7 @@ type Handler struct {
 // Run ...
 func (s *Handler) Run() {
 
-	s.strategies = s.getStrategies()
+	s.strategies = s.getStrategies(s.API, s.APIRetryFacade, s.Logger)
 
 	s.initSymbolsArrays()
 	s.initStrategies()
@@ -72,10 +73,10 @@ func (s *Handler) onReceiveMarketData(symbol string, data *tradingviewsocket.Quo
 	s.Logger.Log("Received data -> " + symbol + " -> " + utils.GetStringRepresentation(data))
 
 	for _, strategy := range s.strategies {
-		if symbol != strategy.GetSymbol().SocketName {
+		if symbol != strategy.Parent().GetSymbol().SocketName {
 			continue
 		}
-		go strategy.OnReceiveMarketData(symbol, data)
+		go strategy.Parent().OnReceiveMarketData(symbol, data)
 	}
 }
 
@@ -107,7 +108,7 @@ func (s *Handler) resetAtTwoAm() {
 			}
 
 			for _, strategy := range s.strategies {
-				go strategy.DailyReset()
+				go strategy.Parent().DailyReset()
 			}
 
 			s.Logger.Log("Refreshing access token by calling API.Login")
@@ -140,10 +141,10 @@ func (s *Handler) fetchDataLoop() {
 						}).(*api.Quote)
 						if quote != nil {
 							for _, strategy := range s.strategies {
-								if strategy.GetSymbol().BrokerAPIName != symbol {
+								if strategy.Parent().GetSymbol().BrokerAPIName != symbol {
 									continue
 								}
-								strategy.SetCurrentBrokerQuote(quote)
+								strategy.Parent().SetCurrentBrokerQuote(quote)
 							}
 						}
 					}(symbol.BrokerAPIName)
@@ -160,7 +161,7 @@ func (s *Handler) fetchDataLoop() {
 					}).([]*api.Order)
 					if orders != nil {
 						for _, strategy := range s.strategies {
-							strategy.SetOrders(orders)
+							strategy.Parent().SetOrders(orders)
 						}
 					}
 				},
@@ -174,7 +175,7 @@ func (s *Handler) fetchDataLoop() {
 						p = positions
 					}
 					for _, strategy := range s.strategies {
-						strategy.SetPositions(p)
+						strategy.Parent().SetPositions(p)
 					}
 				},
 				func() {
@@ -184,7 +185,7 @@ func (s *Handler) fetchDataLoop() {
 					}).(*api.State)
 					if state != nil {
 						for _, strategy := range s.strategies {
-							strategy.SetState(state)
+							strategy.Parent().SetState(state)
 						}
 					}
 				},
@@ -260,14 +261,14 @@ func (s *Handler) panicIfTooManyAPIFails() {
 
 func (s *Handler) initStrategies() {
 	for _, strategy := range s.strategies {
-		go strategy.Initialize()
+		go strategy.Parent().Initialize()
 	}
 }
 
 func (s *Handler) initSymbolsArrays() {
 	s.Logger.Log("Initializing symbols arrays ...")
 	for _, strategy := range s.strategies {
-		symbol := strategy.GetSymbol()
+		symbol := strategy.Parent().GetSymbol()
 		s.Logger.Log("Symbol: " + utils.GetStringRepresentation(symbol))
 
 		exists := false
