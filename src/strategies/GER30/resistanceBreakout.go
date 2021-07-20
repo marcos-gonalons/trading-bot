@@ -1,4 +1,4 @@
-package breakoutAnticipation
+package GER30
 
 import (
 	"TradingBot/src/services/api/ibroker"

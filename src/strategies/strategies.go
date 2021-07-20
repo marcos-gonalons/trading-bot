@@ -4,33 +4,33 @@ import (
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/services/technicalAnalysis/trends"
-	"TradingBot/src/strategies/breakoutAnticipation"
+	"TradingBot/src/strategies/GER30"
 	"TradingBot/src/strategies/testStrategy"
 )
 
 func (s *Handler) getStrategies() []Interface {
 	return []Interface{
-		s.getBreakoutAnticipationStrategy(),
+		s.getGER30Strategy(),
 		// s.getTestStrategy(),
 	}
 }
 
-func (s *Handler) getBreakoutAnticipationStrategy() Interface {
-	breakoutAnticipationStrategy := breakoutAnticipation.GetStrategyInstance(
+func (s *Handler) getGER30Strategy() Interface {
+	GER30Strategy := GER30.GetStrategyInstance(
 		s.API,
 		s.APIRetryFacade,
 		s.Logger,
 	)
 	candlesHandler := &candlesHandler.Service{
 		Logger:    s.Logger,
-		Symbol:    breakoutAnticipationStrategy.GetSymbol().BrokerAPIName,
-		Timeframe: *breakoutAnticipationStrategy.GetTimeframe(),
+		Symbol:    GER30Strategy.GetSymbol().BrokerAPIName,
+		Timeframe: *GER30Strategy.GetTimeframe(),
 	}
-	breakoutAnticipationStrategy.SetCandlesHandler(candlesHandler)
-	breakoutAnticipationStrategy.SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
-	breakoutAnticipationStrategy.SetTrendsService(trends.GetServiceInstance())
+	GER30Strategy.SetCandlesHandler(candlesHandler)
+	GER30Strategy.SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
+	GER30Strategy.SetTrendsService(trends.GetServiceInstance())
 
-	return breakoutAnticipationStrategy
+	return GER30Strategy
 }
 
 func (s *Handler) getTestStrategy() Interface {
