@@ -35,7 +35,7 @@ type Handler struct {
 // Run ...
 func (s *Handler) Run() {
 
-	s.strategies = s.getStrategies(s.API, s.APIRetryFacade, s.Logger)
+	s.strategies = s.getStrategies()
 
 	s.initSymbolsArrays()
 	s.initStrategies()
