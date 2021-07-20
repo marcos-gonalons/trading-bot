@@ -35,6 +35,8 @@ type Strategy struct {
 	averageSpread        float64
 	currentPosition      *api.Position
 	currentOrder         *api.Order
+
+	mutex *sync.Mutex
 }
 
 func (s *Strategy) Parent() interfaces.BaseClassInterface {
@@ -45,8 +47,7 @@ func (s *Strategy) Parent() interfaces.BaseClassInterface {
 func (s *Strategy) Initialize() {
 	s.BaseClass.Initialize()
 
-	s.BaseClass.Mutex = &sync.Mutex{}
-
+	s.mutex = &sync.Mutex{}
 	s.BaseClass.CandlesHandler.InitCandles(time.Now(), "")
 	go s.checkOpenPositionSLandTP()
 
@@ -71,9 +72,9 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		return
 	}
 
-	s.BaseClass.Mutex.Lock()
+	s.mutex.Lock()
 	defer func() {
-		s.BaseClass.Mutex.Unlock()
+		s.mutex.Unlock()
 	}()
 
 	go s.updateAverageSpread()

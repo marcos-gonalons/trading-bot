@@ -9,7 +9,6 @@ import (
 	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
-	"sync"
 	"time"
 
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
@@ -23,7 +22,6 @@ type BaseClass struct {
 	CandlesHandler          candlesHandler.Interface
 	HorizontalLevelsService horizontalLevels.Interface
 	TrendsService           trends.Interface
-	Mutex                   *sync.Mutex
 
 	Name      string
 	Symbol    types.Symbol
