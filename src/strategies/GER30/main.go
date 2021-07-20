@@ -172,7 +172,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 						s.orders = nil
 						s.pendingOrder = nil
 
-						p := s.getOpenPosition()
+						p := utils.FindPositionBySymbol(s.positions, s.GetSymbol().BrokerAPIName)
 						if p != nil {
 							s.log(MainStrategyName, "Closing the open position ... "+utils.GetStringRepresentation(p))
 							s.APIRetryFacade.ClosePosition(
@@ -217,7 +217,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 func (s *Strategy) checkOpenPositionSLandTP() {
 	for {
-		position := s.getOpenPosition()
+		position := utils.FindPositionBySymbol(s.positions, s.GetSymbol().BrokerAPIName)
 
 		if position != nil && s.currentPosition == nil {
 			s.currentPosition = position
@@ -341,7 +341,7 @@ func (s *Strategy) savePendingOrder(side string) {
 	go func() {
 		s.log(MainStrategyName, "Save pending order called for side "+side)
 
-		if s.getOpenPosition() != nil {
+		if utils.FindPositionBySymbol(s.positions, s.GetSymbol().BrokerAPIName) != nil {
 			s.log(MainStrategyName, "Can't save pending order since there is an open position")
 			return
 		}
@@ -442,7 +442,7 @@ func (s *Strategy) createPendingOrder(side string) {
 		return
 	}
 
-	p := s.getOpenPosition()
+	p := utils.FindPositionBySymbol(s.positions, s.GetSymbol().BrokerAPIName)
 	if p != nil {
 		s.log(MainStrategyName, "Can't create the pending order since there is an open position -> "+utils.GetStringRepresentation(p))
 		return
@@ -538,33 +538,6 @@ func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(
 	}
 }
 
-func (s *Strategy) setStringValues(order *api.Order) {
-	currentAsk := utils.FloatToString(float64(s.currentBrokerQuote.Ask), s.GetSymbol().PriceDecimals)
-	currentBid := utils.FloatToString(float64(s.currentBrokerQuote.Bid), s.GetSymbol().PriceDecimals)
-	qty := utils.IntToString(int64(order.Qty))
-	order.StringValues = &api.OrderStringValues{
-		CurrentAsk: &currentAsk,
-		CurrentBid: &currentBid,
-		Qty:        &qty,
-	}
-
-	if s.API.IsLimitOrder(order) {
-		limitPrice := utils.FloatToString(math.Round(float64(*order.LimitPrice)*10)/10, s.GetSymbol().PriceDecimals)
-		order.StringValues.LimitPrice = &limitPrice
-	} else {
-		stopPrice := utils.FloatToString(math.Round(float64(*order.StopPrice)*10)/10, s.GetSymbol().PriceDecimals)
-		order.StringValues.StopPrice = &stopPrice
-	}
-	if order.StopLoss != nil {
-		stopLossPrice := utils.FloatToString(math.Round(float64(*order.StopLoss)*10)/10, s.GetSymbol().PriceDecimals)
-		order.StringValues.StopLoss = &stopLossPrice
-	}
-	if order.TakeProfit != nil {
-		takeProfitPrice := utils.FloatToString(math.Round(float64(*order.TakeProfit)*10)/10, s.GetSymbol().PriceDecimals)
-		order.StringValues.TakeProfit = &takeProfitPrice
-	}
-}
-
 type OnValidTradeSetupParams struct {
 	Price              float64
 	StopLossDistance   float32
@@ -611,7 +584,7 @@ func (s *Strategy) onValidTradeSetup(params OnValidTradeSetupParams) {
 
 	s.log(strategyName, params.Side+" order to be created -> "+utils.GetStringRepresentation(order))
 
-	if s.getOpenPosition() != nil {
+	if utils.FindPositionBySymbol(s.positions, s.GetSymbol().BrokerAPIName) != nil {
 		s.log(strategyName, "There is an open position, saving the order for later ...")
 		s.pendingOrder = order
 		return
@@ -646,16 +619,11 @@ func (s *Strategy) log(strategyName string, message string) {
 	s.Logger.Log(strategyName + " - " + message)
 }
 
-func (s *Strategy) getOpenPosition() *api.Position {
-	p := funk.Find(s.positions, func(p *api.Position) bool {
-		return p.Instrument == s.GetSymbol().BrokerAPIName
-	})
+func (s *Strategy) setStringValues(order *api.Order) {
+	order.CurrentAsk = &s.currentBrokerQuote.Ask
+	order.CurrentBid = &s.currentBrokerQuote.Bid
 
-	if p == nil {
-		return nil
-	}
-
-	return p.(*api.Position)
+	utils.SetStringValues(order, s.GetSymbol(), s.API)
 }
 
 // GetStrategyInstance ...

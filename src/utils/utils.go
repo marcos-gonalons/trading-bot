@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"math/rand"
 	"strconv"
 	"time"
@@ -177,4 +178,45 @@ func FilterOrdersBySide(orders []*api.Order, side string) []*api.Order {
 	})
 
 	return filteredOrders.([]*api.Order)
+}
+
+// FindPositionBySymbol ...
+func FindPositionBySymbol(positions []*api.Position, symbol string) *api.Position {
+	p := funk.Find(positions, func(p *api.Position) bool {
+		return p.Instrument == symbol
+	})
+
+	if p == nil {
+		return nil
+	}
+
+	return p.(*api.Position)
+}
+
+// SetStringValues ...
+func SetStringValues(order *api.Order, symbol *types.Symbol) {
+	currentAsk := FloatToString(float64(*order.CurrentAsk), symbol.PriceDecimals)
+	currentBid := FloatToString(float64(*order.CurrentBid), symbol.PriceDecimals)
+	qty := IntToString(int64(order.Qty))
+	order.StringValues = &api.OrderStringValues{
+		CurrentAsk: &currentAsk,
+		CurrentBid: &currentBid,
+		Qty:        &qty,
+	}
+
+	if s.API.IsLimitOrder(order) {
+		limitPrice := FloatToString(math.Round(float64(*order.LimitPrice)*10)/10, symbol.PriceDecimals)
+		order.StringValues.LimitPrice = &limitPrice
+	} else {
+		stopPrice := FloatToString(math.Round(float64(*order.StopPrice)*10)/10, symbol.PriceDecimals)
+		order.StringValues.StopPrice = &stopPrice
+	}
+	if order.StopLoss != nil {
+		stopLossPrice := FloatToString(math.Round(float64(*order.StopLoss)*10)/10, symbol.PriceDecimals)
+		order.StringValues.StopLoss = &stopLossPrice
+	}
+	if order.TakeProfit != nil {
+		takeProfitPrice := FloatToString(math.Round(float64(*order.TakeProfit)*10)/10, symbol.PriceDecimals)
+		order.StringValues.TakeProfit = &takeProfitPrice
+	}
 }

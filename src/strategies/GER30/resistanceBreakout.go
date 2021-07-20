@@ -46,9 +46,9 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		s.pendingOrder = nil
 	}
 
-	p := s.getOpenPosition()
+	p := utils.FindPositionBySymbol(s.positions, s.GetSymbol().BrokerAPIName)
 	if p != nil && p.Side == ibroker.LongSide {
-		s.checkIfSLShouldBeMovedToBreakEven(ResistanceBreakoutParams.TPDistanceShortForBreakEvenSL, p)
+		s.checkIfSLShouldBeMovedToBreakEven(ResistanceBreakoutParams.TPDistanceShortForTighterSL, p)
 	}
 
 	lastCompletedCandleIndex := len(candles) - 2
@@ -87,7 +87,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		Side:               ibroker.LongSide,
 	}
 
-	if s.getOpenPosition() != nil {
+	if utils.FindPositionBySymbol(s.positions, s.GetSymbol().BrokerAPIName) != nil {
 		s.log(ResistanceBreakoutStrategyName, "There is an open position, no need to close any orders ...")
 		s.onValidTradeSetup(params)
 	} else {
