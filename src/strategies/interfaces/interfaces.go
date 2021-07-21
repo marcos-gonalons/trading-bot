@@ -13,6 +13,9 @@ import (
 // StrategyInterface ...
 type StrategyInterface interface {
 	Parent() BaseClassInterface
+	Initialize()
+	DailyReset()
+	OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData)
 }
 
 // BaseClassInterface ...

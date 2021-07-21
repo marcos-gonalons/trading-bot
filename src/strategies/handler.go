@@ -76,7 +76,7 @@ func (s *Handler) onReceiveMarketData(symbol string, data *tradingviewsocket.Quo
 		if symbol != strategy.Parent().GetSymbol().SocketName {
 			continue
 		}
-		go strategy.Parent().OnReceiveMarketData(symbol, data)
+		go strategy.OnReceiveMarketData(symbol, data)
 	}
 }
 
@@ -108,7 +108,7 @@ func (s *Handler) resetAtTwoAm() {
 			}
 
 			for _, strategy := range s.strategies {
-				go strategy.Parent().DailyReset()
+				go strategy.DailyReset()
 			}
 
 			s.Logger.Log("Refreshing access token by calling API.Login")
@@ -261,7 +261,7 @@ func (s *Handler) panicIfTooManyAPIFails() {
 
 func (s *Handler) initStrategies() {
 	for _, strategy := range s.strategies {
-		go strategy.Parent().Initialize()
+		go strategy.Initialize()
 	}
 }
 
