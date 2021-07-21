@@ -9,6 +9,7 @@ import (
 	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
+	"math"
 	"time"
 
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
@@ -113,6 +114,42 @@ func (s *BaseClass) OnReceiveMarketData(symbol string, data *tradingviewsocket.Q
 
 }
 
+func (s *BaseClass) Log(strategyName string, message string) {
+	s.Logger.Log(strategyName + " - " + message)
+}
+
+func (s *BaseClass) SetStringValues(order *api.Order) {
+	symbol := s.GetSymbol()
+
+	order.CurrentAsk = &s.currentBrokerQuote.Ask
+	order.CurrentBid = &s.currentBrokerQuote.Bid
+
+	currentAsk := utils.FloatToString(float64(*order.CurrentAsk), symbol.PriceDecimals)
+	currentBid := utils.FloatToString(float64(*order.CurrentBid), symbol.PriceDecimals)
+	qty := utils.IntToString(int64(order.Qty))
+	order.StringValues = &api.OrderStringValues{
+		CurrentAsk: &currentAsk,
+		CurrentBid: &currentBid,
+		Qty:        &qty,
+	}
+
+	if s.API.IsLimitOrder(order) {
+		limitPrice := utils.FloatToString(math.Round(float64(*order.LimitPrice)*10)/10, symbol.PriceDecimals)
+		order.StringValues.LimitPrice = &limitPrice
+	} else {
+		stopPrice := utils.FloatToString(math.Round(float64(*order.StopPrice)*10)/10, symbol.PriceDecimals)
+		order.StringValues.StopPrice = &stopPrice
+	}
+	if order.StopLoss != nil {
+		stopLossPrice := utils.FloatToString(math.Round(float64(*order.StopLoss)*10)/10, symbol.PriceDecimals)
+		order.StringValues.StopLoss = &stopLossPrice
+	}
+	if order.TakeProfit != nil {
+		takeProfitPrice := utils.FloatToString(math.Round(float64(*order.TakeProfit)*10)/10, symbol.PriceDecimals)
+		order.StringValues.TakeProfit = &takeProfitPrice
+	}
+}
+
 func (s *BaseClass) checkIfSLShouldBeMovedToBreakEven(
 	distanceToTp float64,
 	position *api.Position,
@@ -153,15 +190,4 @@ func (s *BaseClass) checkIfSLShouldBeMovedToBreakEven(
 	} else {
 		s.Log(s.Name, "The price is not close to the TP yet. Doing nothing ...")
 	}
-}
-
-func (s *BaseClass) Log(strategyName string, message string) {
-	s.Logger.Log(strategyName + " - " + message)
-}
-
-func (s *BaseClass) SetStringValues(order *api.Order) {
-	order.CurrentAsk = &s.currentBrokerQuote.Ask
-	order.CurrentBid = &s.currentBrokerQuote.Bid
-
-	utils.SetStringValues(order, s.GetSymbol(), s.API)
 }

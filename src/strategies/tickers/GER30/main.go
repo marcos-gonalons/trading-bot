@@ -356,7 +356,7 @@ func (s *Strategy) createPendingOrder(side string) {
 			func() *api.Quote {
 				return s.BaseClass.GetCurrentBrokerQuote()
 			},
-			s.setStringValues,
+			s.BaseClass.SetStringValues,
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 10 * time.Second,
 				MaxRetries:          20,
@@ -478,7 +478,7 @@ func (s *Strategy) onValidTradeSetup(params OnValidTradeSetupParams) {
 		func() *api.Quote {
 			return s.BaseClass.GetCurrentBrokerQuote()
 		},
-		s.setStringValues,
+		s.BaseClass.SetStringValues,
 		retryFacade.RetryParams{
 			DelayBetweenRetries: 10 * time.Second,
 			MaxRetries:          20,
@@ -492,13 +492,7 @@ func (s *Strategy) onValidTradeSetup(params OnValidTradeSetupParams) {
 	)
 }
 
-func (s *Strategy) setStringValues(order *api.Order) {
-	order.CurrentAsk = &s.BaseClass.GetCurrentBrokerQuote().Ask
-	order.CurrentBid = &s.BaseClass.GetCurrentBrokerQuote().Bid
-
-	utils.SetStringValues(order, s.BaseClass.GetSymbol(), s.BaseClass.API)
-}
-
+// todo: move this to the base class, probably
 func (s *Strategy) checkOpenPositionSLandTP() {
 	for {
 		position := utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName)
