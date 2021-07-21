@@ -24,25 +24,14 @@ var Symbols = []types.Symbol{
 		MaxSpread:           4,
 	},
 	{
-		BrokerAPIName: ibroker.SP500SymbolName,
-		SocketName:    "TODO-TODO",
-		PriceDecimals: 2,
+		BrokerAPIName: ibroker.EURUSDSymbolName,
+		SocketName:    "FX:EURUSD",
+		PriceDecimals: 5,
 		TradingHours: types.TradingHours{
 			Start: 0,
 			End:   0,
 		},
 		TradeableOnWeekends: false,
-		MaxSpread:           2,
-	},
-	{
-		BrokerAPIName: "__test__",
-		SocketName:    "BINANCE:BTCUSD",
-		PriceDecimals: 1,
-		TradingHours: types.TradingHours{
-			Start: 0,
-			End:   0,
-		},
-		TradeableOnWeekends: true,
 		MaxSpread:           999999,
 	},
 }

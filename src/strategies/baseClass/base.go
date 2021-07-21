@@ -150,15 +150,15 @@ func (s *BaseClass) SetStringValues(order *api.Order) {
 	}
 }
 
-func (s *BaseClass) checkIfSLShouldBeMovedToBreakEven(
-	distanceToTp float64,
+func (s *BaseClass) CheckIfSLShouldBeMovedToBreakEven(
+	params *types.StrategyParams,
 	position *api.Position,
 ) {
-	if distanceToTp <= 0 {
+	if params.TPDistanceShortForTighterSL <= 0 {
 		return
 	}
 
-	s.Log(s.Name, "Checking if the current position needs to have the SL adjusted... ")
+	s.Log(s.Name, "Checking if the current position needs to have the SL adjusted with this params ... "+utils.GetStringRepresentation(params))
 	s.Log(s.Name, "Current position is "+utils.GetStringRepresentation(position))
 
 	_, tpOrder := s.API.GetBracketOrdersForOpenedPosition(position)
@@ -170,18 +170,18 @@ func (s *BaseClass) checkIfSLShouldBeMovedToBreakEven(
 
 	shouldBeAdjusted := false
 	if s.API.IsLongPosition(position) {
-		shouldBeAdjusted = float64(*tpOrder.LimitPrice)-s.CandlesHandler.GetLastCandle().High < distanceToTp
+		shouldBeAdjusted = float64(*tpOrder.LimitPrice)-s.CandlesHandler.GetLastCandle().High < params.TPDistanceShortForTighterSL
 	} else {
-		shouldBeAdjusted = s.CandlesHandler.GetLastCandle().Low-float64(*tpOrder.LimitPrice) < distanceToTp
+		shouldBeAdjusted = s.CandlesHandler.GetLastCandle().Low-float64(*tpOrder.LimitPrice) < params.TPDistanceShortForTighterSL
 	}
 
 	if shouldBeAdjusted {
-		s.Log(s.Name, "The price is very close to the TP. Adjusting SL to break even ...")
+		s.Log(s.Name, "The price is very close to the TP. Adjusting SL...")
 
 		s.APIRetryFacade.ModifyPosition(
 			s.GetSymbol().BrokerAPIName,
 			utils.FloatToString(float64(*tpOrder.LimitPrice), 2),
-			utils.FloatToString(float64(position.AvgPrice), 2),
+			utils.FloatToString(float64(position.AvgPrice)+params.SLDistanceWhenTPIsVeryClose, 2),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          20,

@@ -44,7 +44,7 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 
 	p := utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName)
 	if p != nil && p.Side == ibroker.ShortSide {
-		s.checkIfSLShouldBeMovedToBreakEven(SupportBreakoutParams.TPDistanceShortForTighterSL, p)
+		s.BaseClass.CheckIfSLShouldBeMovedToBreakEven(&SupportBreakoutParams, p)
 	}
 
 	lastCompletedCandleIndex := len(candles) - 2

@@ -373,48 +373,6 @@ func (s *Strategy) createPendingOrder(side string) {
 	s.pendingOrder = nil
 }
 
-func (s *Strategy) checkIfSLShouldBeMovedToBreakEven(
-	distanceToTp float64,
-	position *api.Position,
-) {
-	if distanceToTp <= 0 {
-		return
-	}
-
-	s.BaseClass.Log(s.BaseClass.Name, "Checking if the current position needs to have the SL adjusted... ")
-	s.BaseClass.Log(s.BaseClass.Name, "Current position is "+utils.GetStringRepresentation(position))
-
-	_, tpOrder := s.BaseClass.API.GetBracketOrdersForOpenedPosition(position)
-
-	if tpOrder == nil {
-		s.BaseClass.Log(s.BaseClass.Name, "Take Profit order not found ...")
-		return
-	}
-
-	shouldBeAdjusted := false
-	if s.BaseClass.API.IsLongPosition(position) {
-		shouldBeAdjusted = float64(*tpOrder.LimitPrice)-s.BaseClass.CandlesHandler.GetLastCandle().High < distanceToTp
-	} else {
-		shouldBeAdjusted = s.BaseClass.CandlesHandler.GetLastCandle().Low-float64(*tpOrder.LimitPrice) < distanceToTp
-	}
-
-	if shouldBeAdjusted {
-		s.BaseClass.Log(s.BaseClass.Name, "The price is very close to the TP. Adjusting SL to break even ...")
-
-		s.BaseClass.APIRetryFacade.ModifyPosition(
-			s.BaseClass.GetSymbol().BrokerAPIName,
-			utils.FloatToString(float64(*tpOrder.LimitPrice), 2),
-			utils.FloatToString(float64(position.AvgPrice), 2),
-			retryFacade.RetryParams{
-				DelayBetweenRetries: 5 * time.Second,
-				MaxRetries:          20,
-			},
-		)
-	} else {
-		s.BaseClass.Log(s.BaseClass.Name, "The price is not close to the TP yet. Doing nothing ...")
-	}
-}
-
 type OnValidTradeSetupParams struct {
 	Price              float64
 	StopLossDistance   float32
@@ -492,7 +450,6 @@ func (s *Strategy) onValidTradeSetup(params OnValidTradeSetupParams) {
 	)
 }
 
-// todo: move this to the base class, probably
 func (s *Strategy) checkOpenPositionSLandTP() {
 	for {
 		position := utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName)
