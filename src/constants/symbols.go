@@ -25,7 +25,7 @@ var Symbols = []types.Symbol{
 	},
 	{
 		BrokerAPIName: ibroker.EURUSDSymbolName,
-		SocketName:    "FX:EURUSD",
+		SocketName:    "OANDA:EURUSD",
 		PriceDecimals: 5,
 		TradingHours: types.TradingHours{
 			Start: 0,
