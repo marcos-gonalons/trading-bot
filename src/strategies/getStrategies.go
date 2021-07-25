@@ -5,25 +5,26 @@ import (
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/strategies/interfaces"
+	"TradingBot/src/strategies/tickers/EURUSD"
 	"TradingBot/src/strategies/tickers/GER30"
 )
 
 func (s *Handler) getStrategies() []interfaces.StrategyInterface {
 	return []interfaces.StrategyInterface{
-		s.getGER30Strategy(),
+		s.getStrategy(GER30.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(EURUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 	}
 }
 
-func (s *Handler) getGER30Strategy() interfaces.StrategyInterface {
-	GER30Strategy := GER30.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)
+func (s *Handler) getStrategy(strategy interfaces.StrategyInterface) interfaces.StrategyInterface {
 	candlesHandler := &candlesHandler.Service{
 		Logger:    s.Logger,
-		Symbol:    GER30Strategy.Parent().GetSymbol().BrokerAPIName,
-		Timeframe: *GER30Strategy.Parent().GetTimeframe(),
+		Symbol:    strategy.Parent().GetSymbol().BrokerAPIName,
+		Timeframe: *strategy.Parent().GetTimeframe(),
 	}
-	GER30Strategy.Parent().SetCandlesHandler(candlesHandler)
-	GER30Strategy.Parent().SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
-	GER30Strategy.Parent().SetTrendsService(trends.GetServiceInstance())
+	strategy.Parent().SetCandlesHandler(candlesHandler)
+	strategy.Parent().SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
+	strategy.Parent().SetTrendsService(trends.GetServiceInstance())
 
-	return GER30Strategy
+	return strategy
 }
