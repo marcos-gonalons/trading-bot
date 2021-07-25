@@ -16,6 +16,8 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
+const DailyResetHour = 2
+
 // Handler ...
 type Handler struct {
 	API            api.Interface
@@ -41,7 +43,7 @@ func (s *Handler) Run() {
 	s.initStrategies()
 	s.initSocket()
 
-	go s.resetAtTwoAm()
+	go s.dailyReset()
 	go s.checkSessionDisconnectedError()
 	go s.fetchDataLoop()
 	go s.panicIfTooManyAPIFails()
@@ -95,11 +97,11 @@ func (s *Handler) onSocketError(err error, context string) {
 	s.initSocket()
 }
 
-func (s *Handler) resetAtTwoAm() {
+func (s *Handler) dailyReset() {
 	for {
 		currentHour, _ := strconv.Atoi(time.Now().Format("15"))
 
-		if currentHour == 2 {
+		if currentHour == DailyResetHour {
 			s.Logger.ResetLogs()
 
 			err := s.socket.Close()

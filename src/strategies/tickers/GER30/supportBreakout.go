@@ -36,15 +36,15 @@ func (s *Strategy) supportBreakoutAnticipationStrategy(candles []*types.Candle) 
 	if !isValidTimeToOpenAPosition {
 		s.savePendingOrder(ibroker.ShortSide)
 	} else {
-		if s.pendingOrder != nil {
+		if s.BaseClass.GetPendingOrder() != nil {
 			s.createPendingOrder(ibroker.ShortSide)
 		}
-		s.pendingOrder = nil
+		s.BaseClass.SetPendingOrder(nil)
 	}
 
 	p := utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName)
 	if p != nil && p.Side == ibroker.ShortSide {
-		s.BaseClass.CheckIfSLShouldBeMovedToBreakEven(&SupportBreakoutParams, p)
+		s.BaseClass.CheckIfSLShouldBeAdjusted(&SupportBreakoutParams, p)
 	}
 
 	lastCompletedCandleIndex := len(candles) - 2

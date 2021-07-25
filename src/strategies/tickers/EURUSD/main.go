@@ -1,6 +1,5 @@
 package EURUSD
 
-/*
 import (
 	"TradingBot/src/constants"
 	"TradingBot/src/services/api"
@@ -49,19 +48,13 @@ func (s *Strategy) Initialize() {
 
 	s.mutex = &sync.Mutex{}
 	s.BaseClass.CandlesHandler.InitCandles(time.Now(), "")
-	go s.checkOpenPositionSLandTP()
+	go s.CheckNewestOpenedPositionSLandTP()
 
 	s.isReady = true
 }
 
 // DailyReset ...
 func (s *Strategy) DailyReset() {
-	s.BaseClass.Initialize()
-
-	s.isReady = false
-	s.BaseClass.CandlesHandler.InitCandles(time.Now(), "")
-	s.isReady = true
-	s.pendingOrder = nil
 }
 
 // OnReceiveMarketData ...
@@ -183,4 +176,3 @@ func GetStrategyInstance(
 		},
 	}
 }
-/**/

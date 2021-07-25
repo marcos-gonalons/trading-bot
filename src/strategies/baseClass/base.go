@@ -32,6 +32,9 @@ type BaseClass struct {
 	currentBrokerQuote *api.Quote
 	positions          []*api.Position
 	state              *api.State
+	currentPosition    *api.Position
+	pendingOrder       *api.Order
+	currentOrder       *api.Order
 }
 
 // SetCandlesHandler ...
@@ -150,7 +153,7 @@ func (s *BaseClass) SetStringValues(order *api.Order) {
 	}
 }
 
-func (s *BaseClass) CheckIfSLShouldBeMovedToBreakEven(
+func (s *BaseClass) CheckIfSLShouldBeAdjusted(
 	params *types.StrategyParams,
 	position *api.Position,
 ) {
@@ -190,4 +193,86 @@ func (s *BaseClass) CheckIfSLShouldBeMovedToBreakEven(
 	} else {
 		s.Log(s.Name, "The price is not close to the TP yet. Doing nothing ...")
 	}
+}
+
+func (s *BaseClass) CheckNewestOpenedPositionSLandTP(longParams *types.StrategyParams, shortParams *types.StrategyParams) {
+	for {
+		position := utils.FindPositionBySymbol(s.GetPositions(), s.GetSymbol().BrokerAPIName)
+
+		if position != nil && s.currentPosition == nil {
+			s.currentPosition = position
+
+			var tp string
+			var sl string
+			var closePosition bool = false
+
+			if s.API.IsShortPosition(s.currentPosition) {
+				if s.API.IsStopOrder(s.currentOrder) && float64(*s.currentOrder.StopPrice-s.currentPosition.AvgPrice) > shortParams.MaxTradeExecutionPriceDifference {
+					closePosition = true
+				}
+				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-shortParams.TakeProfitDistance), s.GetSymbol().PriceDecimals)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+shortParams.StopLossDistance), s.GetSymbol().PriceDecimals)
+			} else {
+				if s.API.IsStopOrder(s.currentOrder) && float64(s.currentPosition.AvgPrice-*s.currentOrder.StopPrice) > longParams.MaxTradeExecutionPriceDifference {
+					closePosition = true
+				}
+				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+longParams.TakeProfitDistance), s.GetSymbol().PriceDecimals)
+				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-longParams.StopLossDistance), s.GetSymbol().PriceDecimals)
+			}
+
+			if closePosition {
+				s.Log(s.Name, "Will immediately close the position since it was executed very far away from the stop price")
+				s.Log(s.Name, "Order is "+utils.GetStringRepresentation(s.currentOrder))
+				s.Log(s.Name, "Position is "+utils.GetStringRepresentation(s.currentPosition))
+
+				workingOrders := s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.GetOrders(), s.GetSymbol().BrokerAPIName))
+				s.Log(s.Name, "Closing working orders first ... "+utils.GetStringRepresentation(workingOrders))
+
+				s.APIRetryFacade.CloseOrders(
+					workingOrders,
+					retryFacade.RetryParams{
+						DelayBetweenRetries: 5 * time.Second,
+						MaxRetries:          30,
+						SuccessCallback: func() {
+							s.SetOrders(nil)
+							s.SetPendingOrder(nil)
+
+							s.Log(s.Name, "Closed all orders. Closing the position now ... ")
+							s.APIRetryFacade.ClosePosition(s.currentPosition.Instrument, retryFacade.RetryParams{
+								DelayBetweenRetries: 5 * time.Second,
+								MaxRetries:          20,
+							})
+						},
+					})
+			} else {
+				s.Log(s.Name, "Modifying the SL and TP of the recently open position ... ")
+				s.APIRetryFacade.ModifyPosition(s.GetSymbol().BrokerAPIName, tp, sl, retryFacade.RetryParams{
+					DelayBetweenRetries: 5 * time.Second,
+					MaxRetries:          20,
+				})
+			}
+		}
+
+		if position == nil {
+			s.currentPosition = nil
+		}
+
+		time.Sleep(5 * time.Second)
+	}
+}
+
+func (s *BaseClass) GetPendingOrder() *api.Order {
+	return s.pendingOrder
+}
+
+func (s *BaseClass) SetPendingOrder(order *api.Order) {
+	s.pendingOrder = order
+}
+
+func (s *BaseClass) GetCurrentOrder() *api.Order {
+	return s.currentOrder
+}
+
+func (s *BaseClass) SetCurrentOrder(order *api.Order) {
+	s.currentOrder = order
 }
