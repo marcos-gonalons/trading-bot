@@ -78,6 +78,7 @@ func (s *Handler) onReceiveMarketData(symbol string, data *tradingviewsocket.Quo
 		if symbol != strategy.Parent().GetSymbol().SocketName {
 			continue
 		}
+		s.Logger.Log("Received data -> "+utils.GetStringRepresentation(data), strategy.Parent().GetSymbol().LogType)
 		go strategy.OnReceiveMarketData(symbol, data)
 	}
 }

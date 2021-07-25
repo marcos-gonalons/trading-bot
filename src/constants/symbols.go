@@ -2,6 +2,7 @@ package constants
 
 import (
 	"TradingBot/src/services/api/ibroker"
+	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
 )
 
@@ -22,6 +23,7 @@ var Symbols = []types.Symbol{
 		},
 		TradeableOnWeekends: false,
 		MaxSpread:           4,
+		LogType:             logger.GER30,
 	},
 	{
 		BrokerAPIName: ibroker.EURUSDSymbolName,
@@ -33,5 +35,6 @@ var Symbols = []types.Symbol{
 		},
 		TradeableOnWeekends: false,
 		MaxSpread:           999999,
+		LogType:             logger.EURUSD,
 	},
 }
