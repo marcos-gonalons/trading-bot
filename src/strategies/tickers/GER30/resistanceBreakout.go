@@ -3,6 +3,7 @@ package GER30
 import (
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/api/retryFacade"
+	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"time"
@@ -18,9 +19,9 @@ func (s *Strategy) getResistanceBreakoutStrategyName() string {
 }
 
 func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candle) {
-	s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "resistanceBreakoutAnticipationStrategy started")
+	s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "resistanceBreakoutAnticipationStrategy started", logger.GER30)
 	defer func() {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "resistanceBreakoutAnticipationStrategy ended")
+		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "resistanceBreakoutAnticipationStrategy ended", logger.GER30)
 	}()
 
 	validMonths := ResistanceBreakoutParams.ValidTradingTimes.ValidMonths
@@ -28,7 +29,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	validHalfHours := ResistanceBreakoutParams.ValidTradingTimes.ValidHalfHours
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Today it's not the day for resistance breakout anticipation for GER30")
+		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Today it's not the day for resistance breakout anticipation for GER30", logger.GER30)
 		return
 	}
 
@@ -57,25 +58,25 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 
 	if err != nil {
 		errorMessage := "Not a good long setup yet -> " + err.Error()
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), errorMessage)
+		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), errorMessage, logger.GER30)
 		return
 	}
 
 	price = price - ResistanceBreakoutParams.PriceOffset
 	if price <= float64(s.BaseClass.GetCurrentBrokerQuote().Ask) {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Price is lower than the current ask, so we can't create the long order now. Price is -> "+utils.FloatToString(price, 2))
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Quote is -> "+utils.GetStringRepresentation(s.BaseClass.GetCurrentBrokerQuote()))
+		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Price is lower than the current ask, so we can't create the long order now. Price is -> "+utils.FloatToString(price, 2), logger.GER30)
+		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Quote is -> "+utils.GetStringRepresentation(s.BaseClass.GetCurrentBrokerQuote()), logger.GER30)
 		return
 	}
 
-	s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Ok, we might have a long setup at price "+utils.FloatToString(price, 2))
+	s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Ok, we might have a long setup at price "+utils.FloatToString(price, 2), logger.GER30)
 	if !s.BaseClass.TrendsService.IsBullishTrend(
 		ResistanceBreakoutParams.TrendCandles,
 		ResistanceBreakoutParams.TrendDiff,
 		candles,
 		lastCompletedCandleIndex,
 	) {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "At the end it wasn't a good long setup, doing nothing ...")
+		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "At the end it wasn't a good long setup, doing nothing ...", logger.GER30)
 		return
 	}
 
@@ -89,10 +90,10 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	}
 
 	if utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName) != nil {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "There is an open position, no need to close any orders ...")
+		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "There is an open position, no need to close any orders ...", logger.GER30)
 		s.onValidTradeSetup(params)
 	} else {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "There isn't any open position. Closing orders first ...")
+		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "There isn't any open position. Closing orders first ...", logger.GER30)
 		s.BaseClass.APIRetryFacade.CloseOrders(
 			s.BaseClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseClass.GetOrders(), s.BaseClass.GetSymbol().BrokerAPIName)),
 			retryFacade.RetryParams{

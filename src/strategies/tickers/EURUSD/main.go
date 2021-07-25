@@ -81,10 +81,10 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		}
 
 		s.lastCandlesAmount = len(s.BaseClass.CandlesHandler.GetCandles())
-		s.BaseClass.Log(s.BaseClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
+		s.BaseClass.Log(s.BaseClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount), logger.EURUSD)
 	}()
 
-	s.BaseClass.Log(s.BaseClass.Name, "Updating candles... ")
+	s.BaseClass.Log(s.BaseClass.Name, "Updating candles... ", logger.EURUSD)
 	if data.Price != nil {
 		// TODO: Identify the price discrepancy. data.Price should be as close as possible as the ibroker price.
 		// var price = *data.Price + .8
@@ -93,10 +93,10 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	s.BaseClass.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.lastVolume)
 
 	if s.lastCandlesAmount != len(s.BaseClass.CandlesHandler.GetCandles()) {
-		s.BaseClass.Log(s.BaseClass.Name, "New candle has been added. Executing strategy code ...")
+		s.BaseClass.Log(s.BaseClass.Name, "New candle has been added. Executing strategy code ...", logger.EURUSD)
 		// TODO: Code
 	} else {
-		s.BaseClass.Log(s.BaseClass.Name, "Doing nothing - still same candle")
+		s.BaseClass.Log(s.BaseClass.Name, "Doing nothing - still same candle", logger.EURUSD)
 	}
 }
 

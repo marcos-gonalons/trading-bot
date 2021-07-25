@@ -117,8 +117,8 @@ func (s *BaseClass) OnReceiveMarketData(symbol string, data *tradingviewsocket.Q
 
 }
 
-func (s *BaseClass) Log(strategyName string, message string) {
-	s.Logger.Log(strategyName + " - " + message)
+func (s *BaseClass) Log(strategyName string, message string, logType ...logger.LogType) {
+	s.Logger.Log(strategyName+" - "+message, logType...)
 }
 
 func (s *BaseClass) SetStringValues(order *api.Order) {
@@ -161,8 +161,8 @@ func (s *BaseClass) CheckIfSLShouldBeAdjusted(
 		return
 	}
 
-	s.Log(s.Name, "Checking if the current position needs to have the SL adjusted with this params ... "+utils.GetStringRepresentation(params))
-	s.Log(s.Name, "Current position is "+utils.GetStringRepresentation(position))
+	s.Log(s.Name, "Checking if the position needs to have the SL adjusted with this params ... "+utils.GetStringRepresentation(params))
+	s.Log(s.Name, "Position is "+utils.GetStringRepresentation(position))
 
 	_, tpOrder := s.API.GetBracketOrdersForOpenedPosition(position)
 

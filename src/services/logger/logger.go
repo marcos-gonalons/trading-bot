@@ -48,6 +48,12 @@ const (
 
 	// ErrorLog 99
 	ErrorLog LogType = 99
+
+	// GER30 100
+	GER30 LogType = 100
+
+	// EURUSD 101
+	EURUSD LogType = 101
 )
 
 // Logger ...
@@ -163,6 +169,8 @@ func init() {
 	filePathsMap[GetStateRequest] = "getStateRequest"
 	filePathsMap[ModifyPositionRequest] = "modifyPositionRequest"
 	filePathsMap[ErrorLog] = "errors"
+	filePathsMap[GER30] = "GER30"
+	filePathsMap[EURUSD] = "EURUSD"
 
 	logger = &Logger{
 		"logs/",
