@@ -114,11 +114,11 @@ func (s *BaseClass) GetState() *api.State {
 
 // OnReceiveMarketData ...
 func (s *BaseClass) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
-
+	s.Log("", "Received data -> "+utils.GetStringRepresentation(data))
 }
 
-func (s *BaseClass) Log(strategyName string, message string, logType ...logger.LogType) {
-	s.Logger.Log(strategyName+" - "+message, logType...)
+func (s *BaseClass) Log(strategyName string, message string) {
+	s.Logger.Log(strategyName+" - "+message, s.GetSymbol().LogType)
 }
 
 func (s *BaseClass) SetStringValues(order *api.Order) {

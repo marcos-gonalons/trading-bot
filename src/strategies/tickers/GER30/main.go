@@ -94,10 +94,10 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		}
 
 		s.lastCandlesAmount = len(s.BaseClass.CandlesHandler.GetCandles())
-		s.BaseClass.Log(s.BaseClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount), logger.GER30)
+		s.BaseClass.Log(s.BaseClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
 	}()
 
-	s.BaseClass.Log(s.BaseClass.Name, "Updating candles... ", logger.GER30)
+	s.BaseClass.Log(s.BaseClass.Name, "Updating candles... ")
 	if data.Price != nil {
 		// There is more or less a discrepancy of .8 between the price of ibroker and the price of fx:ger30 on tradingview
 		var price = *data.Price + .8
@@ -107,7 +107,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 	if s.lastCandlesAmount != len(s.BaseClass.CandlesHandler.GetCandles()) {
 		if !utils.IsNowWithinTradingHours(s.BaseClass.GetSymbol()) {
-			s.BaseClass.Log(s.BaseClass.Name, "Doing nothing - Now it's not the time.", logger.GER30)
+			s.BaseClass.Log(s.BaseClass.Name, "Doing nothing - Now it's not the time.")
 
 			s.BaseClass.APIRetryFacade.CloseOrders(
 				s.BaseClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseClass.GetOrders(), s.BaseClass.GetSymbol().BrokerAPIName)),
@@ -120,7 +120,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 						p := utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName)
 						if p != nil {
-							s.BaseClass.Log(s.BaseClass.Name, "Closing the open position ... "+utils.GetStringRepresentation(p), logger.GER30)
+							s.BaseClass.Log(s.BaseClass.Name, "Closing the open position ... "+utils.GetStringRepresentation(p))
 							s.BaseClass.APIRetryFacade.ClosePosition(
 								p.Instrument,
 								retryFacade.RetryParams{
@@ -137,7 +137,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		}
 
 		if s.averageSpread > s.BaseClass.GetSymbol().MaxSpread {
-			s.BaseClass.Log(s.BaseClass.Name, "Closing working orders and doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0), logger.GER30)
+			s.BaseClass.Log(s.BaseClass.Name, "Closing working orders and doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
 			s.BaseClass.SetPendingOrder(nil)
 			s.BaseClass.APIRetryFacade.CloseOrders(
 				s.BaseClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseClass.GetOrders(), s.BaseClass.GetSymbol().BrokerAPIName)),
@@ -150,12 +150,12 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			return
 		}
 
-		s.BaseClass.Log(s.BaseClass.Name, "Calling supportBreakoutAnticipationStrategy", logger.GER30)
+		s.BaseClass.Log(s.BaseClass.Name, "Calling supportBreakoutAnticipationStrategy")
 		s.supportBreakoutAnticipationStrategy(s.BaseClass.CandlesHandler.GetCandles())
-		s.BaseClass.Log(s.BaseClass.Name, "Calling resistanceBreakoutAnticipationStrategy", logger.GER30)
+		s.BaseClass.Log(s.BaseClass.Name, "Calling resistanceBreakoutAnticipationStrategy")
 		s.resistanceBreakoutAnticipationStrategy(s.BaseClass.CandlesHandler.GetCandles())
 	} else {
-		s.BaseClass.Log(s.BaseClass.Name, "Doing nothing - still same candle", logger.GER30)
+		s.BaseClass.Log(s.BaseClass.Name, "Doing nothing - still same candle")
 	}
 }
 
@@ -217,17 +217,17 @@ func (s *Strategy) isExecutionTimeValid(
 
 func (s *Strategy) savePendingOrder(side string) {
 	go func() {
-		s.BaseClass.Log(s.BaseClass.Name, "Save pending order called for side "+side, logger.GER30)
+		s.BaseClass.Log(s.BaseClass.Name, "Save pending order called for side "+side)
 
 		if utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName) != nil {
-			s.BaseClass.Log(s.BaseClass.Name, "Can't save pending order since there is an open position", logger.GER30)
+			s.BaseClass.Log(s.BaseClass.Name, "Can't save pending order since there is an open position")
 			return
 		}
 
 		workingOrders := s.BaseClass.API.GetWorkingOrders(s.BaseClass.GetOrders())
 
 		if len(workingOrders) == 0 {
-			s.BaseClass.Log(s.BaseClass.Name, "There aren't any working orders, doing nothing ...", logger.GER30)
+			s.BaseClass.Log(s.BaseClass.Name, "There aren't any working orders, doing nothing ...")
 			return
 		}
 
@@ -239,7 +239,7 @@ func (s *Strategy) savePendingOrder(side string) {
 		}
 
 		if mainOrder == nil {
-			s.BaseClass.Log(s.BaseClass.Name, "There isn't an active order for this side "+side, logger.GER30)
+			s.BaseClass.Log(s.BaseClass.Name, "There isn't an active order for this side "+side)
 			return
 		}
 
@@ -255,12 +255,12 @@ func (s *Strategy) savePendingOrder(side string) {
 			[]string{},
 			validHalfHours,
 		) {
-			s.BaseClass.Log(s.BaseClass.Name, "No need to save the pending order since we are in the right time", logger.GER30)
+			s.BaseClass.Log(s.BaseClass.Name, "No need to save the pending order since we are in the right time")
 			return
 		}
 
-		s.BaseClass.Log(s.BaseClass.Name, "Closing the current order and saving it for the future, since now it's not the time for profitable trading.", logger.GER30)
-		s.BaseClass.Log(s.BaseClass.Name, "This is the current order -> "+utils.GetStringRepresentation(mainOrder), logger.GER30)
+		s.BaseClass.Log(s.BaseClass.Name, "Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
+		s.BaseClass.Log(s.BaseClass.Name, "This is the current order -> "+utils.GetStringRepresentation(mainOrder))
 
 		slOrder, tpOrder := s.getSlAndTpOrders(mainOrder.ID, workingOrders)
 
@@ -286,7 +286,7 @@ func (s *Strategy) savePendingOrder(side string) {
 				SuccessCallback: func() {
 					s.BaseClass.SetOrders(nil)
 					s.BaseClass.SetPendingOrder(mainOrder)
-					s.BaseClass.Log(s.BaseClass.Name, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.BaseClass.GetPendingOrder()), logger.GER30)
+					s.BaseClass.Log(s.BaseClass.Name, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.BaseClass.GetPendingOrder()))
 				},
 			},
 		)
@@ -322,7 +322,7 @@ func (s *Strategy) createPendingOrder(side string) {
 
 	p := utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName)
 	if p != nil {
-		s.BaseClass.Log(s.BaseClass.Name, "Can't create the pending order since there is an open position -> "+utils.GetStringRepresentation(p), logger.GER30)
+		s.BaseClass.Log(s.BaseClass.Name, "Can't create the pending order since there is an open position -> "+utils.GetStringRepresentation(p))
 		return
 	}
 
@@ -336,21 +336,21 @@ func (s *Strategy) createPendingOrder(side string) {
 
 		candles := s.BaseClass.CandlesHandler.GetCandles()
 		lastCompletedCandle := candles[len(candles)-2]
-		s.BaseClass.Log(s.BaseClass.Name, "Last completed candle -> "+utils.GetStringRepresentation(lastCompletedCandle), logger.GER30)
+		s.BaseClass.Log(s.BaseClass.Name, "Last completed candle -> "+utils.GetStringRepresentation(lastCompletedCandle))
 
 		if side == ibroker.LongSide {
 			if price <= float32(lastCompletedCandle.Close) {
-				s.BaseClass.Log(s.BaseClass.Name, "Price is lower than last completed candle.high - Can't create the pending order", logger.GER30)
+				s.BaseClass.Log(s.BaseClass.Name, "Price is lower than last completed candle.high - Can't create the pending order")
 				return
 			}
 		} else {
 			if price >= float32(lastCompletedCandle.Low) {
-				s.BaseClass.Log(s.BaseClass.Name, "Price is greater than last completed candle.low - Can't create the pending order", logger.GER30)
+				s.BaseClass.Log(s.BaseClass.Name, "Price is greater than last completed candle.low - Can't create the pending order")
 				return
 			}
 		}
 
-		s.BaseClass.Log(s.BaseClass.Name, "Everything is good - Creating the pending order", logger.GER30)
+		s.BaseClass.Log(s.BaseClass.Name, "Everything is good - Creating the pending order")
 		order := s.BaseClass.GetPendingOrder()
 		s.BaseClass.APIRetryFacade.CreateOrder(
 			pendingOrder,
@@ -364,7 +364,7 @@ func (s *Strategy) createPendingOrder(side string) {
 				SuccessCallback: func(order *api.Order) func() {
 					return func() {
 						s.BaseClass.SetCurrentOrder(order)
-						s.BaseClass.Log(s.BaseClass.Name, "Pending order successfully created ... "+utils.GetStringRepresentation(s.BaseClass.GetCurrentOrder()), logger.GER30)
+						s.BaseClass.Log(s.BaseClass.Name, "Pending order successfully created ... "+utils.GetStringRepresentation(s.BaseClass.GetCurrentOrder()))
 					}
 				}(order),
 			},
@@ -418,16 +418,16 @@ func (s *Strategy) onValidTradeSetup(params OnValidTradeSetupParams) {
 		Type:       ibroker.StopType,
 	}
 
-	s.BaseClass.Log(strategyName, params.Side+" order to be created -> "+utils.GetStringRepresentation(order), logger.GER30)
+	s.BaseClass.Log(strategyName, params.Side+" order to be created -> "+utils.GetStringRepresentation(order))
 
 	if utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName) != nil {
-		s.BaseClass.Log(strategyName, "There is an open position, saving the order for later ...", logger.GER30)
+		s.BaseClass.Log(strategyName, "There is an open position, saving the order for later ...")
 		s.BaseClass.SetPendingOrder(order)
 		return
 	}
 
 	if !params.IsValidTime {
-		s.BaseClass.Log(strategyName, "Now is not the time for opening any "+params.Side+" orders, saving it for later ...", logger.GER30)
+		s.BaseClass.Log(strategyName, "Now is not the time for opening any "+params.Side+" orders, saving it for later ...")
 		s.BaseClass.SetPendingOrder(order)
 		return
 	}
@@ -444,7 +444,7 @@ func (s *Strategy) onValidTradeSetup(params OnValidTradeSetupParams) {
 			SuccessCallback: func(order *api.Order) func() {
 				return func() {
 					s.BaseClass.SetCurrentOrder(order)
-					s.BaseClass.Log(strategyName, "New order successfully created ... "+utils.GetStringRepresentation(s.BaseClass.GetCurrentOrder()), logger.GER30)
+					s.BaseClass.Log(strategyName, "New order successfully created ... "+utils.GetStringRepresentation(s.BaseClass.GetCurrentOrder()))
 				}
 			}(order),
 		},
