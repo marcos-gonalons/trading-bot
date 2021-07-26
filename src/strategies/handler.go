@@ -135,8 +135,8 @@ func (s *Handler) fetchDataLoop() {
 			}
 
 			fetchFuncs = append(fetchFuncs,
-				func() {
-					go func(symbol string) {
+				func(symbol string) func() {
+					return func() {
 						quote := s.fetch(func() (interface{}, error) {
 							defer waitingGroup.Done()
 							return s.API.GetQuote(symbol)
@@ -149,8 +149,8 @@ func (s *Handler) fetchDataLoop() {
 								strategy.Parent().SetCurrentBrokerQuote(quote)
 							}
 						}
-					}(symbol.BrokerAPIName)
-				},
+					}
+				}(symbol.BrokerAPIName),
 			)
 		}
 
