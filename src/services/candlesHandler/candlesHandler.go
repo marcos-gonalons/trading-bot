@@ -200,7 +200,7 @@ func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
 
 	for index, line := range csvLines {
 		s.candles = append(s.candles, &types.Candle{
-			Timestamp: int64(s.getAsFloat64(line[0], index)),
+			Timestamp: 0,
 			Open:      s.getAsFloat64(line[1], index),
 			High:      s.getAsFloat64(line[2], index),
 			Low:       s.getAsFloat64(line[3], index),
