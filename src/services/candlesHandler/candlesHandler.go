@@ -26,6 +26,7 @@ type Service struct {
 
 // InitCandles ...
 func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
+	// todo:
 	// if fileName, s.csvFileName will be the fileName, so no need to call initCSV
 	// and then read the file and init s.candles with the info from the file
 

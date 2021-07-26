@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-/**
-	todo: separated class for resistance and support strategies?
-	Will have the main parent strategy class as dependency?
-**/
-
 func (s *Strategy) getResistanceBreakoutStrategyName() string {
 	return s.BaseClass.Name + " - RBA"
 }
