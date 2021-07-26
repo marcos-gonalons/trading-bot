@@ -17,7 +17,7 @@ import (
 // Service ...
 type Service struct {
 	Logger    logger.Interface
-	Symbol    string
+	Symbol    *types.Symbol
 	Timeframe types.Timeframe
 
 	candles     []*types.Candle
@@ -37,10 +37,10 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 			Low:       0,
 			Close:     0,
 			Volume:    0,
-			Timestamp: utils.GetTimestampWith0Seconds(currentExecutionTime),
+			Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
 		}}
 		now := time.Now()
-		s.csvFileName = s.Symbol + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
+		s.csvFileName = s.Symbol.BrokerAPIName + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
 		s.createNewCSV()
 	}
 }
@@ -78,7 +78,7 @@ func (s *Service) UpdateCandles(
 			High:      s.GetLastCandle().Close,
 			Close:     s.GetLastCandle().Close,
 			Volume:    volume,
-			Timestamp: utils.GetTimestampWith0Seconds(currentExecutionTime),
+			Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
 		})
 	} else {
 		index := len(s.candles) - 1
@@ -104,7 +104,7 @@ func (s *Service) UpdateCandles(
 			s.candles[index].Volume += volume
 		}
 		if s.candles[index].Timestamp == 0 {
-			s.candles[index].Timestamp = utils.GetTimestampWith0Seconds(currentExecutionTime)
+			s.candles[index].Timestamp = utils.GetTimestamp(currentExecutionTime, s.getTimeLayout())
 		}
 	}
 }
@@ -151,6 +151,8 @@ func (s *Service) updateCSVWithLastCandle() {
 
 func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 	var multiplier uint
+	var currentTimestamp int64
+	var candleDurationInSeconds uint
 
 	if s.Timeframe.Unit == "m" {
 		multiplier = 60
@@ -162,8 +164,8 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 		multiplier = 60 * 60 * 24
 	}
 
-	var candleDurationInSeconds = s.Timeframe.Value * multiplier
-	currentTimestamp := utils.GetTimestampWith0Seconds(currentExecutionTime)
+	candleDurationInSeconds = s.Timeframe.Value * multiplier
+	currentTimestamp = utils.GetTimestamp(currentExecutionTime, s.getTimeLayout())
 
 	return currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
 }
@@ -215,7 +217,7 @@ func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
 		High:      s.GetLastCandle().Close,
 		Close:     s.GetLastCandle().Close,
 		Volume:    0,
-		Timestamp: utils.GetTimestampWith0Seconds(currentExecutionTime),
+		Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
 	})
 }
 
@@ -225,4 +227,20 @@ func (s *Service) getAsFloat64(v string, index int) float64 {
 		panic("Error while reading csv line at " + strconv.Itoa(index) + e.Error())
 	}
 	return r
+}
+
+func (s *Service) getTimeLayout() string {
+	if s.Timeframe.Unit == "m" {
+		return "15:04:00"
+	}
+
+	if s.Timeframe.Unit == "h" {
+		return "15:00:00"
+	}
+
+	if s.Timeframe.Unit == "d" {
+		return "00:00:00"
+	}
+
+	return ""
 }

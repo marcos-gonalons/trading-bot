@@ -19,7 +19,7 @@ func (s *Handler) getStrategies() []interfaces.StrategyInterface {
 func (s *Handler) getStrategy(strategy interfaces.StrategyInterface) interfaces.StrategyInterface {
 	candlesHandler := &candlesHandler.Service{
 		Logger:    s.Logger,
-		Symbol:    strategy.Parent().GetSymbol().BrokerAPIName,
+		Symbol:    strategy.Parent().GetSymbol(),
 		Timeframe: *strategy.Parent().GetTimeframe(),
 	}
 	strategy.Parent().SetCandlesHandler(candlesHandler)

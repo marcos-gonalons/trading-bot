@@ -90,9 +90,9 @@ func RepeatUntilSuccess(
 	}
 }
 
-// GetTimestampWith0Seconds ...
-func GetTimestampWith0Seconds(t time.Time) int64 {
-	dateString := t.Format("2006-01-02 15:04:00")
+// GetTimestamp ...
+func GetTimestamp(t time.Time, timeLayout string) int64 {
+	dateString := t.Format("2006-01-02 " + timeLayout)
 	date, _ := time.Parse("2006-01-02 15:04:05", dateString)
 	return date.Unix()
 }

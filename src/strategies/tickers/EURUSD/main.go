@@ -90,6 +90,11 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	if s.lastCandlesAmount != len(s.BaseClass.CandlesHandler.GetCandles()) {
 		s.BaseClass.Log(s.BaseClass.Name, "New candle has been added. Executing strategy code ...")
 		// TODO: Code
+		/**
+			current short strategy wins more % of times than the % of the long strategy
+			possible improvement: if we detect a long setup, but there is already a short order in place, do not cancel that order
+			instead, do not create the long order.
+		**/
 	} else {
 		s.BaseClass.Log(s.BaseClass.Name, "Doing nothing - still same candle")
 	}
