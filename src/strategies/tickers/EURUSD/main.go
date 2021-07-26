@@ -41,7 +41,7 @@ func (s *Strategy) Initialize() {
 	s.BaseClass.Initialize()
 
 	s.mutex = &sync.Mutex{}
-	s.BaseClass.CandlesHandler.InitCandles(time.Now(), "") // todo: pass the csv file name
+	s.BaseClass.CandlesHandler.InitCandles(time.Now(), "EURUSD-1H.csv")
 	go s.BaseClass.CheckNewestOpenedPositionSLandTP(
 		&SupportBounceParams,
 		&ResistanceBounceParams,
