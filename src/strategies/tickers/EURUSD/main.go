@@ -85,11 +85,6 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}()
 
 	s.BaseClass.Log(s.BaseClass.Name, "Updating candles... ")
-	if data.Price != nil {
-		// TODO: Identify the price discrepancy. data.Price should be as close as possible as the ibroker price.
-		// var price = *data.Price + .8
-		// data.Price = &price
-	}
 	s.BaseClass.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.lastVolume)
 
 	if s.lastCandlesAmount != len(s.BaseClass.CandlesHandler.GetCandles()) {
