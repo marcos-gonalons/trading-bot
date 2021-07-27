@@ -215,7 +215,7 @@ func (s *Service) createCSVFile(fileName string) {
 			s.csvFileMtx.Unlock()
 			s.Logger.Error("Error while creating the csv file -> " + err.Error())
 		} else {
-			csvFile.Write([]byte("Time,Open,High,Low,Close,Volume\n"))
+			// csvFile.Write([]byte("Time,Open,High,Low,Close,Volume\n"))
 			s.csvFileMtx.Unlock()
 		}
 	}
