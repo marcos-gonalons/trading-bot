@@ -41,7 +41,7 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 		}}
 		now := time.Now()
 		s.csvFileName = s.Symbol.BrokerAPIName + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
-		s.createNewCSV()
+		s.createCSVFile(s.csvFileName)
 	}
 }
 
@@ -116,8 +116,34 @@ func (s *Service) GetCandles() []*types.Candle {
 
 // GetLastCandle ...
 func (s *Service) GetLastCandle() *types.Candle {
-
 	return s.candles[len(s.candles)-1]
+}
+
+// RemoveOldCandles
+func (s *Service) RemoveOldCandles(amount uint) {
+	s.csvFileMtx.Lock()
+	defer func() {
+		s.csvFileMtx.Unlock()
+	}()
+
+	s.candles = s.candles[amount:]
+
+	tempFileName := utils.GetRandomString(10) + ".csv"
+	s.createCSVFile(tempFileName)
+
+	for _, candle := range s.candles {
+		s.writeRowIntoCSVFile(s.getRowForCSV(candle), tempFileName)
+	}
+
+	err := os.Remove(s.csvFileName)
+	if err != nil {
+		panic("Error while removing the csv file -> " + err.Error())
+	}
+
+	err = os.Rename(tempFileName, s.csvFileName)
+	if err != nil {
+		panic("Error renaming the temp csv file -> " + err.Error())
+	}
 }
 
 func (s *Service) updateCSVWithLastCandle() {
@@ -125,28 +151,36 @@ func (s *Service) updateCSVWithLastCandle() {
 	if lastCandle.Timestamp == 0 {
 		return
 	}
-	row := "" +
-		strconv.FormatInt(lastCandle.Timestamp, 10) + "," +
-		utils.FloatToString(float64(lastCandle.Open), 5) + "," +
-		utils.FloatToString(float64(lastCandle.High), 5) + "," +
-		utils.FloatToString(float64(lastCandle.Low), 5) + "," +
-		utils.FloatToString(float64(lastCandle.Close), 5) + "," +
-		utils.FloatToString(lastCandle.Volume, 5) + "\n"
 
-	var err error
+	err := s.writeRowIntoCSVFile(s.getRowForCSV(lastCandle), s.csvFileName)
 
-	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
-		s.Logger.Error("Error when opening the csv file -> " + err.Error())
+		s.Logger.Error("Error when writing into the CSV file -> " + err.Error())
+	}
+}
+
+func (s *Service) writeRowIntoCSVFile(row []byte, fileName string) (err error) {
+	csvFile, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		return
 	}
 	defer csvFile.Close()
 
 	s.csvFileMtx.Lock()
-	_, err = csvFile.Write([]byte(row))
-	if err != nil {
-		s.Logger.Error("Error when writting the last candle in the csv file -> " + err.Error())
-	}
+	_, err = csvFile.Write(row)
 	s.csvFileMtx.Unlock()
+
+	return
+}
+
+func (s *Service) getRowForCSV(candle *types.Candle) []byte {
+	return []byte("" +
+		strconv.FormatInt(candle.Timestamp, 10) + "," +
+		utils.FloatToString(float64(candle.Open), 5) + "," +
+		utils.FloatToString(float64(candle.High), 5) + "," +
+		utils.FloatToString(float64(candle.Low), 5) + "," +
+		utils.FloatToString(float64(candle.Close), 5) + "," +
+		utils.FloatToString(candle.Volume, 5) + "\n")
 }
 
 func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
@@ -170,12 +204,12 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 	return currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
 }
 
-func (s *Service) createNewCSV() {
-	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+func (s *Service) createCSVFile(fileName string) {
+	csvFile, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	defer csvFile.Close()
 	if err != nil {
 		s.csvFileMtx.Lock()
-		csvFile, err = os.Create(s.csvFileName)
+		csvFile, err = os.Create(fileName)
 		defer csvFile.Close()
 		if err != nil {
 			s.csvFileMtx.Unlock()

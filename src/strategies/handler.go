@@ -8,7 +8,6 @@ import (
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"net"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -99,7 +98,7 @@ func (s *Handler) onSocketError(err error, context string) {
 
 func (s *Handler) dailyReset() {
 	for {
-		currentHour, _ := strconv.Atoi(time.Now().Format("15"))
+		currentHour, _ := utils.GetCurrentTimeHourAndMinutes()
 
 		if currentHour == DailyResetHour {
 			s.Logger.ResetLogs()

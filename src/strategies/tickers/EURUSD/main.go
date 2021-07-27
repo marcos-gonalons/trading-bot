@@ -52,7 +52,18 @@ func (s *Strategy) Initialize() {
 
 // DailyReset ...
 func (s *Strategy) DailyReset() {
-	// no need to do anything
+	minCandles := 7 * 2 * 24
+	totalCandles := len(s.BaseClass.CandlesHandler.GetCandles())
+
+	s.BaseClass.Log(s.BaseClass.Name, "Total candles is "+strconv.Itoa(totalCandles)+" - min candles is "+strconv.Itoa(minCandles))
+	if totalCandles < minCandles {
+		s.BaseClass.Log(s.BaseClass.Name, "Not removing any candles yet")
+		return
+	}
+
+	var candlesToRemove uint = 25
+	s.BaseClass.Log(s.BaseClass.Name, "Removing old candles ... "+strconv.Itoa(int(candlesToRemove)))
+	s.BaseClass.CandlesHandler.RemoveOldCandles(candlesToRemove)
 }
 
 // OnReceiveMarketData ...
