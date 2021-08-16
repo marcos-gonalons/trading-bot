@@ -68,18 +68,16 @@ func (s *Strategy) DailyReset() {
 
 // OnReceiveMarketData ...
 func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
+	// TODO: test this
 	s.BaseClass.OnReceiveMarketData(symbol, data)
 
 	if !s.isReady {
+		s.BaseClass.Log(s.BaseClass.Name, "Not ready to process yet, doing nothing ...")
 		return
 	}
 
-	s.mutex.Lock()
-	defer func() {
-		s.mutex.Unlock()
-	}()
-
 	s.currentExecutionTime = time.Now()
+	s.mutex.Lock()
 	defer func() {
 		if data.Volume != nil {
 			s.lastVolume = *data.Volume
@@ -93,6 +91,8 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 		s.lastCandlesAmount = len(s.BaseClass.CandlesHandler.GetCandles())
 		s.BaseClass.Log(s.BaseClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
+
+		s.mutex.Unlock()
 	}()
 
 	s.BaseClass.Log(s.BaseClass.Name, "Updating candles... ")
