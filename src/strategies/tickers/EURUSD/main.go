@@ -68,17 +68,21 @@ func (s *Strategy) DailyReset() {
 
 // OnReceiveMarketData ...
 func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
-	// TODO: test this
+	s.BaseClass.Log(s.BaseClass.Name, "Pre base class on receive market data")
 	s.BaseClass.OnReceiveMarketData(symbol, data)
+	s.BaseClass.Log(s.BaseClass.Name, "Post base class on receive market data")
 
 	if !s.isReady {
 		s.BaseClass.Log(s.BaseClass.Name, "Not ready to process yet, doing nothing ...")
 		return
 	}
+	s.BaseClass.Log(s.BaseClass.Name, "is ready, pre mutex lock")
 
 	s.currentExecutionTime = time.Now()
 	s.mutex.Lock()
+	s.BaseClass.Log(s.BaseClass.Name, "is ready, post mutex lock")
 	defer func() {
+		s.BaseClass.Log(s.BaseClass.Name, "defered function starts")
 		if data.Volume != nil {
 			s.lastVolume = *data.Volume
 		}
@@ -89,10 +93,9 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			s.lastAsk = data.Ask
 		}
 
+		s.BaseClass.Log(s.BaseClass.Name, "defered function before getting candles")
 		s.lastCandlesAmount = len(s.BaseClass.CandlesHandler.GetCandles())
 		s.BaseClass.Log(s.BaseClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
-
-		s.mutex.Unlock()
 	}()
 
 	s.BaseClass.Log(s.BaseClass.Name, "Updating candles... ")
@@ -101,14 +104,13 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	if s.lastCandlesAmount != len(s.BaseClass.CandlesHandler.GetCandles()) {
 		s.BaseClass.Log(s.BaseClass.Name, "New candle has been added. Executing strategy code ...")
 		// TODO: Code
-		/**
-			current short strategy wins more % of times than the % of the long strategy
-			possible improvement: if we detect a long setup, but there is already a short order in place, do not cancel that order
-			instead, do not create the long order.
-		**/
 	} else {
 		s.BaseClass.Log(s.BaseClass.Name, "Doing nothing - still same candle")
 	}
+
+	s.BaseClass.Log(s.BaseClass.Name, "before unlock")
+	s.mutex.Unlock()
+	s.BaseClass.Log(s.BaseClass.Name, "after unlock")
 }
 
 // GetStrategyInstance ...
