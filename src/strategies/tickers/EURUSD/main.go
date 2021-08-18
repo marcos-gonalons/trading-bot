@@ -52,7 +52,7 @@ func (s *Strategy) Initialize() {
 
 // DailyReset ...
 func (s *Strategy) DailyReset() {
-	minCandles := 332 //7 * 2 * 24
+	minCandles := 7 * 2 * 24
 	totalCandles := len(s.BaseClass.CandlesHandler.GetCandles())
 
 	s.BaseClass.Log(s.BaseClass.Name, "Total candles is "+strconv.Itoa(totalCandles)+" - min candles is "+strconv.Itoa(minCandles))
