@@ -121,11 +121,6 @@ func (s *Service) GetLastCandle() *types.Candle {
 
 // RemoveOldCandles
 func (s *Service) RemoveOldCandles(amount uint) {
-	s.csvFileMtx.Lock()
-	defer func() {
-		s.csvFileMtx.Unlock()
-	}()
-
 	s.candles = s.candles[amount:]
 
 	tempFileName := utils.GetRandomString(10) + ".csv"
@@ -134,6 +129,11 @@ func (s *Service) RemoveOldCandles(amount uint) {
 	for _, candle := range s.candles {
 		s.writeRowIntoCSVFile(s.getRowForCSV(candle), tempFileName)
 	}
+
+	s.csvFileMtx.Lock()
+	defer func() {
+		s.csvFileMtx.Unlock()
+	}()
 
 	err := os.Remove(s.csvFileName)
 	if err != nil {
