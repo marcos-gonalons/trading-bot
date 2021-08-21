@@ -24,6 +24,7 @@ func (s *Handler) getStrategy(strategy interfaces.StrategyInterface) interfaces.
 		Symbol:    strategy.Parent().GetSymbol(),
 		Timeframe: *strategy.Parent().GetTimeframe(),
 	}
+
 	strategy.Parent().SetCandlesHandler(candlesHandler)
 	strategy.Parent().SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
 	strategy.Parent().SetTrendsService(trends.GetServiceInstance())

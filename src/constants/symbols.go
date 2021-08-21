@@ -38,7 +38,7 @@ var Symbols = []types.Symbol{
 		LogType:             logger.EURUSD,
 	},
 	{
-		BrokerAPIName: ibroker.EURUSDSymbolName,
+		BrokerAPIName: ibroker.GBPUSDSymbolName,
 		SocketName:    "FX:GBPUSD",
 		PriceDecimals: 5,
 		TradingHours: types.TradingHours{

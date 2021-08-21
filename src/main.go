@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"sync"
 	"syscall"
 
@@ -91,6 +92,7 @@ func panicCatcher(err interface{}, API api.Interface) {
 	// TODO: Mobile alert or something.
 
 	logger.GetInstance().Log("PANIC - " + fmt.Sprintf("%#v", err))
+	logger.GetInstance().Log("\n" + string(debug.Stack()))
 
 	API.CloseAllPositions()
 	API.CloseAllOrders()
