@@ -6,6 +6,8 @@ const SP500SymbolName = "SPX500"
 
 const EURUSDSymbolName = "EUR%2FUSD"
 
+const GBPUSDSymbolName = "GBP%2FUSD"
+
 const SessionDisconnectedErrorString = "Your session is disconnected. Please login again to initialize a new valid session."
 
 const OrderAlreadyExistsErrorString = "ya existe alguna orden vigente"

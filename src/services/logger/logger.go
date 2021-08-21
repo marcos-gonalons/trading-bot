@@ -54,6 +54,9 @@ const (
 
 	// EURUSD 101
 	EURUSD LogType = 101
+
+	// GBPUSD 102
+	GBPUSD LogType = 102
 )
 
 // Logger ...
@@ -171,6 +174,7 @@ func init() {
 	filePathsMap[ErrorLog] = "errors"
 	filePathsMap[GER30] = "GER30"
 	filePathsMap[EURUSD] = "EURUSD"
+	filePathsMap[GBPUSD] = "GBPUSD"
 
 	logger = &Logger{
 		"logs/",

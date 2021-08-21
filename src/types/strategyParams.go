@@ -13,6 +13,7 @@ type StrategyParams struct {
 	CandlesAmountForHorizontalLevel  int
 	ValidTradingTimes                TradingTimes
 	MaxTradeExecutionPriceDifference float64
+	MaxSecondsOpenTrade              int64
 }
 
 type TradingTimes struct {

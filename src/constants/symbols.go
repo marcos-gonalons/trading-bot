@@ -37,4 +37,16 @@ var Symbols = []types.Symbol{
 		MaxSpread:           999999,
 		LogType:             logger.EURUSD,
 	},
+	{
+		BrokerAPIName: ibroker.EURUSDSymbolName,
+		SocketName:    "FX:GBPUSD",
+		PriceDecimals: 5,
+		TradingHours: types.TradingHours{
+			Start: 0,
+			End:   0,
+		},
+		TradeableOnWeekends: false,
+		MaxSpread:           999999,
+		LogType:             logger.GBPUSD,
+	},
 }
