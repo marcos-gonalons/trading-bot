@@ -33,7 +33,7 @@ var SupportBounceParams = types.StrategyParams{
 	TrendDiff:                       10 * float64(priceAdjustment),
 	CandlesAmountForHorizontalLevel: 52,
 	PriceOffset:                     -4 * float64(priceAdjustment),
-	MaxSecondsOpenTrade:             0,
+	MaxSecondsOpenTrade:             50 * 24 * 60 * 60,
 	ValidTradingTimes: types.TradingTimes{
 		ValidMonths:    []string{},
 		ValidWeekdays:  []string{},

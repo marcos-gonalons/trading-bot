@@ -8,6 +8,7 @@ import (
 	"TradingBot/src/strategies/tickers/EURUSD"
 	"TradingBot/src/strategies/tickers/GBPUSD"
 	"TradingBot/src/strategies/tickers/GER30"
+	"TradingBot/src/strategies/tickers/USDCAD"
 )
 
 func (s *Handler) getStrategies() []interfaces.StrategyInterface {
@@ -15,6 +16,7 @@ func (s *Handler) getStrategies() []interfaces.StrategyInterface {
 		s.getStrategy(GER30.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 		s.getStrategy(EURUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 		s.getStrategy(GBPUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(USDCAD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 	}
 }
 

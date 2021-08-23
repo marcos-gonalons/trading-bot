@@ -57,6 +57,9 @@ const (
 
 	// GBPUSD 102
 	GBPUSD LogType = 102
+
+	// USDCAD 102
+	USDCAD LogType = 103
 )
 
 // Logger ...
@@ -175,6 +178,7 @@ func init() {
 	filePathsMap[GER30] = "GER30"
 	filePathsMap[EURUSD] = "EURUSD"
 	filePathsMap[GBPUSD] = "GBPUSD"
+	filePathsMap[USDCAD] = "USDCAD"
 
 	logger = &Logger{
 		"logs/",
