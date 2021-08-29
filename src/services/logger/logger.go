@@ -58,8 +58,20 @@ const (
 	// GBPUSD 102
 	GBPUSD LogType = 102
 
-	// USDCAD 102
+	// USDCAD 103
 	USDCAD LogType = 103
+
+	// USDJPY 104
+	USDJPY LogType = 104
+
+	// USDCHF 105
+	USDCHF LogType = 105
+
+	// NZDUSD 106
+	NZDUSD LogType = 106
+
+	// AUDUSD 107
+	AUDUSD LogType = 107
 )
 
 // Logger ...
@@ -179,6 +191,10 @@ func init() {
 	filePathsMap[EURUSD] = "EURUSD"
 	filePathsMap[GBPUSD] = "GBPUSD"
 	filePathsMap[USDCAD] = "USDCAD"
+	filePathsMap[USDJPY] = "USDJPY"
+	filePathsMap[USDCHF] = "USDCHF"
+	filePathsMap[NZDUSD] = "NZDUSD"
+	filePathsMap[AUDUSD] = "AUDUSD"
 
 	logger = &Logger{
 		"logs/",

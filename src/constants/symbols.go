@@ -61,4 +61,52 @@ var Symbols = []types.Symbol{
 		MaxSpread:           999999,
 		LogType:             logger.USDCAD,
 	},
+	{
+		BrokerAPIName: ibroker.USDJPYSymbolName,
+		SocketName:    "FX:USDJPY",
+		PriceDecimals: 3,
+		TradingHours: types.TradingHours{
+			Start: 0,
+			End:   0,
+		},
+		TradeableOnWeekends: false,
+		MaxSpread:           999999,
+		LogType:             logger.USDJPY,
+	},
+	{
+		BrokerAPIName: ibroker.USDCHFSymbolName,
+		SocketName:    "FX:USDCHF",
+		PriceDecimals: 5,
+		TradingHours: types.TradingHours{
+			Start: 0,
+			End:   0,
+		},
+		TradeableOnWeekends: false,
+		MaxSpread:           999999,
+		LogType:             logger.USDCHF,
+	},
+	{
+		BrokerAPIName: ibroker.NZDUSDSymbolName,
+		SocketName:    "FX:NZDUSD",
+		PriceDecimals: 5,
+		TradingHours: types.TradingHours{
+			Start: 0,
+			End:   0,
+		},
+		TradeableOnWeekends: false,
+		MaxSpread:           999999,
+		LogType:             logger.NZDUSD,
+	},
+	{
+		BrokerAPIName: ibroker.AUDUSDSymbolName,
+		SocketName:    "FX:AUDUSD",
+		PriceDecimals: 5,
+		TradingHours: types.TradingHours{
+			Start: 0,
+			End:   0,
+		},
+		TradeableOnWeekends: false,
+		MaxSpread:           999999,
+		LogType:             logger.AUDUSD,
+	},
 }

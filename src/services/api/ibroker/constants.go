@@ -10,6 +10,14 @@ const GBPUSDSymbolName = "GBP%2FUSD"
 
 const USDCADSymbolName = "USD%2FCAD"
 
+const USDJPYSymbolName = "USD%2FJPY"
+
+const USDCHFSymbolName = "USD%2FCHF"
+
+const NZDUSDSymbolName = "NZD%2FUSD"
+
+const AUDUSDSymbolName = "AUD%2FUSD"
+
 const SessionDisconnectedErrorString = "Your session is disconnected. Please login again to initialize a new valid session."
 
 const OrderAlreadyExistsErrorString = "ya existe alguna orden vigente"

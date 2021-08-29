@@ -5,10 +5,14 @@ import (
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/strategies/interfaces"
+	"TradingBot/src/strategies/tickers/AUDUSD"
 	"TradingBot/src/strategies/tickers/EURUSD"
 	"TradingBot/src/strategies/tickers/GBPUSD"
 	"TradingBot/src/strategies/tickers/GER30"
+	"TradingBot/src/strategies/tickers/NZDUSD"
 	"TradingBot/src/strategies/tickers/USDCAD"
+	"TradingBot/src/strategies/tickers/USDCHF"
+	"TradingBot/src/strategies/tickers/USDJPY"
 )
 
 func (s *Handler) getStrategies() []interfaces.StrategyInterface {
@@ -17,6 +21,10 @@ func (s *Handler) getStrategies() []interfaces.StrategyInterface {
 		s.getStrategy(EURUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 		s.getStrategy(GBPUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 		s.getStrategy(USDCAD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(USDJPY.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(USDCHF.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(NZDUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(AUDUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 	}
 }
 
