@@ -137,12 +137,12 @@ func (s *Service) RemoveOldCandles(amount uint) {
 		s.csvFileMtx.Unlock()
 	}()
 
-	err := os.Remove(s.csvFileName)
+	err := os.Remove(CandlesFolder + s.csvFileName)
 	if err != nil {
 		panic("Error while removing the csv file -> " + err.Error())
 	}
 
-	err = os.Rename(tempFileName, s.csvFileName)
+	err = os.Rename(CandlesFolder+tempFileName, CandlesFolder+s.csvFileName)
 	if err != nil {
 		panic("Error renaming the temp csv file -> " + err.Error())
 	}
@@ -211,7 +211,7 @@ func (s *Service) createCSVFile(fileName string) {
 	defer csvFile.Close()
 	if err != nil {
 		s.csvFileMtx.Lock()
-		csvFile, err = os.Create(fileName)
+		csvFile, err = os.Create(CandlesFolder + fileName)
 		defer csvFile.Close()
 		if err != nil {
 			s.csvFileMtx.Unlock()
