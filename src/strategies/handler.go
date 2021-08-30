@@ -252,7 +252,8 @@ func (s *Handler) checkSessionDisconnectedError() {
 
 func (s *Handler) panicIfTooManyAPIFails() {
 	for {
-		if s.failedAPIRequests >= 50 {
+		// todo: adjust this
+		if s.failedAPIRequests >= 500 {
 			panic("There is something wrong with the API - Check logs - Stopping bot")
 		}
 		s.failedAPIRequests = 0

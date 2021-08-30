@@ -14,6 +14,8 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
+const CandlesFolder = ".candles-csv/"
+
 // Service ...
 type Service struct {
 	Logger    logger.Interface
@@ -160,7 +162,7 @@ func (s *Service) updateCSVWithLastCandle() {
 }
 
 func (s *Service) writeRowIntoCSVFile(row []byte, fileName string) (err error) {
-	csvFile, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	csvFile, err := os.OpenFile(CandlesFolder+fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
 		return
 	}
@@ -205,7 +207,7 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 }
 
 func (s *Service) createCSVFile(fileName string) {
-	csvFile, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	csvFile, err := os.OpenFile(CandlesFolder+fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	defer csvFile.Close()
 	if err != nil {
 		s.csvFileMtx.Lock()
@@ -222,7 +224,7 @@ func (s *Service) createCSVFile(fileName string) {
 }
 
 func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
-	csvFile, err := os.OpenFile(s.csvFileName, os.O_APPEND|os.O_RDWR, os.ModeAppend)
+	csvFile, err := os.OpenFile(CandlesFolder+s.csvFileName, os.O_APPEND|os.O_RDWR, os.ModeAppend)
 	if err != nil {
 		panic("Error while opening the .csv file -> " + err.Error())
 	}

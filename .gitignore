@@ -2,4 +2,4 @@ __debug_bin
 .vscode/
 vendor/
 logs/
-*.csv
+.candles-csv/
