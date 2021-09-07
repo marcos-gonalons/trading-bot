@@ -44,7 +44,7 @@ func (s *Strategy) Initialize() {
 	s.BaseClass.CandlesHandler.InitCandles(time.Now(), "AUDUSD-1H.csv")
 	go s.BaseClass.CheckNewestOpenedPositionSLandTP(
 		&SupportBounceParams,
-		&ResistanceBounceParams,
+		nil,
 	)
 
 	s.isReady = true
