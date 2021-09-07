@@ -43,8 +43,8 @@ func (s *Strategy) Initialize() {
 	s.mutex = &sync.Mutex{}
 	s.BaseClass.CandlesHandler.InitCandles(time.Now(), "USDCHF-1H.csv")
 	go s.BaseClass.CheckNewestOpenedPositionSLandTP(
-		&SupportBounceParams,
-		&ResistanceBounceParams,
+		&ResistanceBreakoutParams,
+		&SupportBreakoutParams,
 	)
 
 	s.isReady = true
