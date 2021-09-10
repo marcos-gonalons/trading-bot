@@ -6,8 +6,8 @@ import (
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/strategies/baseClass"
-	"TradingBot/src/strategies/interfaces"
+	"TradingBot/src/strategies/tickers/baseTickerClass"
+	"TradingBot/src/strategies/tickers/interfaces"
 	"TradingBot/src/types"
 	"strconv"
 	"sync"
@@ -20,7 +20,7 @@ import (
 
 // Strategy ...
 type Strategy struct {
-	BaseClass baseClass.BaseClass
+	BaseTickerClass baseTickerClass.BaseTickerClass
 
 	currentExecutionTime time.Time
 	isReady              bool
@@ -32,17 +32,17 @@ type Strategy struct {
 	mutex *sync.Mutex
 }
 
-func (s *Strategy) Parent() interfaces.BaseClassInterface {
-	return &s.BaseClass
+func (s *Strategy) Parent() interfaces.BaseTickerClassInterface {
+	return &s.BaseTickerClass
 }
 
 // Initialize ...
 func (s *Strategy) Initialize() {
-	s.BaseClass.Initialize()
+	s.BaseTickerClass.Initialize()
 
 	s.mutex = &sync.Mutex{}
-	s.BaseClass.CandlesHandler.InitCandles(time.Now(), "USDCHF-1H.csv")
-	go s.BaseClass.CheckNewestOpenedPositionSLandTP(
+	s.BaseTickerClass.CandlesHandler.InitCandles(time.Now(), "USDCHF-1H.csv")
+	go s.BaseTickerClass.CheckNewestOpenedPositionSLandTP(
 		&ResistanceBreakoutParams,
 		&SupportBreakoutParams,
 	)
@@ -53,25 +53,25 @@ func (s *Strategy) Initialize() {
 // DailyReset ...
 func (s *Strategy) DailyReset() {
 	minCandles := 7 * 2 * 24
-	totalCandles := len(s.BaseClass.CandlesHandler.GetCandles())
+	totalCandles := len(s.BaseTickerClass.CandlesHandler.GetCandles())
 
-	s.BaseClass.Log(s.BaseClass.Name, "Total candles is "+strconv.Itoa(totalCandles)+" - min candles is "+strconv.Itoa(minCandles))
+	s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Total candles is "+strconv.Itoa(totalCandles)+" - min candles is "+strconv.Itoa(minCandles))
 	if totalCandles < minCandles {
-		s.BaseClass.Log(s.BaseClass.Name, "Not removing any candles yet")
+		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Not removing any candles yet")
 		return
 	}
 
 	var candlesToRemove uint = 25
-	s.BaseClass.Log(s.BaseClass.Name, "Removing old candles ... "+strconv.Itoa(int(candlesToRemove)))
-	s.BaseClass.CandlesHandler.RemoveOldCandles(candlesToRemove)
+	s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Removing old candles ... "+strconv.Itoa(int(candlesToRemove)))
+	s.BaseTickerClass.CandlesHandler.RemoveOldCandles(candlesToRemove)
 }
 
 // OnReceiveMarketData ...
 func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
-	s.BaseClass.OnReceiveMarketData(symbol, data)
+	s.BaseTickerClass.OnReceiveMarketData(symbol, data)
 
 	if !s.isReady {
-		s.BaseClass.Log(s.BaseClass.Name, "Not ready to process yet, doing nothing ...")
+		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Not ready to process yet, doing nothing ...")
 		return
 	}
 
@@ -91,18 +91,18 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			s.lastAsk = data.Ask
 		}
 
-		s.lastCandlesAmount = len(s.BaseClass.CandlesHandler.GetCandles())
-		s.BaseClass.Log(s.BaseClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
+		s.lastCandlesAmount = len(s.BaseTickerClass.CandlesHandler.GetCandles())
+		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
 	}()
 
-	s.BaseClass.Log(s.BaseClass.Name, "Updating candles... ")
-	s.BaseClass.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.lastVolume)
+	s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Updating candles... ")
+	s.BaseTickerClass.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.lastVolume)
 
-	if s.lastCandlesAmount != len(s.BaseClass.CandlesHandler.GetCandles()) {
-		s.BaseClass.Log(s.BaseClass.Name, "New candle has been added. Executing strategy code ...")
+	if s.lastCandlesAmount != len(s.BaseTickerClass.CandlesHandler.GetCandles()) {
+		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "New candle has been added. Executing strategy code ...")
 		// TODO: Code
 	} else {
-		s.BaseClass.Log(s.BaseClass.Name, "Doing nothing - still same candle")
+		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Doing nothing - still same candle")
 	}
 }
 
@@ -113,7 +113,7 @@ func GetStrategyInstance(
 	logger logger.Interface,
 ) *Strategy {
 	return &Strategy{
-		BaseClass: baseClass.BaseClass{
+		BaseTickerClass: baseTickerClass.BaseTickerClass{
 			API:            api,
 			APIRetryFacade: apiRetryFacade,
 			Logger:         logger,

@@ -2,7 +2,7 @@ package NZDUSD
 
 import "TradingBot/src/types"
 
-var priceAdjustment float32 = 1 / 10000
+var priceAdjustment float32 = float32(1) / float32(10000)
 
 /*
 var ResistanceBounceParams = types.StrategyParams{

@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/services/technicalAnalysis/trends"
-	"TradingBot/src/strategies/interfaces"
 	"TradingBot/src/strategies/tickers/AUDUSD"
 	"TradingBot/src/strategies/tickers/EURUSD"
 	"TradingBot/src/strategies/tickers/GBPUSD"
@@ -13,10 +12,11 @@ import (
 	"TradingBot/src/strategies/tickers/USDCAD"
 	"TradingBot/src/strategies/tickers/USDCHF"
 	"TradingBot/src/strategies/tickers/USDJPY"
+	"TradingBot/src/strategies/tickers/interfaces"
 )
 
-func (s *Handler) getStrategies() []interfaces.StrategyInterface {
-	return []interfaces.StrategyInterface{
+func (s *Handler) getStrategies() []interfaces.TickerInterface {
+	return []interfaces.TickerInterface{
 		s.getStrategy(GER30.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 		s.getStrategy(EURUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 		s.getStrategy(GBPUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
@@ -28,7 +28,7 @@ func (s *Handler) getStrategies() []interfaces.StrategyInterface {
 	}
 }
 
-func (s *Handler) getStrategy(strategy interfaces.StrategyInterface) interfaces.StrategyInterface {
+func (s *Handler) getStrategy(strategy interfaces.TickerInterface) interfaces.TickerInterface {
 	candlesHandler := &candlesHandler.Service{
 		Logger:    s.Logger,
 		Symbol:    strategy.Parent().GetSymbol(),

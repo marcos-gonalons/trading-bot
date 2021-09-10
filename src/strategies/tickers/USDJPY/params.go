@@ -2,7 +2,7 @@ package USDJPY
 
 import "TradingBot/src/types"
 
-var priceAdjustment float32 = 1 / 100
+var priceAdjustment float32 = float32(1) / float32(100)
 
 var ResistanceBounceParams = types.StrategyParams{
 	RiskPercentage:                  .5,

@@ -9,13 +9,13 @@ import (
 )
 
 func (s *Strategy) getResistanceBreakoutStrategyName() string {
-	return s.BaseClass.Name + " - RBA"
+	return s.BaseTickerClass.Name + " - RBA"
 }
 
 func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candle) {
-	s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "resistanceBreakoutAnticipationStrategy started")
+	s.BaseTickerClass.Log(s.getResistanceBreakoutStrategyName(), "resistanceBreakoutAnticipationStrategy started")
 	defer func() {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "resistanceBreakoutAnticipationStrategy ended")
+		s.BaseTickerClass.Log(s.getResistanceBreakoutStrategyName(), "resistanceBreakoutAnticipationStrategy ended")
 	}()
 
 	validMonths := ResistanceBreakoutParams.ValidTradingTimes.ValidMonths
@@ -23,7 +23,7 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	validHalfHours := ResistanceBreakoutParams.ValidTradingTimes.ValidHalfHours
 
 	if !s.isExecutionTimeValid(validMonths, []string{}, []string{}) || !s.isExecutionTimeValid([]string{}, validWeekdays, []string{}) {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Today it's not the day for resistance breakout anticipation for GER30")
+		s.BaseTickerClass.Log(s.getResistanceBreakoutStrategyName(), "Today it's not the day for resistance breakout anticipation for GER30")
 		return
 	}
 
@@ -36,41 +36,41 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 	if !isValidTimeToOpenAPosition {
 		s.savePendingOrder(ibroker.LongSide)
 	} else {
-		if s.BaseClass.GetPendingOrder() != nil {
+		if s.BaseTickerClass.GetPendingOrder() != nil {
 			s.createPendingOrder(ibroker.LongSide)
 		}
-		s.BaseClass.SetPendingOrder(nil)
+		s.BaseTickerClass.SetPendingOrder(nil)
 	}
 
-	p := utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName)
+	p := utils.FindPositionBySymbol(s.BaseTickerClass.GetPositions(), s.BaseTickerClass.GetSymbol().BrokerAPIName)
 	if p != nil && p.Side == ibroker.LongSide {
-		s.BaseClass.CheckIfSLShouldBeAdjusted(&ResistanceBreakoutParams, p)
+		s.BaseTickerClass.CheckIfSLShouldBeAdjusted(&ResistanceBreakoutParams, p)
 	}
 
 	lastCompletedCandleIndex := len(candles) - 2
-	price, err := s.BaseClass.HorizontalLevelsService.GetResistancePrice(ResistanceBreakoutParams.CandlesAmountForHorizontalLevel, lastCompletedCandleIndex)
+	price, err := s.BaseTickerClass.HorizontalLevelsService.GetResistancePrice(ResistanceBreakoutParams.CandlesAmountForHorizontalLevel, lastCompletedCandleIndex)
 
 	if err != nil {
 		errorMessage := "Not a good long setup yet -> " + err.Error()
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), errorMessage)
+		s.BaseTickerClass.Log(s.getResistanceBreakoutStrategyName(), errorMessage)
 		return
 	}
 
 	price = price - ResistanceBreakoutParams.PriceOffset
-	if price <= float64(s.BaseClass.GetCurrentBrokerQuote().Ask) {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Price is lower than the current ask, so we can't create the long order now. Price is -> "+utils.FloatToString(price, 2))
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Quote is -> "+utils.GetStringRepresentation(s.BaseClass.GetCurrentBrokerQuote()))
+	if price <= float64(s.BaseTickerClass.GetCurrentBrokerQuote().Ask) {
+		s.BaseTickerClass.Log(s.getResistanceBreakoutStrategyName(), "Price is lower than the current ask, so we can't create the long order now. Price is -> "+utils.FloatToString(price, 2))
+		s.BaseTickerClass.Log(s.getResistanceBreakoutStrategyName(), "Quote is -> "+utils.GetStringRepresentation(s.BaseTickerClass.GetCurrentBrokerQuote()))
 		return
 	}
 
-	s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "Ok, we might have a long setup at price "+utils.FloatToString(price, 2))
-	if !s.BaseClass.TrendsService.IsBullishTrend(
+	s.BaseTickerClass.Log(s.getResistanceBreakoutStrategyName(), "Ok, we might have a long setup at price "+utils.FloatToString(price, 2))
+	if !s.BaseTickerClass.TrendsService.IsBullishTrend(
 		ResistanceBreakoutParams.TrendCandles,
 		ResistanceBreakoutParams.TrendDiff,
 		candles,
 		lastCompletedCandleIndex,
 	) {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "At the end it wasn't a good long setup, doing nothing ...")
+		s.BaseTickerClass.Log(s.getResistanceBreakoutStrategyName(), "At the end it wasn't a good long setup, doing nothing ...")
 		return
 	}
 
@@ -83,13 +83,13 @@ func (s *Strategy) resistanceBreakoutAnticipationStrategy(candles []*types.Candl
 		Side:               ibroker.LongSide,
 	}
 
-	if utils.FindPositionBySymbol(s.BaseClass.GetPositions(), s.BaseClass.GetSymbol().BrokerAPIName) != nil {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "There is an open position, no need to close any orders ...")
+	if utils.FindPositionBySymbol(s.BaseTickerClass.GetPositions(), s.BaseTickerClass.GetSymbol().BrokerAPIName) != nil {
+		s.BaseTickerClass.Log(s.getResistanceBreakoutStrategyName(), "There is an open position, no need to close any orders ...")
 		s.onValidTradeSetup(params)
 	} else {
-		s.BaseClass.Log(s.getResistanceBreakoutStrategyName(), "There isn't any open position. Closing orders first ...")
-		s.BaseClass.APIRetryFacade.CloseOrders(
-			s.BaseClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseClass.GetOrders(), s.BaseClass.GetSymbol().BrokerAPIName)),
+		s.BaseTickerClass.Log(s.getResistanceBreakoutStrategyName(), "There isn't any open position. Closing orders first ...")
+		s.BaseTickerClass.APIRetryFacade.CloseOrders(
+			s.BaseTickerClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseTickerClass.GetOrders(), s.BaseTickerClass.GetSymbol().BrokerAPIName)),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,

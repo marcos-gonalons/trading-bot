@@ -1,4 +1,4 @@
-package baseClass
+package baseTickerClass
 
 import (
 	"TradingBot/src/services/api"
@@ -15,8 +15,8 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
-// BaseClass ...
-type BaseClass struct {
+// BaseTickerClass ...
+type BaseTickerClass struct {
 	APIRetryFacade          retryFacade.Interface
 	API                     api.Interface
 	Logger                  logger.Interface
@@ -38,90 +38,90 @@ type BaseClass struct {
 }
 
 // SetCandlesHandler ...
-func (s *BaseClass) SetCandlesHandler(candlesHandler candlesHandler.Interface) {
+func (s *BaseTickerClass) SetCandlesHandler(candlesHandler candlesHandler.Interface) {
 	s.CandlesHandler = candlesHandler
 }
 
 // SetHorizontalLevelsService ...
-func (s *BaseClass) SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface) {
+func (s *BaseTickerClass) SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface) {
 	s.HorizontalLevelsService = horizontalLevelsService
 }
 
 // SetTrendsService ...
-func (s *BaseClass) SetTrendsService(trendsService trends.Interface) {
+func (s *BaseTickerClass) SetTrendsService(trendsService trends.Interface) {
 	s.TrendsService = trendsService
 }
 
 // GetTimeframe ...
-func (s *BaseClass) GetTimeframe() *types.Timeframe {
+func (s *BaseTickerClass) GetTimeframe() *types.Timeframe {
 	return &s.Timeframe
 }
 
 // GetSymbol ...
-func (s *BaseClass) GetSymbol() *types.Symbol {
+func (s *BaseTickerClass) GetSymbol() *types.Symbol {
 	return &s.Symbol
 }
 
 // Initialize ...
-func (s *BaseClass) Initialize() {
+func (s *BaseTickerClass) Initialize() {
 
 }
 
 // DailyReset ...
-func (s *BaseClass) DailyReset() {
+func (s *BaseTickerClass) DailyReset() {
 
 }
 
 // SetOrders ...
-func (s *BaseClass) SetOrders(orders []*api.Order) {
+func (s *BaseTickerClass) SetOrders(orders []*api.Order) {
 	s.orders = orders
 }
 
 // GetOrders ...
-func (s *BaseClass) GetOrders() []*api.Order {
+func (s *BaseTickerClass) GetOrders() []*api.Order {
 	return s.orders
 }
 
 // SetCurrentBrokerQuote ...
-func (s *BaseClass) SetCurrentBrokerQuote(quote *api.Quote) {
+func (s *BaseTickerClass) SetCurrentBrokerQuote(quote *api.Quote) {
 	s.currentBrokerQuote = quote
 }
 
 // GetCurrentBrokerQuote ...
-func (s *BaseClass) GetCurrentBrokerQuote() *api.Quote {
+func (s *BaseTickerClass) GetCurrentBrokerQuote() *api.Quote {
 	return s.currentBrokerQuote
 }
 
 // SetPositions ...
-func (s *BaseClass) SetPositions(positions []*api.Position) {
+func (s *BaseTickerClass) SetPositions(positions []*api.Position) {
 	s.positions = positions
 }
 
 // GetPositions ...
-func (s *BaseClass) GetPositions() []*api.Position {
+func (s *BaseTickerClass) GetPositions() []*api.Position {
 	return s.positions
 }
 
 // SetState ...
-func (s *BaseClass) SetState(state *api.State) {
+func (s *BaseTickerClass) SetState(state *api.State) {
 	s.state = state
 }
 
 // GetState ...
-func (s *BaseClass) GetState() *api.State {
+func (s *BaseTickerClass) GetState() *api.State {
 	return s.state
 }
 
 // OnReceiveMarketData ...
-func (s *BaseClass) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
+func (s *BaseTickerClass) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
 	s.Log("", "Received data -> "+utils.GetStringRepresentation(data))
 }
 
-func (s *BaseClass) Log(strategyName string, message string) {
+func (s *BaseTickerClass) Log(strategyName string, message string) {
 	s.Logger.Log(strategyName+" - "+message, s.GetSymbol().LogType)
 }
 
-func (s *BaseClass) SetStringValues(order *api.Order) {
+func (s *BaseTickerClass) SetStringValues(order *api.Order) {
 	symbol := s.GetSymbol()
 
 	order.CurrentAsk = &s.currentBrokerQuote.Ask
@@ -153,7 +153,7 @@ func (s *BaseClass) SetStringValues(order *api.Order) {
 	}
 }
 
-func (s *BaseClass) CheckIfSLShouldBeAdjusted(
+func (s *BaseTickerClass) CheckIfSLShouldBeAdjusted(
 	params *types.StrategyParams,
 	position *api.Position,
 ) {
@@ -195,7 +195,7 @@ func (s *BaseClass) CheckIfSLShouldBeAdjusted(
 	}
 }
 
-func (s *BaseClass) CheckNewestOpenedPositionSLandTP(longParams *types.StrategyParams, shortParams *types.StrategyParams) {
+func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.StrategyParams, shortParams *types.StrategyParams) {
 	for {
 		position := utils.FindPositionBySymbol(s.GetPositions(), s.GetSymbol().BrokerAPIName)
 
@@ -261,18 +261,18 @@ func (s *BaseClass) CheckNewestOpenedPositionSLandTP(longParams *types.StrategyP
 	}
 }
 
-func (s *BaseClass) GetPendingOrder() *api.Order {
+func (s *BaseTickerClass) GetPendingOrder() *api.Order {
 	return s.pendingOrder
 }
 
-func (s *BaseClass) SetPendingOrder(order *api.Order) {
+func (s *BaseTickerClass) SetPendingOrder(order *api.Order) {
 	s.pendingOrder = order
 }
 
-func (s *BaseClass) GetCurrentOrder() *api.Order {
+func (s *BaseTickerClass) GetCurrentOrder() *api.Order {
 	return s.currentOrder
 }
 
-func (s *BaseClass) SetCurrentOrder(order *api.Order) {
+func (s *BaseTickerClass) SetCurrentOrder(order *api.Order) {
 	s.currentOrder = order
 }
