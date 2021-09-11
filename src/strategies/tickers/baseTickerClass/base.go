@@ -117,6 +117,8 @@ func (s *BaseTickerClass) GetState() *api.State {
 // OnReceiveMarketData ...
 func (s *BaseTickerClass) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
 	s.Log("", "Received data -> "+utils.GetStringRepresentation(data))
+
+	s.SetCurrentExecutionTime(time.Now())
 }
 
 func (s *BaseTickerClass) Log(strategyName string, message string) {

@@ -80,7 +80,6 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 	go s.updateAverageSpread()
 
-	s.BaseTickerClass.SetCurrentExecutionTime(time.Now())
 	defer func() {
 		if data.Volume != nil {
 			s.lastVolume = *data.Volume
