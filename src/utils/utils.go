@@ -191,3 +191,42 @@ func FindPositionBySymbol(positions []*api.Position, symbol string) *api.Positio
 
 	return p.(*api.Position)
 }
+
+// IsExecutionTimeValid ...
+func IsExecutionTimeValid(
+	t time.Time,
+	validMonths []string,
+	validWeekDays []string,
+	validHalfHours []string,
+) bool {
+	if len(validMonths) > 0 {
+		if !IsInArray(t.Format("January"), validMonths) {
+			return false
+		}
+	}
+
+	if len(validWeekDays) > 0 {
+		if !IsInArray(t.Format("Monday"), validWeekDays) {
+			return false
+		}
+	}
+
+	if len(validHalfHours) > 0 {
+		currentHour, currentMinutes := GetCurrentTimeHourAndMinutes()
+		if currentMinutes >= 30 {
+			currentMinutes = 30
+		} else {
+			currentMinutes = 0
+		}
+
+		currentHourString := strconv.Itoa(currentHour)
+		currentMinutesString := strconv.Itoa(currentMinutes)
+		if len(currentMinutesString) == 1 {
+			currentMinutesString += "0"
+		}
+
+		return IsInArray(currentHourString+":"+currentMinutesString, validHalfHours)
+	}
+
+	return true
+}

@@ -2,7 +2,7 @@ package GER30
 
 import "TradingBot/src/types"
 
-var ResistanceBreakoutParams = types.StrategyParams{
+var ResistanceBreakoutParams = types.TickerStrategyParams{
 	RiskPercentage:                  1,
 	StopLossDistance:                24,
 	TakeProfitDistance:              34,
@@ -20,7 +20,7 @@ var ResistanceBreakoutParams = types.StrategyParams{
 	MaxTradeExecutionPriceDifference: 3,
 }
 
-var SupportBreakoutParams = types.StrategyParams{
+var SupportBreakoutParams = types.TickerStrategyParams{
 	RiskPercentage:                  1,
 	StopLossDistance:                15,
 	TakeProfitDistance:              34,

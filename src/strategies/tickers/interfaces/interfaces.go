@@ -20,8 +20,6 @@ type TickerInterface interface {
 
 // BaseTickerClassInterface ...
 type BaseTickerClassInterface interface {
-	Initialize()
-	DailyReset()
 	SetCandlesHandler(candlesHandler candlesHandler.Interface)
 	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
 	SetTrendsService(trendsService trends.Interface)
