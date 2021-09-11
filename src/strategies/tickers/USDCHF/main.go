@@ -22,12 +22,11 @@ import (
 type Strategy struct {
 	BaseTickerClass baseTickerClass.BaseTickerClass
 
-	currentExecutionTime time.Time
-	isReady              bool
-	lastCandlesAmount    int
-	lastVolume           float64
-	lastBid              *float64
-	lastAsk              *float64
+	isReady           bool
+	lastCandlesAmount int
+	lastVolume        float64
+	lastBid           *float64
+	lastAsk           *float64
 
 	mutex *sync.Mutex
 }
@@ -75,7 +74,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		return
 	}
 
-	s.currentExecutionTime = time.Now()
+	s.BaseTickerClass.SetCurrentExecutionTime(time.Now())
 	s.mutex.Lock()
 	defer func() {
 		s.mutex.Unlock()
@@ -96,7 +95,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}()
 
 	s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Updating candles... ")
-	s.BaseTickerClass.CandlesHandler.UpdateCandles(data, s.currentExecutionTime, s.lastVolume)
+	s.BaseTickerClass.CandlesHandler.UpdateCandles(data, s.BaseTickerClass.GetCurrentExecutionTime(), s.lastVolume)
 
 	if s.lastCandlesAmount != len(s.BaseTickerClass.CandlesHandler.GetCandles()) {
 		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "New candle has been added. Executing strategy code ...")
