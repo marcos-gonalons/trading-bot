@@ -1,6 +1,7 @@
 package candlesHandler
 
 import (
+	"TradingBot/src/constants"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
@@ -49,10 +50,17 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 
 // UpdateCandles ...
 func (s *Service) UpdateCandles(
+	symbol *types.Symbol,
 	data *tradingviewsocket.QuoteData,
 	currentExecutionTime time.Time,
 	lastVolume float64,
 ) {
+	if symbol.MarketType == constants.ForexType {
+		if utils.IsOutsideForexHours(currentExecutionTime) {
+			return
+		}
+	}
+
 	var currentPrice float64
 	if data.Price != nil {
 		currentPrice = *data.Price

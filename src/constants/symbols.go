@@ -12,6 +12,9 @@ import (
 // Start hour is included, end hour is excluded
 // For example, from 7 to 22, it will execute trades from 7 to 8, but not from 22 to 23.
 
+var ForexType types.MarketType = "forex"
+var IndexType types.MarketType = "index"
+
 var Symbols = []types.Symbol{
 	{
 		BrokerAPIName: ibroker.GER30SymbolName,
@@ -24,6 +27,7 @@ var Symbols = []types.Symbol{
 		TradeableOnWeekends: false,
 		MaxSpread:           4,
 		LogType:             logger.GER30,
+		MarketType:          IndexType,
 	},
 	{
 		BrokerAPIName: ibroker.EURUSDSymbolName,
@@ -36,6 +40,7 @@ var Symbols = []types.Symbol{
 		TradeableOnWeekends: false,
 		MaxSpread:           999999,
 		LogType:             logger.EURUSD,
+		MarketType:          ForexType,
 	},
 	{
 		BrokerAPIName: ibroker.GBPUSDSymbolName,
@@ -48,6 +53,7 @@ var Symbols = []types.Symbol{
 		TradeableOnWeekends: false,
 		MaxSpread:           999999,
 		LogType:             logger.GBPUSD,
+		MarketType:          ForexType,
 	},
 	{
 		BrokerAPIName: ibroker.USDCADSymbolName,
@@ -60,6 +66,7 @@ var Symbols = []types.Symbol{
 		TradeableOnWeekends: false,
 		MaxSpread:           999999,
 		LogType:             logger.USDCAD,
+		MarketType:          ForexType,
 	},
 	{
 		BrokerAPIName: ibroker.USDJPYSymbolName,
@@ -72,6 +79,7 @@ var Symbols = []types.Symbol{
 		TradeableOnWeekends: false,
 		MaxSpread:           999999,
 		LogType:             logger.USDJPY,
+		MarketType:          ForexType,
 	},
 	{
 		BrokerAPIName: ibroker.USDCHFSymbolName,
@@ -84,6 +92,7 @@ var Symbols = []types.Symbol{
 		TradeableOnWeekends: false,
 		MaxSpread:           999999,
 		LogType:             logger.USDCHF,
+		MarketType:          ForexType,
 	},
 	{
 		BrokerAPIName: ibroker.NZDUSDSymbolName,
@@ -96,6 +105,7 @@ var Symbols = []types.Symbol{
 		TradeableOnWeekends: false,
 		MaxSpread:           999999,
 		LogType:             logger.NZDUSD,
+		MarketType:          ForexType,
 	},
 	{
 		BrokerAPIName: ibroker.AUDUSDSymbolName,
@@ -108,5 +118,6 @@ var Symbols = []types.Symbol{
 		TradeableOnWeekends: false,
 		MaxSpread:           999999,
 		LogType:             logger.AUDUSD,
+		MarketType:          ForexType,
 	},
 }

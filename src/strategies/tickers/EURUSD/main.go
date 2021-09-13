@@ -95,7 +95,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	}()
 
 	s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Updating candles... ")
-	s.BaseTickerClass.CandlesHandler.UpdateCandles(data, s.BaseTickerClass.GetCurrentExecutionTime(), s.lastVolume)
+	s.BaseTickerClass.CandlesHandler.UpdateCandles(s.BaseTickerClass.GetSymbol(), data, s.BaseTickerClass.GetCurrentExecutionTime(), s.lastVolume)
 
 	if s.lastCandlesAmount != len(s.BaseTickerClass.CandlesHandler.GetCandles()) {
 		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "New candle has been added. Executing strategy code ...")

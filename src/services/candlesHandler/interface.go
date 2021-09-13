@@ -11,6 +11,7 @@ import (
 type Interface interface {
 	InitCandles(currentExecutionTime time.Time, fileName string)
 	UpdateCandles(
+		symbol *types.Symbol,
 		data *tradingviewsocket.QuoteData,
 		currentExecutionTime time.Time,
 		lastVolume float64,

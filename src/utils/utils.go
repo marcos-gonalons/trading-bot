@@ -230,3 +230,28 @@ func IsExecutionTimeValid(
 
 	return true
 }
+
+func IsOutsideForexHours(t time.Time) bool {
+	// t is a timestamp in spanish time
+	weekday := t.Weekday()
+
+	// sun 0, mon 1, tue 2, wed 3, thu 4, fri 5, sat 6
+	if weekday >= 1 && weekday <= 4 {
+		return false
+	}
+
+	if weekday == 6 { // saturday
+		return true
+	}
+
+	hour, _ := strconv.Atoi(t.Format("15"))
+	if weekday == 5 { // friday
+		return hour > 22
+	}
+
+	if weekday == 0 { // sunday
+		return hour < 23
+	}
+
+	return false
+}

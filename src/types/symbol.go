@@ -10,7 +10,9 @@ type Symbol struct {
 	TradeableOnWeekends bool
 	MaxSpread           float64
 	LogType             logger.LogType
+	MarketType          MarketType
 }
+type MarketType string
 
 type TradingHours struct {
 	Start uint
