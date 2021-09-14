@@ -385,13 +385,21 @@ func (s *BaseTickerClass) CreatePendingOrder(side string) {
 		s.Log(s.Name, "Last completed candle -> "+utils.GetStringRepresentation(lastCompletedCandle))
 
 		if side == ibroker.LongSide {
-			if price <= float32(lastCompletedCandle.Close) {
-				s.Log(s.Name, "Price is lower than last completed candle.high - Can't create the pending order")
+			if s.API.IsStopOrder(pendingOrder) && price <= float32(lastCompletedCandle.Close) {
+				s.Log(s.Name, "STOP ORDER -> Price is lower than last completed candle.close - Can't create the pending order")
+				return
+			}
+			if s.API.IsLimitOrder(pendingOrder) && price >= float32(lastCompletedCandle.Close) {
+				s.Log(s.Name, "LIMIT ORDER -> Price is higher than last completed candle.close - Can't create the pending order")
 				return
 			}
 		} else {
-			if price >= float32(lastCompletedCandle.Low) {
-				s.Log(s.Name, "Price is greater than last completed candle.low - Can't create the pending order")
+			if s.API.IsStopOrder(pendingOrder) && price >= float32(lastCompletedCandle.Close) {
+				s.Log(s.Name, "STOP ORDER -> Price is greater than last completed candle.close - Can't create the pending order")
+				return
+			}
+			if s.API.IsLimitOrder(pendingOrder) && price <= float32(lastCompletedCandle.Close) {
+				s.Log(s.Name, "LIMIT ORDER -> Price is lower than last completed candle.close - Can't create the pending order")
 				return
 			}
 		}
