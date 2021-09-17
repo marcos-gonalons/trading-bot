@@ -101,6 +101,7 @@ func ResistanceBreakoutAnticipation(params StrategyParams) {
 		Side:               ibroker.LongSide,
 		StrategyName:       strategyName,
 		WithPendingOrders:  params.WithPendingOrders,
+		OrderType:          ibroker.StopType,
 	}
 
 	if utils.FindPositionBySymbol(params.BaseTickerClass.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName) != nil {

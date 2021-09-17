@@ -25,7 +25,7 @@ func SupportBreakoutAnticipationStrategy(params StrategyParams) {
 	validHalfHours := params.TickerStrategyParams.ValidTradingTimes.ValidHalfHours
 
 	if !utils.IsExecutionTimeValid(params.BaseTickerClass.GetCurrentExecutionTime(), validMonths, []string{}, []string{}) || !utils.IsExecutionTimeValid(params.BaseTickerClass.GetCurrentExecutionTime(), []string{}, validWeekdays, []string{}) {
-		log("Today it's not the day for resistance breakout anticipation for " + params.BaseTickerClass.Symbol.SocketName)
+		log("Today it's not the day for support breakout anticipation for " + params.BaseTickerClass.Symbol.SocketName)
 		return
 	}
 
@@ -99,6 +99,7 @@ func SupportBreakoutAnticipationStrategy(params StrategyParams) {
 		Side:               ibroker.ShortSide,
 		StrategyName:       strategyName,
 		WithPendingOrders:  params.WithPendingOrders,
+		OrderType:          ibroker.StopType,
 	}
 
 	if utils.FindPositionBySymbol(params.BaseTickerClass.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName) != nil {

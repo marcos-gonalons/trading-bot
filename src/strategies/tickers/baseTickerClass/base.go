@@ -437,6 +437,7 @@ type OnValidTradeSetupParams struct {
 	IsValidTime        bool
 	Side               string
 	WithPendingOrders  bool
+	OrderType          string
 }
 
 func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
@@ -454,6 +455,8 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 	}
 
 	// TOOD: move the getsize to another function somewhere
+	// Think about the best way to calculate size for both ger30 and forex
+	// where riskPercentage works as intended
 	size := math.Floor((s.GetState().Equity*(params.RiskPercentage/100))/float64(params.StopLossDistance+1) + 1)
 	if size == 0 {
 		size = 1
@@ -468,7 +471,7 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		Side:       params.Side,
 		StopLoss:   &stopLoss,
 		TakeProfit: &takeProfit,
-		Type:       ibroker.StopType,
+		Type:       params.OrderType,
 	}
 
 	s.Log(params.StrategyName, params.Side+" order to be created -> "+utils.GetStringRepresentation(order))
