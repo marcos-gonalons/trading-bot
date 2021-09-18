@@ -6,7 +6,7 @@ var priceAdjustment float32 = float32(1) / float32(10000)
 
 /*
 var ResistanceBounceParams = types.TickerStrategyParams{
-	RiskPercentage:                  .5,
+	RiskPercentage:                  5,
 	StopLossDistance:                0 * priceAdjustment,
 	TakeProfitDistance:              0 * priceAdjustment,
 	TPDistanceShortForTighterSL:     0 * float64(priceAdjustment),
@@ -26,7 +26,7 @@ var ResistanceBounceParams = types.TickerStrategyParams{
 }*/
 
 var SupportBounceParams = types.TickerStrategyParams{
-	RiskPercentage:                  .5,
+	RiskPercentage:                  5,
 	StopLossDistance:                60 * priceAdjustment,
 	TakeProfitDistance:              280 * priceAdjustment,
 	TPDistanceShortForTighterSL:     110 * float64(priceAdjustment),
