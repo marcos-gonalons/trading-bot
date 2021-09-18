@@ -22,6 +22,7 @@ var ResistanceBounceParams = types.TickerStrategyParams{
 		ValidHalfHours: []string{},
 	},
 	MaxTradeExecutionPriceDifference: 9999,
+	MinPositionSize: 10000,
 }*/
 
 var SupportBounceParams = types.TickerStrategyParams{
@@ -41,4 +42,5 @@ var SupportBounceParams = types.TickerStrategyParams{
 		ValidHalfHours: []string{},
 	},
 	MaxTradeExecutionPriceDifference: 9999,
+	MinPositionSize:                  10000,
 }

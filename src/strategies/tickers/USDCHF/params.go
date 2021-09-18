@@ -21,6 +21,7 @@ var ResistanceBreakoutParams = types.TickerStrategyParams{
 		ValidHalfHours: []string{},
 	},
 	MaxTradeExecutionPriceDifference: 9999,
+	MinPositionSize:                  10000,
 }
 
 var SupportBreakoutParams = types.TickerStrategyParams{
@@ -40,4 +41,5 @@ var SupportBreakoutParams = types.TickerStrategyParams{
 		ValidHalfHours: []string{},
 	},
 	MaxTradeExecutionPriceDifference: 9999,
+	MinPositionSize:                  10000,
 }

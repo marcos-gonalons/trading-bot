@@ -100,6 +100,7 @@ func SupportBounceStrategy(params StrategyParams) {
 		StrategyName:       strategyName,
 		WithPendingOrders:  params.WithPendingOrders,
 		OrderType:          ibroker.LimitType,
+		MinPositionSize:    params.TickerStrategyParams.MinPositionSize,
 	}
 
 	if utils.FindPositionBySymbol(params.BaseTickerClass.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName) != nil {

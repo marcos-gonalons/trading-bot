@@ -37,6 +37,8 @@ type BaseTickerClass struct {
 	currentPosition      *api.Position
 	pendingOrder         *api.Order
 	currentOrder         *api.Order
+
+	eurExchangeRate float64
 }
 
 // SetCandlesHandler ...
@@ -289,6 +291,14 @@ func (s *BaseTickerClass) GetCurrentExecutionTime() time.Time {
 	return s.currentExecutionTime
 }
 
+func (s *BaseTickerClass) SetEurExchangeRate(rate float64) {
+	s.eurExchangeRate = rate
+}
+
+func (s *BaseTickerClass) GetEurExchangeRate() float64 {
+	return s.eurExchangeRate
+}
+
 func (s *BaseTickerClass) SavePendingOrder(side string, validTimes types.TradingTimes) {
 	go func() {
 		s.Log(s.Name, "Save pending order called for side "+side)
@@ -438,6 +448,7 @@ type OnValidTradeSetupParams struct {
 	Side               string
 	WithPendingOrders  bool
 	OrderType          string
+	MinPositionSize    int64
 }
 
 func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
@@ -454,20 +465,20 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		takeProfit = float32Price - float32(params.TakeProfitDistance)
 	}
 
-	// TOOD: move the getsize to another function somewhere
-	// Think about the best way to calculate size for both ger30 and forex
-	// where riskPercentage works as intended
-	size := math.Floor((s.GetState().Equity*(params.RiskPercentage/100))/float64(params.StopLossDistance+1) + 1)
-	if size == 0 {
-		size = 1
-	}
+	size := getSize(
+		s.GetState().Equity,
+		params.RiskPercentage,
+		float64(params.StopLossDistance),
+		float64(params.MinPositionSize),
+		1, // todo: set this accordingly
+	)
 
 	order := &api.Order{
 		CurrentAsk: &s.GetCurrentBrokerQuote().Ask,
 		CurrentBid: &s.GetCurrentBrokerQuote().Bid,
 		Instrument: s.GetSymbol().BrokerAPIName,
 		StopPrice:  &float32Price,
-		Qty:        float32(size),
+		Qty:        size,
 		Side:       params.Side,
 		StopLoss:   &stopLoss,
 		TakeProfit: &takeProfit,
@@ -529,4 +540,18 @@ func (s *BaseTickerClass) getSlAndTpOrders(
 	}
 
 	return slOrder, tpOrder
+}
+
+func getSize(
+	currentBalance float64,
+	riskPercentage float64,
+	stopLossDistance float64,
+	minPositionSize float64,
+	eurExchangeRate float64,
+) float32 {
+	size := math.Floor((currentBalance*(riskPercentage/100))/(stopLossDistance*minPositionSize*eurExchangeRate)) * minPositionSize
+	if size == 0 {
+		size = minPositionSize
+	}
+	return float32(size)
 }

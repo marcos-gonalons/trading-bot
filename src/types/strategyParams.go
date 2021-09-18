@@ -14,6 +14,7 @@ type TickerStrategyParams struct {
 	ValidTradingTimes                TradingTimes
 	MaxTradeExecutionPriceDifference float64
 	MaxSecondsOpenTrade              int64
+	MinPositionSize                  int64
 }
 
 type TradingTimes struct {
