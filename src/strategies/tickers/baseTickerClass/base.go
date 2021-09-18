@@ -68,7 +68,7 @@ func (s *BaseTickerClass) GetSymbol() *types.Symbol {
 
 // Initialize ...
 func (s *BaseTickerClass) Initialize() {
-
+	s.SetEurExchangeRate(1)
 }
 
 // DailyReset ...
@@ -470,7 +470,7 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		params.RiskPercentage,
 		float64(params.StopLossDistance),
 		float64(params.MinPositionSize),
-		1, // todo: set this accordingly
+		s.GetEurExchangeRate(),
 	)
 
 	order := &api.Order{

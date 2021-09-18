@@ -46,11 +46,17 @@ func (s *Strategy) Initialize() {
 		&ResistanceBounceParams,
 	)
 
+	// todo: get the cadeur quote
+	s.BaseTickerClass.SetEurExchangeRate(.67)
+
 	s.isReady = true
 }
 
 // DailyReset ...
 func (s *Strategy) DailyReset() {
+	// todo: get the cadeur quote
+	s.BaseTickerClass.SetEurExchangeRate(.67)
+
 	minCandles := 7 * 2 * 24
 	totalCandles := len(s.BaseTickerClass.CandlesHandler.GetCandles())
 
