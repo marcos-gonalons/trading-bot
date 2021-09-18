@@ -7,17 +7,17 @@ import (
 	"TradingBot/src/strategies/tickers/AUDUSD"
 	"TradingBot/src/strategies/tickers/EURUSD"
 	"TradingBot/src/strategies/tickers/GBPUSD"
-	"TradingBot/src/strategies/tickers/GER30"
 	"TradingBot/src/strategies/tickers/NZDUSD"
 	"TradingBot/src/strategies/tickers/USDCAD"
 	"TradingBot/src/strategies/tickers/USDCHF"
 	"TradingBot/src/strategies/tickers/USDJPY"
 	"TradingBot/src/strategies/tickers/interfaces"
+	//"TradingBot/src/strategies/tickers/GER30"
 )
 
 func (s *Handler) getStrategies() []interfaces.TickerInterface {
 	return []interfaces.TickerInterface{
-		s.getStrategy(GER30.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
+		//s.getStrategy(GER30.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 		s.getStrategy(EURUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 		s.getStrategy(GBPUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 		s.getStrategy(USDCAD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
