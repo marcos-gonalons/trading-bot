@@ -8,16 +8,16 @@ import (
 	"time"
 )
 
-// SupportBounceStrategy ...
-func SupportBounceStrategy(params StrategyParams) {
+// SupportBounce ...
+func SupportBounce(params StrategyParams) {
 	var strategyName = params.BaseTickerClass.Name + " - SBA"
 	var log = func(msg string) {
 		params.BaseTickerClass.Log(strategyName, msg)
 	}
 
-	log("supportBounceStrategy started")
+	log("supportBounce started")
 	defer func() {
-		log("supportBounceStrategy ended")
+		log("supportBounce ended")
 	}()
 
 	validMonths := params.TickerStrategyParams.ValidTradingTimes.ValidMonths

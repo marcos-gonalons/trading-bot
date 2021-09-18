@@ -6,6 +6,7 @@ import (
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/strategies/strategies"
 	"TradingBot/src/strategies/tickers/baseTickerClass"
 	"TradingBot/src/strategies/tickers/interfaces"
 	"TradingBot/src/types"
@@ -105,7 +106,23 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 	if s.lastCandlesAmount != len(s.BaseTickerClass.CandlesHandler.GetCandles()) {
 		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "New candle has been added. Executing strategy code ...")
-		// TODO: Code
+
+		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Calling resistanceBounce strategy")
+		strategies.ResistanceBreakoutAnticipation(strategies.StrategyParams{
+			BaseTickerClass:       s.BaseTickerClass,
+			TickerStrategyParams:  &ResistanceBreakoutParams,
+			WithPendingOrders:     false,
+			CloseOrdersOnBadTrend: false,
+		})
+
+		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Calling supportBounce strategy")
+		strategies.SupportBreakoutAnticipation(strategies.StrategyParams{
+			BaseTickerClass:       s.BaseTickerClass,
+			TickerStrategyParams:  &SupportBreakoutParams,
+			WithPendingOrders:     false,
+			CloseOrdersOnBadTrend: false,
+		})
+
 	} else {
 		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Doing nothing - still same candle")
 	}

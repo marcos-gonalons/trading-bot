@@ -15,9 +15,9 @@ func ResistanceBreakoutAnticipation(params StrategyParams) {
 		params.BaseTickerClass.Log(strategyName, msg)
 	}
 
-	log("resistanceBreakoutAnticipationStrategy started")
+	log("resistanceBreakoutAnticipation started")
 	defer func() {
-		log("resistanceBreakoutAnticipationStrategy ended")
+		log("resistanceBreakoutAnticipation ended")
 	}()
 
 	validMonths := params.TickerStrategyParams.ValidTradingTimes.ValidMonths

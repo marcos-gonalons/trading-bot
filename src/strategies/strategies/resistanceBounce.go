@@ -15,9 +15,9 @@ func ResistanceBounce(params StrategyParams) {
 		params.BaseTickerClass.Log(strategyName, msg)
 	}
 
-	log("resistanceBounceStrategy started")
+	log("resistanceBounce started")
 	defer func() {
-		log("resistanceBounceStrategy ended")
+		log("resistanceBounce ended")
 	}()
 
 	validMonths := params.TickerStrategyParams.ValidTradingTimes.ValidMonths
