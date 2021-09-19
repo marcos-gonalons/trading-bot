@@ -150,14 +150,14 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Calling supportBreakoutAnticipationStrategy")
 		strategies.SupportBreakoutAnticipation(strategies.StrategyParams{
-			BaseTickerClass:       s.BaseTickerClass,
+			BaseTickerClass:       &s.BaseTickerClass,
 			TickerStrategyParams:  &SupportBreakoutParams,
 			WithPendingOrders:     true,
 			CloseOrdersOnBadTrend: true,
 		})
 		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Calling resistanceBreakoutAnticipationStrategy")
 		strategies.ResistanceBreakoutAnticipation(strategies.StrategyParams{
-			BaseTickerClass:       s.BaseTickerClass,
+			BaseTickerClass:       &s.BaseTickerClass,
 			TickerStrategyParams:  &ResistanceBreakoutParams,
 			WithPendingOrders:     true,
 			CloseOrdersOnBadTrend: false,

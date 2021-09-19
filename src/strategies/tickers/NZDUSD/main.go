@@ -109,7 +109,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 
 		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Calling supportBounce strategy")
 		strategies.SupportBounce(strategies.StrategyParams{
-			BaseTickerClass:       s.BaseTickerClass,
+			BaseTickerClass:       &s.BaseTickerClass,
 			TickerStrategyParams:  &SupportBounceParams,
 			WithPendingOrders:     false,
 			CloseOrdersOnBadTrend: false,

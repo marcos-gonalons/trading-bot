@@ -6,7 +6,7 @@ import (
 )
 
 type StrategyParams struct {
-	BaseTickerClass       baseTickerClass.BaseTickerClass
+	BaseTickerClass       *baseTickerClass.BaseTickerClass
 	TickerStrategyParams  *types.TickerStrategyParams
 	WithPendingOrders     bool
 	CloseOrdersOnBadTrend bool
