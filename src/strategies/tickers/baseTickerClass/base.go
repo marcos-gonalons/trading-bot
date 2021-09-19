@@ -465,7 +465,7 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		takeProfit = float32Price - float32(params.TakeProfitDistance)
 	}
 
-	size := getSize(
+	size := utils.GetPositionSize(
 		s.GetState().Equity,
 		params.RiskPercentage,
 		float64(params.StopLossDistance),
@@ -540,18 +540,4 @@ func (s *BaseTickerClass) getSlAndTpOrders(
 	}
 
 	return slOrder, tpOrder
-}
-
-func getSize(
-	currentBalance float64,
-	riskPercentage float64,
-	stopLossDistance float64,
-	minPositionSize float64,
-	eurExchangeRate float64,
-) float32 {
-	size := math.Floor((currentBalance*(riskPercentage/100))/(stopLossDistance*minPositionSize*eurExchangeRate)) * minPositionSize
-	if size == 0 {
-		size = minPositionSize
-	}
-	return float32(size)
 }
