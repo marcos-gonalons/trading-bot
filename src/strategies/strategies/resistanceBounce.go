@@ -10,7 +10,7 @@ import (
 
 // ResistanceBounce ...
 func ResistanceBounce(params StrategyParams) {
-	var strategyName = params.BaseTickerClass.Name + " - RBA"
+	var strategyName = params.BaseTickerClass.Name + " - RB"
 	var log = func(msg string) {
 		params.BaseTickerClass.Log(strategyName, msg)
 	}
@@ -63,12 +63,12 @@ func ResistanceBounce(params StrategyParams) {
 
 	price = price - params.TickerStrategyParams.PriceOffset
 	if price <= float64(params.BaseTickerClass.GetCurrentBrokerQuote().Ask) {
-		log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, 2))
+		log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, params.BaseTickerClass.GetSymbol().PriceDecimals))
 		log("Quote is -> " + utils.GetStringRepresentation(params.BaseTickerClass.GetCurrentBrokerQuote()))
 		return
 	}
 
-	log("Ok, we might have a short setup at price " + utils.FloatToString(price, 2))
+	log("Ok, we might have a short setup at price " + utils.FloatToString(price, params.BaseTickerClass.GetSymbol().PriceDecimals))
 	if !params.BaseTickerClass.TrendsService.IsBearishTrend(
 		params.TickerStrategyParams.TrendCandles,
 		params.TickerStrategyParams.TrendDiff,

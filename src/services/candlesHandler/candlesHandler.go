@@ -1,7 +1,6 @@
 package candlesHandler
 
 import (
-	"TradingBot/src/constants"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
@@ -50,16 +49,10 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 
 // UpdateCandles ...
 func (s *Service) UpdateCandles(
-	symbol *types.Symbol,
 	data *tradingviewsocket.QuoteData,
 	currentExecutionTime time.Time,
 	lastVolume float64,
 ) {
-	if symbol.MarketType == constants.ForexType {
-		if utils.IsOutsideForexHours(currentExecutionTime) {
-			return
-		}
-	}
 
 	var currentPrice float64
 	if data.Price != nil {
@@ -186,11 +179,11 @@ func (s *Service) writeRowIntoCSVFile(row []byte, fileName string) (err error) {
 func (s *Service) getRowForCSV(candle *types.Candle) []byte {
 	return []byte("" +
 		strconv.FormatInt(candle.Timestamp, 10) + "," +
-		utils.FloatToString(float64(candle.Open), 5) + "," +
-		utils.FloatToString(float64(candle.High), 5) + "," +
-		utils.FloatToString(float64(candle.Low), 5) + "," +
-		utils.FloatToString(float64(candle.Close), 5) + "," +
-		utils.FloatToString(candle.Volume, 5) + "\n")
+		utils.FloatToString(float64(candle.Open), s.Symbol.PriceDecimals) + "," +
+		utils.FloatToString(float64(candle.High), s.Symbol.PriceDecimals) + "," +
+		utils.FloatToString(float64(candle.Low), s.Symbol.PriceDecimals) + "," +
+		utils.FloatToString(float64(candle.Close), s.Symbol.PriceDecimals) + "," +
+		utils.FloatToString(candle.Volume, s.Symbol.PriceDecimals) + "\n")
 }
 
 func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {

@@ -101,7 +101,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 		var price = *data.Price + .8
 		data.Price = &price
 	}
-	s.BaseTickerClass.CandlesHandler.UpdateCandles(s.BaseTickerClass.GetSymbol(), data, s.BaseTickerClass.GetCurrentExecutionTime(), s.lastVolume)
+	s.BaseTickerClass.CandlesHandler.UpdateCandles(data, s.BaseTickerClass.GetCurrentExecutionTime(), s.lastVolume)
 
 	if s.lastCandlesAmount != len(s.BaseTickerClass.CandlesHandler.GetCandles()) {
 		if !utils.IsNowWithinTradingHours(s.BaseTickerClass.GetSymbol()) {

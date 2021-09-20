@@ -10,7 +10,7 @@ import (
 
 // SupportBounce ...
 func SupportBounce(params StrategyParams) {
-	var strategyName = params.BaseTickerClass.Name + " - SBA"
+	var strategyName = params.BaseTickerClass.Name + " - SB"
 	var log = func(msg string) {
 		params.BaseTickerClass.Log(strategyName, msg)
 	}
@@ -56,28 +56,28 @@ func SupportBounce(params StrategyParams) {
 	price, err := params.BaseTickerClass.HorizontalLevelsService.GetSupportPrice(params.TickerStrategyParams.CandlesAmountForHorizontalLevel, lastCompletedCandleIndex)
 
 	if err != nil {
-		errorMessage := "Not a good short setup yet -> " + err.Error()
+		errorMessage := "Not a good long setup yet -> " + err.Error()
 		log(errorMessage)
 		return
 	}
 
 	price = price + params.TickerStrategyParams.PriceOffset
 	if price >= float64(params.BaseTickerClass.GetCurrentBrokerQuote().Bid) {
-		log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, 2))
+		log("Price is lower than the current ask, so we can't create the long order now. Price is -> " + utils.FloatToString(price, params.BaseTickerClass.GetSymbol().PriceDecimals))
 		log("Quote is -> " + utils.GetStringRepresentation(params.BaseTickerClass.GetCurrentBrokerQuote()))
 		return
 	}
 
-	log("Ok, we might have a short setup at price " + utils.FloatToString(price, 2))
+	log("Ok, we might have a long setup at price " + utils.FloatToString(price, params.BaseTickerClass.GetSymbol().PriceDecimals))
 	if !params.BaseTickerClass.TrendsService.IsBullishTrend(
 		params.TickerStrategyParams.TrendCandles,
 		params.TickerStrategyParams.TrendDiff,
 		params.BaseTickerClass.CandlesHandler.GetCandles(),
 		lastCompletedCandleIndex,
 	) {
-		log("At the end it wasn't a good short setup")
+		log("At the end it wasn't a good long setup")
 		if params.CloseOrdersOnBadTrend && utils.FindPositionBySymbol(params.BaseTickerClass.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName) == nil {
-			log("There isn't an open position, closing short orders ...")
+			log("There isn't an open position, closing long orders ...")
 			params.BaseTickerClass.APIRetryFacade.CloseOrders(
 				params.BaseTickerClass.API.GetWorkingOrderWithBracketOrders(ibroker.LongSide, params.BaseTickerClass.GetSymbol().BrokerAPIName, params.BaseTickerClass.GetOrders()),
 				retryFacade.RetryParams{
