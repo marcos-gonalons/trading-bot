@@ -17,6 +17,8 @@ import (
 
 // FloatToString ...
 func FloatToString(v float64, decimals int64) string {
+	m := math.Pow(10, float64(decimals))
+	v = math.Round(v*m) / m
 	decimalsAsString := IntToString(decimals)
 	return fmt.Sprintf("%."+decimalsAsString+"f", v)
 }

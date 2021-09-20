@@ -10,7 +10,6 @@ import (
 	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
-	"math"
 	"time"
 
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
@@ -143,18 +142,18 @@ func (s *BaseTickerClass) SetStringValues(order *api.Order) {
 	}
 
 	if s.API.IsLimitOrder(order) {
-		limitPrice := utils.FloatToString(math.Round(float64(*order.LimitPrice)*10)/10, symbol.PriceDecimals)
+		limitPrice := utils.FloatToString(float64(*order.LimitPrice), symbol.PriceDecimals)
 		order.StringValues.LimitPrice = &limitPrice
 	} else {
-		stopPrice := utils.FloatToString(math.Round(float64(*order.StopPrice)*10)/10, symbol.PriceDecimals)
+		stopPrice := utils.FloatToString(float64(*order.StopPrice), symbol.PriceDecimals)
 		order.StringValues.StopPrice = &stopPrice
 	}
 	if order.StopLoss != nil {
-		stopLossPrice := utils.FloatToString(math.Round(float64(*order.StopLoss)*10)/10, symbol.PriceDecimals)
+		stopLossPrice := utils.FloatToString(float64(*order.StopLoss), symbol.PriceDecimals)
 		order.StringValues.StopLoss = &stopLossPrice
 	}
 	if order.TakeProfit != nil {
-		takeProfitPrice := utils.FloatToString(math.Round(float64(*order.TakeProfit)*10)/10, symbol.PriceDecimals)
+		takeProfitPrice := utils.FloatToString(float64(*order.TakeProfit), symbol.PriceDecimals)
 		order.StringValues.TakeProfit = &takeProfitPrice
 	}
 }
