@@ -477,12 +477,17 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		CurrentAsk: &s.GetCurrentBrokerQuote().Ask,
 		CurrentBid: &s.GetCurrentBrokerQuote().Bid,
 		Instrument: s.GetSymbol().BrokerAPIName,
-		StopPrice:  &float32Price,
 		Qty:        size,
 		Side:       params.Side,
 		StopLoss:   &stopLoss,
 		TakeProfit: &takeProfit,
 		Type:       params.OrderType,
+	}
+	if s.API.IsStopOrder(order) {
+		order.StopPrice = &float32Price
+	}
+	if s.API.IsLimitOrder(order) {
+		order.LimitPrice = &float32Price
 	}
 
 	s.Log(params.StrategyName, params.Side+" order to be created -> "+utils.GetStringRepresentation(order))
