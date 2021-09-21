@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -117,6 +118,7 @@ func (logger *Logger) Log(message string, logType ...LogType) {
 // ResetLogs ...
 func (logger *Logger) ResetLogs() {
 	directory := logger.rootPath
+	now := time.Now()
 
 	osDir, err := os.Open(directory)
 	if err != nil {
@@ -127,11 +129,26 @@ func (logger *Logger) ResetLogs() {
 		panic("Error reading the directory" + directory + " -> " + err.Error())
 	}
 
+	bkFolder := directory + "/backup-" + now.Format("2006-01-02")
+	err = os.Mkdir(bkFolder, os.ModePerm)
+	if err != nil {
+		panic("Error while creating the backup log folder - " + bkFolder)
+	}
+
 	for index := range files {
 		file := files[index]
-		err = os.Remove(directory + "/" + file.Name())
+		err = os.Rename(directory+"/"+file.Name(), bkFolder+"/"+file.Name())
 		if err != nil {
-			panic("Error removing the log file" + file.Name() + " -> " + err.Error())
+			panic("Error moving the log file to the backup folder -> " + bkFolder + " -> " + file.Name() + " -> " + err.Error())
+		}
+
+		if strings.Contains(file.Name(), "backup") {
+			if now.Unix()-file.ModTime().Unix() > 60*60*24*7 {
+				err = os.RemoveAll("logs/" + file.Name())
+				if err != nil {
+					panic("Error deleting the old backup folder " + file.Name() + " -> " + err.Error())
+				}
+			}
 		}
 	}
 }
