@@ -90,29 +90,31 @@ func (logger *Logger) Error(message string, logType ...LogType) {
 
 // Log logs a message
 func (logger *Logger) Log(message string, logType ...LogType) {
-	var logFileName string
-	isError := false
+	go func() {
+		var logFileName string
+		isError := false
 
-	if len(logType) > 0 {
-		logFileName = logger.fileNames[logType[0]]
-		if logType[len(logType)-1] == ErrorLog {
-			isError = true
+		if len(logType) > 0 {
+			logFileName = logger.fileNames[logType[0]]
+			if logType[len(logType)-1] == ErrorLog {
+				isError = true
+			}
+		} else {
+			logFileName = logger.fileNames[Default]
 		}
-	} else {
-		logFileName = logger.fileNames[Default]
-	}
 
-	if logFileName == logger.fileNames[Default] || isError {
-		var ioWriter io.Writer
-		ioWriter = os.Stdout
-		fmt.Fprintf(ioWriter, message)
-		fmt.Fprintf(ioWriter, "\n\n")
-	}
+		if logFileName == logger.fileNames[Default] || isError {
+			var ioWriter io.Writer
+			ioWriter = os.Stdout
+			fmt.Fprintf(ioWriter, message)
+			fmt.Fprintf(ioWriter, "\n\n")
+		}
 
-	logger.doLog(message, logFileName)
-	if isError {
-		logger.doLog(message, logger.fileNames[ErrorLog])
-	}
+		logger.doLog(message, logFileName)
+		if isError {
+			logger.doLog(message, logger.fileNames[ErrorLog])
+		}
+	}()
 }
 
 // ResetLogs ...
