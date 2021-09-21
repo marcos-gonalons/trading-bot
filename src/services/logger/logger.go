@@ -137,12 +137,13 @@ func (logger *Logger) ResetLogs() {
 
 	for index := range files {
 		file := files[index]
-		err = os.Rename(directory+"/"+file.Name(), bkFolder+"/"+file.Name())
-		if err != nil {
-			panic("Error moving the log file to the backup folder -> " + bkFolder + " -> " + file.Name() + " -> " + err.Error())
-		}
 
-		if strings.Contains(file.Name(), "backup") {
+		if !strings.Contains(file.Name(), "backup") {
+			err = os.Rename(directory+"/"+file.Name(), bkFolder+"/"+file.Name())
+			if err != nil {
+				panic("Error moving the log file to the backup folder -> " + bkFolder + " -> " + file.Name() + " -> " + err.Error())
+			}
+		} else {
 			if now.Unix()-file.ModTime().Unix() > 60*60*24*7 {
 				err = os.RemoveAll("logs/" + file.Name())
 				if err != nil {
