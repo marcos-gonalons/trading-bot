@@ -83,6 +83,7 @@ func (s *Service) UpdateCandles(
 			Volume:    volume,
 			Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
 		})
+
 	} else {
 		index := len(s.candles) - 1
 		if data.Price != nil {
@@ -248,14 +249,25 @@ func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
 		})
 	}
 
-	s.candles = append(s.candles, &types.Candle{
-		Open:      s.GetLastCandle().Close,
-		Low:       s.GetLastCandle().Close,
-		High:      s.GetLastCandle().Close,
-		Close:     s.GetLastCandle().Close,
-		Volume:    0,
-		Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
-	})
+	if len(s.candles) > 0 {
+		s.candles = append(s.candles, &types.Candle{
+			Open:      s.GetLastCandle().Close,
+			Low:       s.GetLastCandle().Close,
+			High:      s.GetLastCandle().Close,
+			Close:     s.GetLastCandle().Close,
+			Volume:    0,
+			Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
+		})
+	} else {
+		s.candles = append(s.candles, &types.Candle{
+			Open:      0,
+			Low:       0,
+			High:      0,
+			Close:     0,
+			Volume:    0,
+			Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
+		})
+	}
 }
 
 func (s *Service) getAsFloat64(v string, index int) float64 {
