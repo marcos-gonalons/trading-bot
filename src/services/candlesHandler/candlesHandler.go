@@ -1,6 +1,7 @@
 package candlesHandler
 
 import (
+	"TradingBot/src/constants"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
@@ -83,7 +84,6 @@ func (s *Service) UpdateCandles(
 			Volume:    volume,
 			Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
 		})
-
 	} else {
 		index := len(s.candles) - 1
 		if data.Price != nil {
@@ -205,7 +205,20 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 	candleDurationInSeconds = s.Timeframe.Value * multiplier
 	currentTimestamp = utils.GetTimestamp(currentExecutionTime, s.getTimeLayout())
 
-	return currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
+	cond1 := currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
+
+	cond2 := true
+	if s.Symbol.MarketType == constants.ForexType {
+		if utils.IsOutsideForexHours(currentExecutionTime) {
+			cond2 = false
+		}
+	}
+
+	s.Logger.Log("Should add new candle for " + s.Symbol.BrokerAPIName)
+	s.Logger.Log("condition 1 is -> " + strconv.FormatBool(cond1))
+	s.Logger.Log("condition 2 is -> " + strconv.FormatBool(cond2))
+
+	return cond1 && cond2
 }
 
 func (s *Service) createCSVFile(fileName string) {
