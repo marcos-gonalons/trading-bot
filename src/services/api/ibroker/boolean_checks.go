@@ -7,12 +7,18 @@ import (
 
 // IsSessionDisconnectedError ...
 func (s *API) IsSessionDisconnectedError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), SessionDisconnectedErrorString)
+	for _, str := range SessionDisconnectedErrorStrings {
+		if strings.Contains(err.Error(), str) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // IsOrderAlreadyExistsError ...
 func (s *API) IsOrderAlreadyExistsError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), SessionDisconnectedErrorString)
+	return err != nil && strings.Contains(err.Error(), OrderAlreadyExistsErrorString)
 }
 
 // IsNotEnoughFundsError ...
