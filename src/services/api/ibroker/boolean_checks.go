@@ -7,6 +7,10 @@ import (
 
 // IsSessionDisconnectedError ...
 func (s *API) IsSessionDisconnectedError(err error) bool {
+	if err == nil {
+		return false
+	}
+
 	for _, str := range SessionDisconnectedErrorStrings {
 		if strings.Contains(err.Error(), str) {
 			return true
