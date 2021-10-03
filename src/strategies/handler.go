@@ -77,7 +77,9 @@ func (s *Handler) onReceiveMarketData(symbol string, data *tradingviewsocket.Quo
 		if symbol != strategy.Parent().GetSymbol().SocketName {
 			continue
 		}
-		go strategy.OnReceiveMarketData(symbol, data)
+		if strategy.Parent().GetCurrentBrokerQuote() != nil {
+			go strategy.OnReceiveMarketData(symbol, data)
+		}
 	}
 }
 
