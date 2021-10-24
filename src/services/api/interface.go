@@ -41,3 +41,12 @@ type Interface interface {
 	GetBracketOrdersForOpenedPosition(position *Position) (slOrder, tpOrder *Order)
 	GetWorkingOrderWithBracketOrders(side string, symbol string, orders []*Order) []*Order
 }
+
+type DataInterface interface {
+	SetOrders(orders []*Order)
+	GetOrders() []*Order
+	SetPositions(positions []*Position)
+	GetPositions() []*Position
+	SetState(state *State)
+	GetState() *State
+}

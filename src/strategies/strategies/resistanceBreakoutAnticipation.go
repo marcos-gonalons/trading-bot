@@ -47,7 +47,7 @@ func ResistanceBreakoutAnticipation(params StrategyParams) {
 		}
 	}
 
-	p := utils.FindPositionBySymbol(params.BaseTickerClass.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName)
+	p := utils.FindPositionBySymbol(params.BaseTickerClass.APIData.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName)
 	if p != nil && p.Side == ibroker.LongSide {
 		params.BaseTickerClass.CheckIfSLShouldBeAdjusted(params.TickerStrategyParams, p)
 		params.BaseTickerClass.CheckOpenPositionTTL(params.TickerStrategyParams, p)
@@ -78,14 +78,13 @@ func ResistanceBreakoutAnticipation(params StrategyParams) {
 	) {
 		log("At the end it wasn't a good long setup, doing nothing ...")
 
-		if params.CloseOrdersOnBadTrend && utils.FindPositionBySymbol(params.BaseTickerClass.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName) == nil {
+		if params.CloseOrdersOnBadTrend && utils.FindPositionBySymbol(params.BaseTickerClass.APIData.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName) == nil {
 			log("There isn't an open position, closing long orders ...")
 			params.BaseTickerClass.APIRetryFacade.CloseOrders(
-				params.BaseTickerClass.API.GetWorkingOrderWithBracketOrders(ibroker.LongSide, params.BaseTickerClass.GetSymbol().BrokerAPIName, params.BaseTickerClass.GetOrders()),
+				params.BaseTickerClass.API.GetWorkingOrderWithBracketOrders(ibroker.LongSide, params.BaseTickerClass.GetSymbol().BrokerAPIName, params.BaseTickerClass.APIData.GetOrders()),
 				retryFacade.RetryParams{
 					DelayBetweenRetries: 5 * time.Second,
 					MaxRetries:          30,
-					SuccessCallback:     func() { params.BaseTickerClass.SetOrders(nil) },
 				},
 			)
 		}
@@ -106,13 +105,13 @@ func ResistanceBreakoutAnticipation(params StrategyParams) {
 		MinPositionSize:    params.TickerStrategyParams.MinPositionSize,
 	}
 
-	if utils.FindPositionBySymbol(params.BaseTickerClass.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName) != nil {
+	if utils.FindPositionBySymbol(params.BaseTickerClass.APIData.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName) != nil {
 		log("There is an open position, no need to close any orders ...")
 		params.BaseTickerClass.OnValidTradeSetup(onValidTradeSetupParams)
 	} else {
 		log("There isn't any open position. Closing orders first ...")
 		params.BaseTickerClass.APIRetryFacade.CloseOrders(
-			params.BaseTickerClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(params.BaseTickerClass.GetOrders(), params.BaseTickerClass.GetSymbol().BrokerAPIName)),
+			params.BaseTickerClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(params.BaseTickerClass.APIData.GetOrders(), params.BaseTickerClass.GetSymbol().BrokerAPIName)),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,

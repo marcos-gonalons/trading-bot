@@ -108,15 +108,14 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Doing nothing - Now it's not the time.")
 
 			s.BaseTickerClass.APIRetryFacade.CloseOrders(
-				s.BaseTickerClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseTickerClass.GetOrders(), s.BaseTickerClass.GetSymbol().BrokerAPIName)),
+				s.BaseTickerClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseTickerClass.APIData.GetOrders(), s.BaseTickerClass.GetSymbol().BrokerAPIName)),
 				retryFacade.RetryParams{
 					DelayBetweenRetries: 5 * time.Second,
 					MaxRetries:          30,
 					SuccessCallback: func() {
-						s.BaseTickerClass.SetOrders(nil)
 						s.BaseTickerClass.SetPendingOrder(nil)
 
-						p := utils.FindPositionBySymbol(s.BaseTickerClass.GetPositions(), s.BaseTickerClass.GetSymbol().BrokerAPIName)
+						p := utils.FindPositionBySymbol(s.BaseTickerClass.APIData.GetPositions(), s.BaseTickerClass.GetSymbol().BrokerAPIName)
 						if p != nil {
 							s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Closing the open position ... "+utils.GetStringRepresentation(p))
 							s.BaseTickerClass.APIRetryFacade.ClosePosition(
@@ -124,7 +123,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 								retryFacade.RetryParams{
 									DelayBetweenRetries: 5 * time.Second,
 									MaxRetries:          30,
-									SuccessCallback:     func() { s.BaseTickerClass.SetPositions(nil) },
+									SuccessCallback:     func() { s.BaseTickerClass.APIData.SetPositions(nil) },
 								},
 							)
 						}
@@ -138,11 +137,10 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Closing working orders and doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
 			s.BaseTickerClass.SetPendingOrder(nil)
 			s.BaseTickerClass.APIRetryFacade.CloseOrders(
-				s.BaseTickerClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseTickerClass.GetOrders(), s.BaseTickerClass.GetSymbol().BrokerAPIName)),
+				s.BaseTickerClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseTickerClass.APIData.GetOrders(), s.BaseTickerClass.GetSymbol().BrokerAPIName)),
 				retryFacade.RetryParams{
 					DelayBetweenRetries: 5 * time.Second,
 					MaxRetries:          30,
-					SuccessCallback:     func() { s.BaseTickerClass.SetOrders(nil) },
 				},
 			)
 			return
@@ -189,6 +187,7 @@ func (s *Strategy) updateAverageSpread() {
 // GetStrategyInstance ...
 func GetStrategyInstance(
 	api api.Interface,
+	apiData api.DataInterface,
 	apiRetryFacade retryFacade.Interface,
 	logger logger.Interface,
 ) *Strategy {
@@ -196,6 +195,7 @@ func GetStrategyInstance(
 		BaseTickerClass: baseTickerClass.BaseTickerClass{
 			API:            api,
 			APIRetryFacade: apiRetryFacade,
+			APIData:        apiData,
 			Logger:         logger,
 			Name:           "GER30 Strategy",
 			Symbol: funk.Find(

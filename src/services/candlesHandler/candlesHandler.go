@@ -15,6 +15,10 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
+// todo: for forex, there are no candles on weekends, but the last candle from friday is not saved in the csv
+// until we start receiving the data from sunday's first candle
+// This means that, if we reset the bot on a weekend, we will lose last friday's candle data
+
 const CandlesFolder = ".candles-csv/"
 
 // Service ...

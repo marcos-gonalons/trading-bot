@@ -57,6 +57,7 @@ func main() {
 		Logger:         logger.GetInstance(),
 		API:            ibrokerAPI,
 		APIRetryFacade: apiRetryFacade,
+		APIData:        &api.Data{},
 	}
 	handler.Run()
 	waitingGroup.Wait() // Wait forever, this script should never die

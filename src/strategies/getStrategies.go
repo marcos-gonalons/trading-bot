@@ -18,13 +18,13 @@ import (
 func (s *Handler) getStrategies() []interfaces.TickerInterface {
 	return []interfaces.TickerInterface{
 		//s.getStrategy(GER30.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
-		s.getStrategy(EURUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
-		s.getStrategy(GBPUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
-		s.getStrategy(USDCAD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
-		s.getStrategy(USDJPY.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
-		s.getStrategy(USDCHF.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
-		s.getStrategy(NZDUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
-		s.getStrategy(AUDUSD.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(EURUSD.GetStrategyInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(GBPUSD.GetStrategyInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(USDCAD.GetStrategyInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(USDJPY.GetStrategyInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(USDCHF.GetStrategyInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(NZDUSD.GetStrategyInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
+		s.getStrategy(AUDUSD.GetStrategyInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
 	}
 }
 

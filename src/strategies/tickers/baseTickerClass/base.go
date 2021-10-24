@@ -20,6 +20,7 @@ import (
 type BaseTickerClass struct {
 	APIRetryFacade          retryFacade.Interface
 	API                     api.Interface
+	APIData                 api.DataInterface
 	Logger                  logger.Interface
 	CandlesHandler          candlesHandler.Interface
 	HorizontalLevelsService horizontalLevels.Interface
@@ -30,10 +31,7 @@ type BaseTickerClass struct {
 	Timeframe types.Timeframe
 
 	currentExecutionTime      time.Time
-	orders                    []*api.Order
 	currentBrokerQuote        *api.Quote
-	positions                 []*api.Position
-	state                     *api.State
 	currentPosition           *api.Position
 	currentPositionExecutedAt time.Time
 	pendingOrder              *api.Order
@@ -77,16 +75,6 @@ func (s *BaseTickerClass) DailyReset() {
 
 }
 
-// SetOrders ...
-func (s *BaseTickerClass) SetOrders(orders []*api.Order) {
-	s.orders = orders
-}
-
-// GetOrders ...
-func (s *BaseTickerClass) GetOrders() []*api.Order {
-	return s.orders
-}
-
 // SetCurrentBrokerQuote ...
 func (s *BaseTickerClass) SetCurrentBrokerQuote(quote *api.Quote) {
 	s.currentBrokerQuote = quote
@@ -95,26 +83,6 @@ func (s *BaseTickerClass) SetCurrentBrokerQuote(quote *api.Quote) {
 // GetCurrentBrokerQuote ...
 func (s *BaseTickerClass) GetCurrentBrokerQuote() *api.Quote {
 	return s.currentBrokerQuote
-}
-
-// SetPositions ...
-func (s *BaseTickerClass) SetPositions(positions []*api.Position) {
-	s.positions = positions
-}
-
-// GetPositions ...
-func (s *BaseTickerClass) GetPositions() []*api.Position {
-	return s.positions
-}
-
-// SetState ...
-func (s *BaseTickerClass) SetState(state *api.State) {
-	s.state = state
-}
-
-// GetState ...
-func (s *BaseTickerClass) GetState() *api.State {
-	return s.state
 }
 
 // OnReceiveMarketData ...
@@ -204,7 +172,7 @@ func (s *BaseTickerClass) CheckIfSLShouldBeAdjusted(
 
 func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.TickerStrategyParams, shortParams *types.TickerStrategyParams) {
 	for {
-		position := utils.FindPositionBySymbol(s.GetPositions(), s.GetSymbol().BrokerAPIName)
+		position := utils.FindPositionBySymbol(s.APIData.GetPositions(), s.GetSymbol().BrokerAPIName)
 
 		if position != nil && s.currentPosition == nil {
 			s.currentPosition = position
@@ -233,7 +201,7 @@ func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.Tic
 				s.Log(s.Name, "Order is "+utils.GetStringRepresentation(s.currentOrder))
 				s.Log(s.Name, "Position is "+utils.GetStringRepresentation(s.currentPosition))
 
-				workingOrders := s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.GetOrders(), s.GetSymbol().BrokerAPIName))
+				workingOrders := s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.APIData.GetOrders(), s.GetSymbol().BrokerAPIName))
 				s.Log(s.Name, "Closing working orders first ... "+utils.GetStringRepresentation(workingOrders))
 
 				s.APIRetryFacade.CloseOrders(
@@ -242,7 +210,6 @@ func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.Tic
 						DelayBetweenRetries: 5 * time.Second,
 						MaxRetries:          30,
 						SuccessCallback: func() {
-							s.SetOrders(nil)
 							s.SetPendingOrder(nil)
 
 							s.Log(s.Name, "Closed all orders. Closing the position now ... ")
@@ -305,12 +272,12 @@ func (s *BaseTickerClass) SavePendingOrder(side string, validTimes types.Trading
 	go func() {
 		s.Log(s.Name, "Save pending order called for side "+side)
 
-		if utils.FindPositionBySymbol(s.GetPositions(), s.GetSymbol().BrokerAPIName) != nil {
+		if utils.FindPositionBySymbol(s.APIData.GetPositions(), s.GetSymbol().BrokerAPIName) != nil {
 			s.Log(s.Name, "Can't save pending order since there is an open position")
 			return
 		}
 
-		workingOrders := s.API.GetWorkingOrders(s.GetOrders())
+		workingOrders := s.API.GetWorkingOrders(s.APIData.GetOrders())
 
 		if len(workingOrders) == 0 {
 			s.Log(s.Name, "There aren't any working orders, doing nothing ...")
@@ -359,12 +326,11 @@ func (s *BaseTickerClass) SavePendingOrder(side string, validTimes types.Trading
 		}
 
 		s.APIRetryFacade.CloseOrders(
-			s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.GetOrders(), s.GetSymbol().BrokerAPIName)),
+			s.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.APIData.GetOrders(), s.GetSymbol().BrokerAPIName)),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,
 				SuccessCallback: func() {
-					s.SetOrders(nil)
 					s.SetPendingOrder(mainOrder)
 					s.Log(s.Name, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.GetPendingOrder()))
 				},
@@ -378,7 +344,7 @@ func (s *BaseTickerClass) CreatePendingOrder(side string) {
 		return
 	}
 
-	p := utils.FindPositionBySymbol(s.GetPositions(), s.GetSymbol().BrokerAPIName)
+	p := utils.FindPositionBySymbol(s.APIData.GetPositions(), s.GetSymbol().BrokerAPIName)
 	if p != nil {
 		s.Log(s.Name, "Can't create the pending order since there is an open position -> "+utils.GetStringRepresentation(p))
 		return
@@ -468,7 +434,7 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 	}
 
 	size := utils.GetPositionSize(
-		s.GetState().Equity,
+		s.APIData.GetState().Equity,
 		params.RiskPercentage,
 		float64(params.StopLossDistance),
 		float64(params.MinPositionSize),
@@ -495,7 +461,7 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 	s.Log(params.StrategyName, params.Side+" order to be created -> "+utils.GetStringRepresentation(order))
 
 	if params.WithPendingOrders {
-		if utils.FindPositionBySymbol(s.GetPositions(), s.GetSymbol().BrokerAPIName) != nil {
+		if utils.FindPositionBySymbol(s.APIData.GetPositions(), s.GetSymbol().BrokerAPIName) != nil {
 			s.Log(params.StrategyName, "There is an open position, saving the order for later ...")
 			s.SetPendingOrder(order)
 			return

@@ -130,6 +130,7 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 // GetStrategyInstance ...
 func GetStrategyInstance(
 	api api.Interface,
+	apiData api.DataInterface,
 	apiRetryFacade retryFacade.Interface,
 	logger logger.Interface,
 ) *Strategy {
@@ -137,6 +138,7 @@ func GetStrategyInstance(
 		BaseTickerClass: baseTickerClass.BaseTickerClass{
 			API:            api,
 			APIRetryFacade: apiRetryFacade,
+			APIData:        apiData,
 			Logger:         logger,
 			Name:           "USDJPY Strategy",
 			Symbol: funk.Find(

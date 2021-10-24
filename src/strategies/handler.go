@@ -20,6 +20,7 @@ const DailyResetHour = 2
 // Handler ...
 type Handler struct {
 	API            api.Interface
+	APIData        api.DataInterface
 	APIRetryFacade retryFacade.Interface
 	Logger         logger.Interface
 
@@ -162,11 +163,11 @@ func (s *Handler) fetchDataLoop() {
 						defer waitingGroup.Done()
 						return s.API.GetOrders()
 					}).([]*api.Order)
+					var o []*api.Order
 					if orders != nil {
-						for _, strategy := range s.strategies {
-							strategy.Parent().SetOrders(orders)
-						}
+						o = orders
 					}
+					s.APIData.SetOrders(o)
 				},
 				func() {
 					positions := s.fetch(func() (interface{}, error) {
@@ -177,9 +178,7 @@ func (s *Handler) fetchDataLoop() {
 					if positions != nil {
 						p = positions
 					}
-					for _, strategy := range s.strategies {
-						strategy.Parent().SetPositions(p)
-					}
+					s.APIData.SetPositions(p)
 				},
 				func() {
 					state := s.fetch(func() (interface{}, error) {
@@ -187,9 +186,7 @@ func (s *Handler) fetchDataLoop() {
 						return s.API.GetState()
 					}).(*api.State)
 					if state != nil {
-						for _, strategy := range s.strategies {
-							strategy.Parent().SetState(state)
-						}
+						s.APIData.SetState(state)
 					}
 				},
 			)

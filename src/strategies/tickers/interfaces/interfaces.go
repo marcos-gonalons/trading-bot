@@ -24,14 +24,8 @@ type BaseTickerClassInterface interface {
 	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
 	SetTrendsService(trendsService trends.Interface)
 	OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData)
-	SetOrders(orders []*api.Order)
-	GetOrders() []*api.Order
 	SetCurrentBrokerQuote(quote *api.Quote)
 	GetCurrentBrokerQuote() *api.Quote
-	SetPositions(positions []*api.Position)
-	GetPositions() []*api.Position
-	SetState(state *api.State)
-	GetState() *api.State
 	GetTimeframe() *types.Timeframe
 	GetSymbol() *types.Symbol
 }
