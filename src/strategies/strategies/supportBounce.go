@@ -50,6 +50,7 @@ func SupportBounce(params StrategyParams) {
 	p := utils.FindPositionBySymbol(params.BaseTickerClass.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName)
 	if p != nil && p.Side == ibroker.LongSide {
 		params.BaseTickerClass.CheckIfSLShouldBeAdjusted(params.TickerStrategyParams, p)
+		params.BaseTickerClass.CheckOpenPositionTTL(params.TickerStrategyParams, p)
 	}
 
 	lastCompletedCandleIndex := len(params.BaseTickerClass.CandlesHandler.GetCandles()) - 2

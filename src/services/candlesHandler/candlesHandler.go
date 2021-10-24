@@ -253,7 +253,7 @@ func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
 
 	for index, line := range csvLines {
 		s.candles = append(s.candles, &types.Candle{
-			Timestamp: 0,
+			Timestamp: s.getAsInt64(line[0], index),
 			Open:      s.getAsFloat64(line[1], index),
 			High:      s.getAsFloat64(line[2], index),
 			Low:       s.getAsFloat64(line[3], index),
@@ -285,6 +285,14 @@ func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
 
 func (s *Service) getAsFloat64(v string, index int) float64 {
 	r, e := strconv.ParseFloat(v, 64)
+	if e != nil {
+		panic("Error while reading csv line at " + strconv.Itoa(index) + e.Error())
+	}
+	return r
+}
+
+func (s *Service) getAsInt64(v string, index int) int64 {
+	r, e := strconv.ParseInt(v, 10, 64)
 	if e != nil {
 		panic("Error while reading csv line at " + strconv.Itoa(index) + e.Error())
 	}

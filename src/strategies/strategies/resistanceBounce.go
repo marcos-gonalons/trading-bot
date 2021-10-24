@@ -50,6 +50,7 @@ func ResistanceBounce(params StrategyParams) {
 	p := utils.FindPositionBySymbol(params.BaseTickerClass.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName)
 	if p != nil && p.Side == ibroker.ShortSide {
 		params.BaseTickerClass.CheckIfSLShouldBeAdjusted(params.TickerStrategyParams, p)
+		params.BaseTickerClass.CheckOpenPositionTTL(params.TickerStrategyParams, p)
 	}
 
 	lastCompletedCandleIndex := len(params.BaseTickerClass.CandlesHandler.GetCandles()) - 2

@@ -10,6 +10,7 @@ import (
 	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
+	"strconv"
 	"time"
 
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
@@ -28,14 +29,15 @@ type BaseTickerClass struct {
 	Symbol    types.Symbol
 	Timeframe types.Timeframe
 
-	currentExecutionTime time.Time
-	orders               []*api.Order
-	currentBrokerQuote   *api.Quote
-	positions            []*api.Position
-	state                *api.State
-	currentPosition      *api.Position
-	pendingOrder         *api.Order
-	currentOrder         *api.Order
+	currentExecutionTime      time.Time
+	orders                    []*api.Order
+	currentBrokerQuote        *api.Quote
+	positions                 []*api.Position
+	state                     *api.State
+	currentPosition           *api.Position
+	currentPositionExecutedAt time.Time
+	pendingOrder              *api.Order
+	currentOrder              *api.Order
 
 	eurExchangeRate float64
 }
@@ -206,6 +208,7 @@ func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.Tic
 
 		if position != nil && s.currentPosition == nil {
 			s.currentPosition = position
+			s.currentPositionExecutedAt = time.Now()
 
 			var tp string
 			var sl string
@@ -522,6 +525,29 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 			}(order),
 		},
 	)
+}
+
+func (s *BaseTickerClass) CheckOpenPositionTTL(params *types.TickerStrategyParams, position *api.Position) {
+	if params.MaxSecondsOpenTrade == 0 {
+		return
+	}
+
+	s.Log(s.Name, "Checking open position TTL, it was opened on "+s.currentPositionExecutedAt.Format("2006-01-02 15:04:05"))
+	s.Log(s.Name, "Position is "+utils.GetStringRepresentation(position))
+	s.Log(s.Name, "Max seconds open trade is"+strconv.FormatInt(params.MaxSecondsOpenTrade, 10))
+
+	var diffInSeconds = time.Now().Unix() - s.currentPositionExecutedAt.Unix()
+	s.Log(s.Name, "Difference in seconds is "+strconv.FormatInt(diffInSeconds, 10))
+
+	if diffInSeconds > params.MaxSecondsOpenTrade {
+		s.Log(s.Name, "Trade has been opened for too long, closing position ...")
+		s.APIRetryFacade.ClosePosition(s.currentPosition.Instrument, retryFacade.RetryParams{
+			DelayBetweenRetries: 5 * time.Second,
+			MaxRetries:          20,
+		})
+	} else {
+		s.Log(s.Name, "Not closing the trade yet")
+	}
 }
 
 func (s *BaseTickerClass) getSlAndTpOrders(
