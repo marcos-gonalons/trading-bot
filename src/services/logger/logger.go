@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"TradingBot/src/utils"
 	"fmt"
 	"io"
 	"os"
@@ -131,23 +132,23 @@ func (logger *Logger) ResetLogs() {
 		panic("Error reading the directory" + directory + " -> " + err.Error())
 	}
 
-	bkFolder := directory + "/backup-" + now.Format("2006-01-02")
+	bkFolder := directory + "backup-" + now.Format("2006-01-02") + "-" + utils.GetRandomString(4)
 	err = os.Mkdir(bkFolder, os.ModePerm)
 	if err != nil {
-		panic("Error while creating the backup log folder - " + bkFolder)
+		panic("Error while creating the backup log folder - " + bkFolder + ". Error is " + err.Error())
 	}
 
 	for index := range files {
 		file := files[index]
 
 		if !strings.Contains(file.Name(), "backup") {
-			err = os.Rename(directory+"/"+file.Name(), bkFolder+"/"+file.Name())
+			err = os.Rename(directory+file.Name(), bkFolder+"/"+file.Name())
 			if err != nil {
 				panic("Error moving the log file to the backup folder -> " + bkFolder + " -> " + file.Name() + " -> " + err.Error())
 			}
 		} else {
 			if now.Unix()-file.ModTime().Unix() > 60*60*24*7 {
-				err = os.RemoveAll("logs/" + file.Name())
+				err = os.RemoveAll(logger.rootPath + file.Name())
 				if err != nil {
 					panic("Error deleting the old backup folder " + file.Name() + " -> " + err.Error())
 				}
@@ -168,7 +169,7 @@ func (logger *Logger) doLog(message string, logFileName string) {
 		}
 	}
 
-	var fullLogFilePath = folderPath + "/" + logFileName
+	var fullLogFilePath = folderPath + logFileName
 
 	var logFile, err = os.OpenFile(fullLogFilePath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	defer logFile.Close()
