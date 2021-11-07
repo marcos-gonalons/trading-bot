@@ -1,7 +1,7 @@
 package constants
 
 import (
-	"TradingBot/src/services/api/ibroker"
+	ibroker "TradingBot/src/services/api/ibroker/constants"
 	logger "TradingBot/src/services/logger/types"
 	"TradingBot/src/types"
 )

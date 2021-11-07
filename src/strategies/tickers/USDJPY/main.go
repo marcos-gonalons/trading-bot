@@ -3,7 +3,7 @@ package USDJPY
 import (
 	"TradingBot/src/constants"
 	"TradingBot/src/services/api"
-	"TradingBot/src/services/api/ibroker"
+	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/strategies/strategies"

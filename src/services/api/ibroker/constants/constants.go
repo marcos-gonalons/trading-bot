@@ -1,4 +1,4 @@
-package ibroker
+package constants
 
 const GER30SymbolName = "GER30"
 

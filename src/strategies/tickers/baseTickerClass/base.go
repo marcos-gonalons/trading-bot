@@ -2,7 +2,7 @@ package baseTickerClass
 
 import (
 	"TradingBot/src/services/api"
-	"TradingBot/src/services/api/ibroker"
+	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/logger"

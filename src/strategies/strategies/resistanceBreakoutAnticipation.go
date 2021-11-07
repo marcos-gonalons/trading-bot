@@ -1,7 +1,7 @@
 package strategies
 
 import (
-	"TradingBot/src/services/api/ibroker"
+	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/strategies/tickers/baseTickerClass"
 	"TradingBot/src/utils"
