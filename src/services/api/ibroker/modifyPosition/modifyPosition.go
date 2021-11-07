@@ -2,7 +2,7 @@ package modifyposition
 
 import (
 	"TradingBot/src/services/httpclient"
-	"TradingBot/src/services/logger"
+	logger "TradingBot/src/services/logger/types"
 	"TradingBot/src/utils"
 	"errors"
 	"io"

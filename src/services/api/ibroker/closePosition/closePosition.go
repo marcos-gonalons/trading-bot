@@ -2,7 +2,7 @@ package closeposition
 
 import (
 	"TradingBot/src/services/httpclient"
-	"TradingBot/src/services/logger"
+	logger "TradingBot/src/services/logger/types"
 	"errors"
 	"net/http"
 )

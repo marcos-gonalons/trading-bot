@@ -12,68 +12,6 @@ import (
 	"time"
 )
 
-const (
-	// Default 1
-	Default types.LogType = 1
-
-	// LoginRequest 2
-	LoginRequest types.LogType = 2
-
-	// GetQuoteRequest 3
-	GetQuoteRequest types.LogType = 3
-
-	// CreateOrderRequest 4
-	CreateOrderRequest types.LogType = 4
-
-	// GetOrdersRequest 5
-	GetOrdersRequest types.LogType = 5
-
-	// ModifyOrderRequest 6
-	ModifyOrderRequest types.LogType = 6
-
-	// CloseOrderRequest 7
-	CloseOrderRequest types.LogType = 7
-
-	// GetPositionsRequest 8
-	GetPositionsRequest types.LogType = 8
-
-	// ClosePositionRequest 9
-	ClosePositionRequest types.LogType = 9
-
-	// GetStateRequest 10
-	GetStateRequest types.LogType = 10
-
-	// ModifyPositionRequest 11
-	ModifyPositionRequest types.LogType = 11
-
-	// ErrorLog 99
-	ErrorLog types.LogType = 99
-
-	// GER30 100
-	GER30 types.LogType = 100
-
-	// EURUSD 101
-	EURUSD types.LogType = 101
-
-	// GBPUSD 102
-	GBPUSD types.LogType = 102
-
-	// USDCAD 103
-	USDCAD types.LogType = 103
-
-	// USDJPY 104
-	USDJPY types.LogType = 104
-
-	// USDCHF 105
-	USDCHF types.LogType = 105
-
-	// NZDUSD 106
-	NZDUSD types.LogType = 106
-
-	// AUDUSD 107
-	AUDUSD types.LogType = 107
-)
-
 // Logger ...
 type Logger struct {
 	rootPath  string
@@ -83,7 +21,7 @@ type Logger struct {
 
 // Error logs the error in the normal log file + also in the error log file
 func (logger *Logger) Error(message string, logType ...types.LogType) {
-	logType = append(logType, ErrorLog)
+	logType = append(logType, types.ErrorLog)
 	logger.Log(message, logType...)
 }
 
@@ -95,14 +33,14 @@ func (logger *Logger) Log(message string, logType ...types.LogType) {
 
 		if len(logType) > 0 {
 			logFileName = logger.fileNames[logType[0]]
-			if logType[len(logType)-1] == ErrorLog {
+			if logType[len(logType)-1] == types.ErrorLog {
 				isError = true
 			}
 		} else {
-			logFileName = logger.fileNames[Default]
+			logFileName = logger.fileNames[types.Default]
 		}
 
-		if logFileName == logger.fileNames[Default] || isError {
+		if logFileName == logger.fileNames[types.Default] || isError {
 			var ioWriter io.Writer
 			ioWriter = os.Stdout
 			fmt.Fprintf(ioWriter, message)
@@ -111,7 +49,7 @@ func (logger *Logger) Log(message string, logType ...types.LogType) {
 
 		logger.doLog(message, logFileName)
 		if isError {
-			logger.doLog(message, logger.fileNames[ErrorLog])
+			logger.doLog(message, logger.fileNames[types.ErrorLog])
 		}
 	}()
 }
@@ -194,26 +132,26 @@ var logger *Logger
 
 func init() {
 	filePathsMap := make(map[types.LogType]string)
-	filePathsMap[Default] = "bot"
-	filePathsMap[LoginRequest] = "loginRequest"
-	filePathsMap[GetQuoteRequest] = "getQuoteRequest"
-	filePathsMap[CreateOrderRequest] = "createOrderRequest"
-	filePathsMap[GetOrdersRequest] = "getOrdersRequest"
-	filePathsMap[ModifyOrderRequest] = "modifyOrderRequest"
-	filePathsMap[CloseOrderRequest] = "closeOrderRequest"
-	filePathsMap[GetPositionsRequest] = "getPositionsRequest"
-	filePathsMap[ClosePositionRequest] = "closePositionRequest"
-	filePathsMap[GetStateRequest] = "getStateRequest"
-	filePathsMap[ModifyPositionRequest] = "modifyPositionRequest"
-	filePathsMap[ErrorLog] = "errors"
-	filePathsMap[GER30] = "GER30"
-	filePathsMap[EURUSD] = "EURUSD"
-	filePathsMap[GBPUSD] = "GBPUSD"
-	filePathsMap[USDCAD] = "USDCAD"
-	filePathsMap[USDJPY] = "USDJPY"
-	filePathsMap[USDCHF] = "USDCHF"
-	filePathsMap[NZDUSD] = "NZDUSD"
-	filePathsMap[AUDUSD] = "AUDUSD"
+	filePathsMap[types.Default] = "bot"
+	filePathsMap[types.LoginRequest] = "loginRequest"
+	filePathsMap[types.GetQuoteRequest] = "getQuoteRequest"
+	filePathsMap[types.CreateOrderRequest] = "createOrderRequest"
+	filePathsMap[types.GetOrdersRequest] = "getOrdersRequest"
+	filePathsMap[types.ModifyOrderRequest] = "modifyOrderRequest"
+	filePathsMap[types.CloseOrderRequest] = "closeOrderRequest"
+	filePathsMap[types.GetPositionsRequest] = "getPositionsRequest"
+	filePathsMap[types.ClosePositionRequest] = "closePositionRequest"
+	filePathsMap[types.GetStateRequest] = "getStateRequest"
+	filePathsMap[types.ModifyPositionRequest] = "modifyPositionRequest"
+	filePathsMap[types.ErrorLog] = "errors"
+	filePathsMap[types.GER30] = "GER30"
+	filePathsMap[types.EURUSD] = "EURUSD"
+	filePathsMap[types.GBPUSD] = "GBPUSD"
+	filePathsMap[types.USDCAD] = "USDCAD"
+	filePathsMap[types.USDJPY] = "USDJPY"
+	filePathsMap[types.USDCHF] = "USDCHF"
+	filePathsMap[types.NZDUSD] = "NZDUSD"
+	filePathsMap[types.AUDUSD] = "AUDUSD"
 
 	logger = &Logger{
 		"logs/",

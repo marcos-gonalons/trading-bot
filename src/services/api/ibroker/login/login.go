@@ -3,7 +3,7 @@ package login
 import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/httpclient"
-	"TradingBot/src/services/logger"
+	logger "TradingBot/src/services/logger/types"
 	"TradingBot/src/utils"
 
 	"errors"
