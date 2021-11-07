@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"TradingBot/src/constants"
 	"TradingBot/src/services/api"
 	"TradingBot/src/types"
 	"bytes"
@@ -128,10 +129,14 @@ func GetCurrentTimeHourAndMinutes() (int, int) {
 
 // IsNowWithinTradingHours ...
 func IsNowWithinTradingHours(symbol *types.Symbol) bool {
-	// todo: forex is tradeable on sunday 23:00, do something similar as in candleshander
-	// utils.IsOutsideForexHours
-	if IsNowWeekend() && !symbol.TradeableOnWeekends {
-		return false
+	if symbol.MarketType == constants.ForexType {
+		if IsOutsideForexHours(time.Now()) {
+			return false
+		}
+	} else {
+		if IsNowWeekend() && !symbol.TradeableOnWeekends {
+			return false
+		}
 	}
 
 	if symbol.TradingHours.Start == symbol.TradingHours.End {
