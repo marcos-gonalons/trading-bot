@@ -236,7 +236,6 @@ func (s *Service) createCSVFile(fileName string) {
 			s.csvFileMtx.Unlock()
 			s.Logger.Error("Error while creating the csv file -> " + err.Error())
 		} else {
-			// csvFile.Write([]byte("Time,Open,High,Low,Close,Volume\n"))
 			s.csvFileMtx.Unlock()
 		}
 	}
@@ -255,26 +254,40 @@ func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
 		panic("Error while reading the .csv file -> " + err.Error())
 	}
 
+	tempFileName := utils.GetRandomString(10) + ".csv"
+	s.createCSVFile(tempFileName)
+
 	for index, line := range csvLines {
-		s.candles = append(s.candles, &types.Candle{
+		candle := &types.Candle{
 			Timestamp: s.getAsInt64(line[0], index),
 			Open:      s.getAsFloat64(line[1], index),
 			High:      s.getAsFloat64(line[2], index),
 			Low:       s.getAsFloat64(line[3], index),
 			Close:     s.getAsFloat64(line[4], index),
 			Volume:    s.getAsFloat64(line[5], index),
-		})
+		}
+		s.candles = append(s.candles, candle)
+
+		if index < len(csvLines)-1 {
+			s.writeRowIntoCSVFile(s.getRowForCSV(candle), tempFileName)
+		}
 	}
 
 	if len(s.candles) > 0 {
-		s.candles = append(s.candles, &types.Candle{
-			Open:      s.GetLastCandle().Close,
-			Low:       s.GetLastCandle().Close,
-			High:      s.GetLastCandle().Close,
-			Close:     s.GetLastCandle().Close,
-			Volume:    0,
-			Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
-		})
+		s.csvFileMtx.Lock()
+		defer func() {
+			s.csvFileMtx.Unlock()
+		}()
+
+		err := os.Remove(CandlesFolder + s.csvFileName)
+		if err != nil {
+			panic("Error while removing the csv file -> " + err.Error())
+		}
+
+		err = os.Rename(CandlesFolder+tempFileName, CandlesFolder+s.csvFileName)
+		if err != nil {
+			panic("Error renaming the temp csv file -> " + err.Error())
+		}
 	} else {
 		s.candles = append(s.candles, &types.Candle{
 			Open:      0,
