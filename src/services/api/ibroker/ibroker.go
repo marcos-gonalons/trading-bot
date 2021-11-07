@@ -12,6 +12,7 @@ import (
 	modifyorder "TradingBot/src/services/api/ibroker/modifyOrder"
 	modifyposition "TradingBot/src/services/api/ibroker/modifyPosition"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/services/logger/types"
 	"errors"
 
 	"encoding/json"
@@ -379,7 +380,7 @@ func (s *API) GetWorkingOrderWithBracketOrders(side string, symbol string, order
 }
 
 func (s *API) apiCall(
-	logType logger.LogType,
+	logType types.LogType,
 	call func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (interface{}, error),
 ) (r interface{}, err error) {
 	defer func() {
@@ -425,7 +426,7 @@ func (s *API) setHeaders(rq *http.Request, isOptionsRequest bool, method string)
 	rq.Header.Set("Accept-Language", "en-US,en;q=0.9,es;q=0.8")
 }
 
-func (s *API) optionsRequest(url string, method string, logType logger.LogType) (err error) {
+func (s *API) optionsRequest(url string, method string, logType types.LogType) (err error) {
 	// The OPTIONS request is, of course, not really needed outside a browser's context.
 	// But since we want to simulate we are in the browser, we send the options request anyway.
 	rq, err := http.NewRequest(
@@ -446,7 +447,7 @@ func (s *API) optionsRequest(url string, method string, logType logger.LogType) 
 	return
 }
 
-func (s *API) logAPIResult(response interface{}, err error, logType logger.LogType) {
+func (s *API) logAPIResult(response interface{}, err error, logType types.LogType) {
 	if err != nil {
 		s.logger.Error("ERROR -> "+err.Error(), logType)
 	} else {

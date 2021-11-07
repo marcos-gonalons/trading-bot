@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"TradingBot/src/services/logger"
+	"TradingBot/src/services/logger/types"
 	"bytes"
 	"encoding/json"
 	"io"
@@ -18,7 +19,7 @@ type Service struct {
 }
 
 // Do ...
-func (s *Service) Do(rq *http.Request, logType logger.LogType) (*http.Response, error) {
+func (s *Service) Do(rq *http.Request, logType types.LogType) (*http.Response, error) {
 	s.Logger.Log("REQUEST -> "+s.getRQStringRepresentation(rq), logType)
 	return s.Client.Do(rq)
 }

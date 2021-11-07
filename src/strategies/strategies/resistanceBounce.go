@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+// todo: code is very similar between strategies, find a way to reuse code
+// things like checking valid time, the pending orders logic and CheckIfSLShouldBeAdjusted/CheckOpenPositionTTL are the same for every strategy
+// so maybe move that code somewhere else so it can be shared between all the strategies
+// idea: parent strategy class with method "Execute"
+// This method accepts a func() with the custom strategy code. Before calling this code, we will call the shared code
+
 // ResistanceBounce ...
 func ResistanceBounce(params StrategyParams) {
 	var strategyName = params.BaseTickerClass.Name + " - RB"

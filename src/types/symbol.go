@@ -1,6 +1,6 @@
 package types
 
-import "TradingBot/src/services/logger"
+import logger "TradingBot/src/services/logger/types"
 
 type Symbol struct {
 	BrokerAPIName       string

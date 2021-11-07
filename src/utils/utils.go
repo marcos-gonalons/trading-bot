@@ -128,6 +128,8 @@ func GetCurrentTimeHourAndMinutes() (int, int) {
 
 // IsNowWithinTradingHours ...
 func IsNowWithinTradingHours(symbol *types.Symbol) bool {
+	// todo: forex is tradeable on sunday 23:00, do something similar as in candleshander
+	// utils.IsOutsideForexHours
 	if IsNowWeekend() && !symbol.TradeableOnWeekends {
 		return false
 	}

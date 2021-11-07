@@ -262,6 +262,7 @@ func (s *Handler) panicIfTooManyAPIFails() {
 
 func (s *Handler) initStrategies() {
 	for _, strategy := range s.strategies {
+		s.Logger.Log("Initializing strategy " + strategy.Parent().GetSymbol().BrokerAPIName)
 		go strategy.Initialize()
 	}
 }

@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"TradingBot/src/services/logger/types"
 	"TradingBot/src/utils"
 	"fmt"
 	"io"
@@ -11,86 +12,83 @@ import (
 	"time"
 )
 
-// LogType determines which log file to use
-type LogType uint8
-
 const (
 	// Default 1
-	Default LogType = 1
+	Default types.LogType = 1
 
 	// LoginRequest 2
-	LoginRequest LogType = 2
+	LoginRequest types.LogType = 2
 
 	// GetQuoteRequest 3
-	GetQuoteRequest LogType = 3
+	GetQuoteRequest types.LogType = 3
 
 	// CreateOrderRequest 4
-	CreateOrderRequest LogType = 4
+	CreateOrderRequest types.LogType = 4
 
 	// GetOrdersRequest 5
-	GetOrdersRequest LogType = 5
+	GetOrdersRequest types.LogType = 5
 
 	// ModifyOrderRequest 6
-	ModifyOrderRequest LogType = 6
+	ModifyOrderRequest types.LogType = 6
 
 	// CloseOrderRequest 7
-	CloseOrderRequest LogType = 7
+	CloseOrderRequest types.LogType = 7
 
 	// GetPositionsRequest 8
-	GetPositionsRequest LogType = 8
+	GetPositionsRequest types.LogType = 8
 
 	// ClosePositionRequest 9
-	ClosePositionRequest LogType = 9
+	ClosePositionRequest types.LogType = 9
 
 	// GetStateRequest 10
-	GetStateRequest LogType = 10
+	GetStateRequest types.LogType = 10
 
 	// ModifyPositionRequest 11
-	ModifyPositionRequest LogType = 11
+	ModifyPositionRequest types.LogType = 11
 
 	// ErrorLog 99
-	ErrorLog LogType = 99
+	ErrorLog types.LogType = 99
 
 	// GER30 100
-	GER30 LogType = 100
+	GER30 types.LogType = 100
 
 	// EURUSD 101
-	EURUSD LogType = 101
+	EURUSD types.LogType = 101
 
 	// GBPUSD 102
-	GBPUSD LogType = 102
+	GBPUSD types.LogType = 102
 
 	// USDCAD 103
-	USDCAD LogType = 103
+	USDCAD types.LogType = 103
 
 	// USDJPY 104
-	USDJPY LogType = 104
+	USDJPY types.LogType = 104
 
 	// USDCHF 105
-	USDCHF LogType = 105
+	USDCHF types.LogType = 105
 
 	// NZDUSD 106
-	NZDUSD LogType = 106
+	NZDUSD types.LogType = 106
 
 	// AUDUSD 107
-	AUDUSD LogType = 107
+	AUDUSD types.LogType = 107
 )
 
 // Logger ...
 type Logger struct {
 	rootPath  string
-	fileNames map[LogType]string
+	fileNames map[types.LogType]string
 	mtx       sync.Mutex
 }
 
 // Error logs the error in the normal log file + also in the error log file
-func (logger *Logger) Error(message string, logType ...LogType) {
+func (logger *Logger) Error(message string, logType ...types.LogType) {
 	logType = append(logType, ErrorLog)
 	logger.Log(message, logType...)
 }
 
 // Log logs a message
-func (logger *Logger) Log(message string, logType ...LogType) {
+func (logger *Logger) Log(message string, logType ...types.LogType) {
 	go func() {
 		var logFileName string
 		isError := false
@@ -195,7 +193,7 @@ func (logger *Logger) doLog(message string, logFileName string) {
 var logger *Logger
 
 func init() {
-	filePathsMap := make(map[LogType]string)
+	filePathsMap := make(map[types.LogType]string)
 	filePathsMap[Default] = "bot"
 	filePathsMap[LoginRequest] = "loginRequest"
 	filePathsMap[GetQuoteRequest] = "getQuoteRequest"
