@@ -106,8 +106,8 @@ func setupOSSignalsNotifications(API api.Interface) {
 	go func() {
 		sig := <-sigs
 		fmt.Printf("%#v", sig)
-		API.CloseAllPositions()
-		API.CloseAllOrders()
+		//API.CloseAllPositions()
+		//API.CloseAllOrders()
 		os.Exit(0)
 	}()
 }
