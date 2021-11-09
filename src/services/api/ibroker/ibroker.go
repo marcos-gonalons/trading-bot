@@ -17,6 +17,7 @@ import (
 
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"time"
 
 	"TradingBot/src/services/api"
@@ -152,7 +153,7 @@ func (s *API) ClosePosition(symbol string) (err error) {
 	_, err = s.apiCall(
 		types.ClosePositionRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
-			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + symbol
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + url.QueryEscape(symbol)
 			return closeposition.Request(
 				url,
 				s.httpclient,
@@ -238,7 +239,7 @@ func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string
 	_, err = s.apiCall(
 		types.ModifyPositionRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
-			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + symbol
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + url.QueryEscape(symbol)
 			return modifyposition.Request(
 				url,
 				s.httpclient,

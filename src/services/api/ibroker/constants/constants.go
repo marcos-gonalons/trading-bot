@@ -4,19 +4,19 @@ const GER30SymbolName = "GER30"
 
 const SP500SymbolName = "SPX500"
 
-const EURUSDSymbolName = "EUR%2FUSD"
+const EURUSDSymbolName = "EUR/USD"
 
-const GBPUSDSymbolName = "GBP%2FUSD"
+const GBPUSDSymbolName = "GBP/USD"
 
-const USDCADSymbolName = "USD%2FCAD"
+const USDCADSymbolName = "USD/CAD"
 
-const USDJPYSymbolName = "USD%2FJPY"
+const USDJPYSymbolName = "USD/JPY"
 
-const USDCHFSymbolName = "USD%2FCHF"
+const USDCHFSymbolName = "USD/CHF"
 
-const NZDUSDSymbolName = "NZD%2FUSD"
+const NZDUSDSymbolName = "NZD/USD"
 
-const AUDUSDSymbolName = "AUD%2FUSD"
+const AUDUSDSymbolName = "AUD/USD"
 
 var SessionDisconnectedErrorStrings = []string{
 	"Your session is disconnected. Please login again to initialize a new valid session.",

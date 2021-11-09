@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 // RequestParameters ...
@@ -75,7 +76,7 @@ func getRequestBody(order *api.Order) io.Reader {
 		"currentAsk=" + *order.StringValues.CurrentAsk + "&" +
 		"currentBid=" + *order.StringValues.CurrentBid + "&" +
 		"durationType=DAY&" +
-		"instrument=" + order.Instrument + "&" +
+		"instrument=" + url.QueryEscape(order.Instrument) + "&" +
 		"side=" + order.Side + "&" +
 		"type=" + order.Type + "&" +
 		"qty=" + *order.StringValues.Qty
