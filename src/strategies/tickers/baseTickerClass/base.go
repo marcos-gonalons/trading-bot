@@ -506,6 +506,10 @@ func (s *BaseTickerClass) CheckOpenPositionTTL(params *types.TickerStrategyParam
 	if params.MaxSecondsOpenTrade == 0 {
 		return
 	}
+	if s.currentPosition == nil {
+		s.Log(s.Name, "CheckOpenPositionTTL called, but currentPosition is nil")
+		return
+	}
 
 	s.Log(s.Name, "Checking open position TTL, it was opened on "+s.currentPositionExecutedAt.Format("2006-01-02 15:04:05"))
 	s.Log(s.Name, "Position is "+utils.GetStringRepresentation(position))
