@@ -185,18 +185,22 @@ func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.Tic
 			var sl string
 			var closePosition bool = false
 
-			if s.API.IsShortPosition(s.currentPosition) {
-				if s.API.IsStopOrder(s.currentOrder) && float64(*s.currentOrder.StopPrice-s.currentPosition.AvgPrice) > shortParams.MaxTradeExecutionPriceDifference {
-					closePosition = true
+			if s.currentOrder != nil {
+				if s.API.IsShortPosition(s.currentPosition) {
+					if s.API.IsStopOrder(s.currentOrder) && float64(*s.currentOrder.StopPrice-s.currentPosition.AvgPrice) > shortParams.MaxTradeExecutionPriceDifference {
+						closePosition = true
+					}
+					tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-shortParams.TakeProfitDistance), s.GetSymbol().PriceDecimals)
+					sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+shortParams.StopLossDistance), s.GetSymbol().PriceDecimals)
+				} else {
+					if s.API.IsStopOrder(s.currentOrder) && float64(s.currentPosition.AvgPrice-*s.currentOrder.StopPrice) > longParams.MaxTradeExecutionPriceDifference {
+						closePosition = true
+					}
+					tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+longParams.TakeProfitDistance), s.GetSymbol().PriceDecimals)
+					sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-longParams.StopLossDistance), s.GetSymbol().PriceDecimals)
 				}
-				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-shortParams.TakeProfitDistance), s.GetSymbol().PriceDecimals)
-				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+shortParams.StopLossDistance), s.GetSymbol().PriceDecimals)
 			} else {
-				if s.API.IsStopOrder(s.currentOrder) && float64(s.currentPosition.AvgPrice-*s.currentOrder.StopPrice) > longParams.MaxTradeExecutionPriceDifference {
-					closePosition = true
-				}
-				tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+longParams.TakeProfitDistance), s.GetSymbol().PriceDecimals)
-				sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-longParams.StopLossDistance), s.GetSymbol().PriceDecimals)
+				s.Log(s.Name, "current order is nil (because the order was created manually on the broker)")
 			}
 
 			if closePosition {
@@ -223,11 +227,13 @@ func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.Tic
 						},
 					})
 			} else {
-				s.Log(s.Name, "Modifying the SL and TP of the recently open position ... ")
-				s.APIRetryFacade.ModifyPosition(s.GetSymbol().BrokerAPIName, tp, sl, retryFacade.RetryParams{
-					DelayBetweenRetries: 5 * time.Second,
-					MaxRetries:          20,
-				})
+				if s.currentOrder != nil {
+					s.Log(s.Name, "Modifying the SL and TP of the recently opened position ... ")
+					s.APIRetryFacade.ModifyPosition(s.GetSymbol().BrokerAPIName, tp, sl, retryFacade.RetryParams{
+						DelayBetweenRetries: 5 * time.Second,
+						MaxRetries:          20,
+					})
+				}
 			}
 		}
 
