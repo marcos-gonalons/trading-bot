@@ -141,8 +141,10 @@ func (s *Handler) fetchDataLoop() {
 					return func() {
 						quote := s.fetch(func() (interface{}, error) {
 							defer waitingGroup.Done()
+							s.Logger.Log("Fetching quote ...")
 							return s.API.GetQuote(symbol)
 						}).(*api.Quote)
+						s.Logger.Log("Quote is -> " + utils.GetStringRepresentation(quote))
 						if quote != nil {
 							for _, strategy := range s.strategies {
 								if strategy.Parent().GetSymbol().BrokerAPIName != symbol {
@@ -161,8 +163,10 @@ func (s *Handler) fetchDataLoop() {
 				func() {
 					orders := s.fetch(func() (interface{}, error) {
 						defer waitingGroup.Done()
+						s.Logger.Log("Fetching orders ...")
 						return s.API.GetOrders()
 					}).([]*api.Order)
+					s.Logger.Log("Orders is -> " + utils.GetStringRepresentation(orders))
 					var o []*api.Order
 					if orders != nil {
 						o = orders
@@ -172,8 +176,10 @@ func (s *Handler) fetchDataLoop() {
 				func() {
 					positions := s.fetch(func() (interface{}, error) {
 						defer waitingGroup.Done()
+						s.Logger.Log("Fetching positions ...")
 						return s.API.GetPositions()
 					}).([]*api.Position)
+					s.Logger.Log("Positions is -> " + utils.GetStringRepresentation(positions))
 					var p []*api.Position
 					if positions != nil {
 						p = positions
@@ -183,8 +189,10 @@ func (s *Handler) fetchDataLoop() {
 				func() {
 					state := s.fetch(func() (interface{}, error) {
 						defer waitingGroup.Done()
+						s.Logger.Log("Fetching state ...")
 						return s.API.GetState()
 					}).(*api.State)
+					s.Logger.Log("State is -> " + utils.GetStringRepresentation(state))
 					if state != nil {
 						s.APIData.SetState(state)
 					}

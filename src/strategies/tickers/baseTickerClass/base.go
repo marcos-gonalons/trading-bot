@@ -172,8 +172,12 @@ func (s *BaseTickerClass) CheckIfSLShouldBeAdjusted(
 
 func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.TickerStrategyParams, shortParams *types.TickerStrategyParams) {
 	for {
+		positions := s.APIData.GetPositions()
+		symbolName := s.GetSymbol().BrokerAPIName
 		s.Log(s.Name, "Checking newest open position")
-		position := utils.FindPositionBySymbol(s.APIData.GetPositions(), s.GetSymbol().BrokerAPIName)
+		s.Log(s.Name, "Positions is -> "+utils.GetStringRepresentation(positions))
+		s.Log(s.Name, "Symbol name is -> "+symbolName)
+		position := utils.FindPositionBySymbol(positions, symbolName)
 		s.Log(s.Name, "Position ->"+utils.GetStringRepresentation(position))
 		s.Log(s.Name, "Current position ->"+utils.GetStringRepresentation(s.currentPosition))
 
