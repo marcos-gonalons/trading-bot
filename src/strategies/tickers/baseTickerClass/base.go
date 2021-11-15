@@ -487,23 +487,31 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		}
 	}
 
-	s.APIRetryFacade.CreateOrder(
-		order,
-		func() *api.Quote {
-			return s.GetCurrentBrokerQuote()
-		},
-		s.SetStringValues,
-		retryFacade.RetryParams{
-			DelayBetweenRetries: 10 * time.Second,
-			MaxRetries:          20,
-			SuccessCallback: func(order *api.Order) func() {
-				return func() {
-					s.SetCurrentOrder(order)
-					s.Log(params.StrategyName, "New order successfully created ... "+utils.GetStringRepresentation(s.GetCurrentOrder()))
-				}
-			}(order),
-		},
-	)
+	if s.currentPosition == nil {
+		s.Log(params.StrategyName, "There isn't any open position, let's create the order ...")
+
+		s.APIRetryFacade.CreateOrder(
+			order,
+			func() *api.Quote {
+				return s.GetCurrentBrokerQuote()
+			},
+			s.SetStringValues,
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 10 * time.Second,
+				MaxRetries:          20,
+				SuccessCallback: func(order *api.Order) func() {
+					return func() {
+						s.SetCurrentOrder(order)
+						s.Log(params.StrategyName, "New order successfully created ... "+utils.GetStringRepresentation(s.GetCurrentOrder()))
+					}
+				}(order),
+			},
+		)
+	} else {
+		s.Log(params.StrategyName, "Not creating the order since there is an open position")
+		s.Log(params.StrategyName, "Position is -> "+utils.GetStringRepresentation(s.currentPosition))
+	}
+
 }
 
 func (s *BaseTickerClass) CheckOpenPositionTTL(params *types.TickerStrategyParams, position *api.Position) {
