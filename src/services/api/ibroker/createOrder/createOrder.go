@@ -75,7 +75,7 @@ func getRequestBody(order *api.Order) io.Reader {
 	body := "" +
 		"currentAsk=" + *order.StringValues.CurrentAsk + "&" +
 		"currentBid=" + *order.StringValues.CurrentBid + "&" +
-		"durationType=DAY&" +
+		"durationType=GTC&" +
 		"instrument=" + url.QueryEscape(order.Instrument) + "&" +
 		"side=" + order.Side + "&" +
 		"type=" + order.Type + "&" +
