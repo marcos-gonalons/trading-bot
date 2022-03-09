@@ -232,6 +232,9 @@ func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.Tic
 					})
 			} else {
 				if s.currentOrder != nil {
+					// TODO: investigate why this executed at 23:00, causing an error saying
+					// that it can't be traded at 23:00 (since it's not market hours),
+					// causing the app to panic after reaching lot's of unsuccessful tries
 					s.Log(s.Name, "Modifying the SL and TP of the recently opened position ... ")
 					s.APIRetryFacade.ModifyPosition(s.GetSymbol().BrokerAPIName, tp, sl, retryFacade.RetryParams{
 						DelayBetweenRetries: 5 * time.Second,

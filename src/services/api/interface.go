@@ -23,6 +23,7 @@ type Interface interface {
 
 	IsSessionDisconnectedError(err error) bool
 	IsOrderAlreadyExistsError(err error) bool
+	IsPositionAlreadyExistsError(err error) bool
 	IsNotEnoughFundsError(err error) bool
 	IsOrderPendingCancelError(err error) bool
 	IsOrderCancelledError(err error) bool

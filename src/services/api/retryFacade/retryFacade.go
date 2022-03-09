@@ -180,7 +180,8 @@ func (s *APIFacade) CreateOrder(
 			err = s.API.CreateOrder(order)
 			if err != nil {
 				s.Logger.Error("Error when creating the order -> " + err.Error())
-				if s.API.IsOrderAlreadyExistsError(err) || s.API.IsNotEnoughFundsError(err) {
+				// todo: group this errors into 'known errors' or 'acceptable errors'
+				if s.API.IsOrderAlreadyExistsError(err) || s.API.IsNotEnoughFundsError(err) || s.API.IsPositionAlreadyExistsError(err) {
 					err = nil
 				}
 			} else {

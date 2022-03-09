@@ -26,6 +26,11 @@ func (s *API) IsOrderAlreadyExistsError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), constants.OrderAlreadyExistsErrorString)
 }
 
+// IsPositionAlreadyExistsError ...
+func (s *API) IsPositionAlreadyExistsError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), constants.PositionAlreadyExistsErrorString)
+}
+
 // IsNotEnoughFundsError ...
 func (s *API) IsNotEnoughFundsError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), constants.NotEnoughFundsErrorString)

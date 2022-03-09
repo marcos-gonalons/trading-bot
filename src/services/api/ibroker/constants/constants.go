@@ -25,6 +25,8 @@ var SessionDisconnectedErrorStrings = []string{
 
 const OrderAlreadyExistsErrorString = "ya existe alguna orden vigente"
 
+const PositionAlreadyExistsErrorString = "No es posible introducir una nueva orden con bracket TP/SL"
+
 const NotEnoughFundsErrorString = "Saldo insuficiente"
 
 const OrderIsPendingCancelErrorString = "Pending Cancel"
