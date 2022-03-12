@@ -181,7 +181,7 @@ func (s *APIFacade) CreateOrder(
 			if err != nil {
 				s.Logger.Error("Error when creating the order -> " + err.Error())
 				// todo: group this errors into 'known errors' or 'acceptable errors'
-				if s.API.IsOrderAlreadyExistsError(err) || s.API.IsNotEnoughFundsError(err) || s.API.IsPositionAlreadyExistsError(err) {
+				if s.API.IsOrderAlreadyExistsError(err) || s.API.IsNotEnoughFundsError(err) || s.API.IsPositionAlreadyExistsError(err) || s.API.IsInvalidHoursError(err) {
 					err = nil
 				}
 			} else {
