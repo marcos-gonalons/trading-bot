@@ -53,7 +53,7 @@ func (s *API) IsOrderFilledError(err error) bool {
 
 // IsInvalidHoursError ...
 func (s *API) IsInvalidHoursError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), constants.InvalidHoursErrorString)
+	return err != nil && (strings.Contains(err.Error(), constants.InvalidHoursErrorString) || strings.Contains(err.Error(), constants.InvalidHoursErrorString2))
 }
 
 // IsClosePositionRequestInProgressError ...

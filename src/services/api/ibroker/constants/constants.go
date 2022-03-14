@@ -37,6 +37,8 @@ const OrderIsFilledErrorString = "Order Status is Filled"
 
 const InvalidHoursErrorString = "Horario incorrecto"
 
+const InvalidHoursErrorString2 = "cerrada a esta hora"
+
 const ClosePositionRequestInProgressErrorString = "Orden de cerrar no procesada porque existe otra orden en curso"
 
 const StatusWorkingOrder = "working"
