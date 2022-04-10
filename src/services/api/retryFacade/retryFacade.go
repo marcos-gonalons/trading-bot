@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/utils"
-	"strings"
 )
 
 // APIFacade ...
@@ -128,7 +127,7 @@ func (s *APIFacade) ModifyPosition(
 			err = s.API.ModifyPosition(symbol, &tp, &sl)
 			if err != nil {
 				s.Logger.Error("An error happened while modifying the position -> " + err.Error())
-				if strings.Contains(err.Error(), "no tiene posición abierta en el contrato") {
+				if s.API.IsPositionNotFoundError(err) || s.API.IsInvalidHoursError(err) {
 					err = nil
 				}
 			}

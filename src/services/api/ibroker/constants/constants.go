@@ -39,7 +39,11 @@ const InvalidHoursErrorString = "Horario incorrecto"
 
 const InvalidHoursErrorString2 = "cerrada a esta hora"
 
+const InvalidHoursErrorString3 = "Contrato en fase Closed"
+
 const ClosePositionRequestInProgressErrorString = "Orden de cerrar no procesada porque existe otra orden en curso"
+
+const PositionNotFoundError = "no tiene posición abierta en el contrato"
 
 const StatusWorkingOrder = "working"
 

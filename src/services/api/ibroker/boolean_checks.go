@@ -53,12 +53,17 @@ func (s *API) IsOrderFilledError(err error) bool {
 
 // IsInvalidHoursError ...
 func (s *API) IsInvalidHoursError(err error) bool {
-	return err != nil && (strings.Contains(err.Error(), constants.InvalidHoursErrorString) || strings.Contains(err.Error(), constants.InvalidHoursErrorString2))
+	return err != nil && (strings.Contains(err.Error(), constants.InvalidHoursErrorString) || strings.Contains(err.Error(), constants.InvalidHoursErrorString2) || strings.Contains(err.Error(), constants.InvalidHoursErrorString3))
 }
 
 // IsClosePositionRequestInProgressError ...
 func (s *API) IsClosePositionRequestInProgressError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), constants.ClosePositionRequestInProgressErrorString)
+}
+
+// IsPositionNotFoundError ...
+func (s *API) IsPositionNotFoundError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), constants.PositionNotFoundError)
 }
 
 // IsLimitOrder ...

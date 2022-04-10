@@ -30,6 +30,7 @@ type Interface interface {
 	IsOrderFilledError(err error) bool
 	IsInvalidHoursError(err error) bool
 	IsClosePositionRequestInProgressError(err error) bool
+	IsPositionNotFoundError(err error) bool
 
 	IsWorkingOrder(order *Order) bool
 	IsLimitOrder(order *Order) bool
