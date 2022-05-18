@@ -1,7 +1,7 @@
 package types
 
-// TickerStrategyParams ...
-type TickerStrategyParams struct {
+// MarketStrategyParams ...
+type MarketStrategyParams struct {
 	RiskPercentage                   float64
 	StopLossDistance                 float32
 	TakeProfitDistance               float32

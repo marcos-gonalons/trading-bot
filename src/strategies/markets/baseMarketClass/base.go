@@ -1,4 +1,4 @@
-package baseTickerClass
+package baseMarketClass
 
 import (
 	"TradingBot/src/services/api"
@@ -16,8 +16,8 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
-// BaseTickerClass ...
-type BaseTickerClass struct {
+// BaseMarketClass ...
+type BaseMarketClass struct {
 	APIRetryFacade          retryFacade.Interface
 	API                     api.Interface
 	APIData                 api.DataInterface
@@ -41,62 +41,62 @@ type BaseTickerClass struct {
 }
 
 // SetCandlesHandler ...
-func (s *BaseTickerClass) SetCandlesHandler(candlesHandler candlesHandler.Interface) {
+func (s *BaseMarketClass) SetCandlesHandler(candlesHandler candlesHandler.Interface) {
 	s.CandlesHandler = candlesHandler
 }
 
 // SetHorizontalLevelsService ...
-func (s *BaseTickerClass) SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface) {
+func (s *BaseMarketClass) SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface) {
 	s.HorizontalLevelsService = horizontalLevelsService
 }
 
 // SetTrendsService ...
-func (s *BaseTickerClass) SetTrendsService(trendsService trends.Interface) {
+func (s *BaseMarketClass) SetTrendsService(trendsService trends.Interface) {
 	s.TrendsService = trendsService
 }
 
 // GetTimeframe ...
-func (s *BaseTickerClass) GetTimeframe() *types.Timeframe {
+func (s *BaseMarketClass) GetTimeframe() *types.Timeframe {
 	return &s.Timeframe
 }
 
 // GetSymbol ...
-func (s *BaseTickerClass) GetSymbol() *types.Symbol {
+func (s *BaseMarketClass) GetSymbol() *types.Symbol {
 	return &s.Symbol
 }
 
 // Initialize ...
-func (s *BaseTickerClass) Initialize() {
+func (s *BaseMarketClass) Initialize() {
 	s.SetEurExchangeRate(1)
 }
 
 // DailyReset ...
-func (s *BaseTickerClass) DailyReset() {
+func (s *BaseMarketClass) DailyReset() {
 
 }
 
 // SetCurrentBrokerQuote ...
-func (s *BaseTickerClass) SetCurrentBrokerQuote(quote *api.Quote) {
+func (s *BaseMarketClass) SetCurrentBrokerQuote(quote *api.Quote) {
 	s.currentBrokerQuote = quote
 }
 
 // GetCurrentBrokerQuote ...
-func (s *BaseTickerClass) GetCurrentBrokerQuote() *api.Quote {
+func (s *BaseMarketClass) GetCurrentBrokerQuote() *api.Quote {
 	return s.currentBrokerQuote
 }
 
 // OnReceiveMarketData ...
-func (s *BaseTickerClass) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
+func (s *BaseMarketClass) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
 	s.Log("", "Received data -> "+utils.GetStringRepresentation(data))
 
 	s.SetCurrentExecutionTime(time.Now())
 }
 
-func (s *BaseTickerClass) Log(strategyName string, message string) {
+func (s *BaseMarketClass) Log(strategyName string, message string) {
 	s.Logger.Log(strategyName+" - "+message, s.GetSymbol().LogType)
 }
 
-func (s *BaseTickerClass) SetStringValues(order *api.Order) {
+func (s *BaseMarketClass) SetStringValues(order *api.Order) {
 	symbol := s.GetSymbol()
 
 	order.CurrentAsk = &s.currentBrokerQuote.Ask
@@ -128,8 +128,8 @@ func (s *BaseTickerClass) SetStringValues(order *api.Order) {
 	}
 }
 
-func (s *BaseTickerClass) CheckIfSLShouldBeAdjusted(
-	params *types.TickerStrategyParams,
+func (s *BaseMarketClass) CheckIfSLShouldBeAdjusted(
+	params *types.MarketStrategyParams,
 	position *api.Position,
 ) {
 	if params.TPDistanceShortForTighterSL <= 0 {
@@ -170,7 +170,7 @@ func (s *BaseTickerClass) CheckIfSLShouldBeAdjusted(
 	}
 }
 
-func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.TickerStrategyParams, shortParams *types.TickerStrategyParams) {
+func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP(longParams *types.MarketStrategyParams, shortParams *types.MarketStrategyParams) {
 	for {
 		positions := s.APIData.GetPositions()
 		symbolName := s.GetSymbol().BrokerAPIName
@@ -252,39 +252,39 @@ func (s *BaseTickerClass) CheckNewestOpenedPositionSLandTP(longParams *types.Tic
 	}
 }
 
-func (s *BaseTickerClass) GetPendingOrder() *api.Order {
+func (s *BaseMarketClass) GetPendingOrder() *api.Order {
 	return s.pendingOrder
 }
 
-func (s *BaseTickerClass) SetPendingOrder(order *api.Order) {
+func (s *BaseMarketClass) SetPendingOrder(order *api.Order) {
 	s.pendingOrder = order
 }
 
-func (s *BaseTickerClass) GetCurrentOrder() *api.Order {
+func (s *BaseMarketClass) GetCurrentOrder() *api.Order {
 	return s.currentOrder
 }
 
-func (s *BaseTickerClass) SetCurrentOrder(order *api.Order) {
+func (s *BaseMarketClass) SetCurrentOrder(order *api.Order) {
 	s.currentOrder = order
 }
 
-func (s *BaseTickerClass) SetCurrentExecutionTime(t time.Time) {
+func (s *BaseMarketClass) SetCurrentExecutionTime(t time.Time) {
 	s.currentExecutionTime = t
 }
 
-func (s *BaseTickerClass) GetCurrentExecutionTime() time.Time {
+func (s *BaseMarketClass) GetCurrentExecutionTime() time.Time {
 	return s.currentExecutionTime
 }
 
-func (s *BaseTickerClass) SetEurExchangeRate(rate float64) {
+func (s *BaseMarketClass) SetEurExchangeRate(rate float64) {
 	s.eurExchangeRate = rate
 }
 
-func (s *BaseTickerClass) GetEurExchangeRate() float64 {
+func (s *BaseMarketClass) GetEurExchangeRate() float64 {
 	return s.eurExchangeRate
 }
 
-func (s *BaseTickerClass) SavePendingOrder(side string, validTimes types.TradingTimes) {
+func (s *BaseMarketClass) SavePendingOrder(side string, validTimes types.TradingTimes) {
 	go func() {
 		s.Log(s.Name, "Save pending order called for side "+side)
 
@@ -355,7 +355,7 @@ func (s *BaseTickerClass) SavePendingOrder(side string, validTimes types.Trading
 	}()
 }
 
-func (s *BaseTickerClass) CreatePendingOrder(side string) {
+func (s *BaseMarketClass) CreatePendingOrder(side string) {
 	if s.GetPendingOrder().Side != side {
 		return
 	}
@@ -435,7 +435,7 @@ type OnValidTradeSetupParams struct {
 	MinPositionSize    int64
 }
 
-func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
+func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 	float32Price := float32(params.Price)
 
 	var stopLoss float32
@@ -517,7 +517,7 @@ func (s *BaseTickerClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 
 }
 
-func (s *BaseTickerClass) CheckOpenPositionTTL(params *types.TickerStrategyParams, position *api.Position) {
+func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParams, position *api.Position) {
 	if params.MaxSecondsOpenTrade == 0 {
 		return
 	}
@@ -544,7 +544,7 @@ func (s *BaseTickerClass) CheckOpenPositionTTL(params *types.TickerStrategyParam
 	}
 }
 
-func (s *BaseTickerClass) getSlAndTpOrders(
+func (s *BaseMarketClass) getSlAndTpOrders(
 	parentID string,
 	orders []*api.Order,
 ) (*api.Order, *api.Order) {

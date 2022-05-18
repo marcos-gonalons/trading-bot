@@ -6,9 +6,9 @@ import (
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/strategies/markets/baseMarketClass"
+	"TradingBot/src/strategies/markets/interfaces"
 	"TradingBot/src/strategies/strategies"
-	"TradingBot/src/strategies/tickers/baseTickerClass"
-	"TradingBot/src/strategies/tickers/interfaces"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"math"
@@ -23,7 +23,7 @@ import (
 
 // Strategy ...
 type Strategy struct {
-	BaseTickerClass baseTickerClass.BaseTickerClass
+	BaseMarketClass baseMarketClass.BaseMarketClass
 
 	isReady           bool
 	lastCandlesAmount int
@@ -36,17 +36,17 @@ type Strategy struct {
 	mutex *sync.Mutex
 }
 
-func (s *Strategy) Parent() interfaces.BaseTickerClassInterface {
-	return &s.BaseTickerClass
+func (s *Strategy) Parent() interfaces.BaseMarketClassInterface {
+	return &s.BaseMarketClass
 }
 
 // Initialize ...
 func (s *Strategy) Initialize() {
-	s.BaseTickerClass.Initialize()
+	s.BaseMarketClass.Initialize()
 
 	s.mutex = &sync.Mutex{}
-	s.BaseTickerClass.CandlesHandler.InitCandles(time.Now(), "")
-	go s.BaseTickerClass.CheckNewestOpenedPositionSLandTP(
+	s.BaseMarketClass.CandlesHandler.InitCandles(time.Now(), "")
+	go s.BaseMarketClass.CheckNewestOpenedPositionSLandTP(
 		&ResistanceBreakoutParams,
 		&SupportBreakoutParams,
 	)
@@ -56,18 +56,18 @@ func (s *Strategy) Initialize() {
 
 // DailyReset ...
 func (s *Strategy) DailyReset() {
-	s.BaseTickerClass.Initialize()
+	s.BaseMarketClass.Initialize()
 
 	s.isReady = false
-	s.BaseTickerClass.CandlesHandler.InitCandles(time.Now(), "")
+	s.BaseMarketClass.CandlesHandler.InitCandles(time.Now(), "")
 	s.isReady = true
 
-	s.BaseTickerClass.SetPendingOrder(nil)
+	s.BaseMarketClass.SetPendingOrder(nil)
 }
 
 // OnReceiveMarketData ...
 func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
-	s.BaseTickerClass.OnReceiveMarketData(symbol, data)
+	s.BaseMarketClass.OnReceiveMarketData(symbol, data)
 
 	if !s.isReady {
 		return
@@ -91,39 +91,39 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			s.lastAsk = data.Ask
 		}
 
-		s.lastCandlesAmount = len(s.BaseTickerClass.CandlesHandler.GetCandles())
-		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
+		s.lastCandlesAmount = len(s.BaseMarketClass.CandlesHandler.GetCandles())
+		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
 	}()
 
-	s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Updating candles... ")
+	s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Updating candles... ")
 	if data.Price != nil {
 		// There is more or less a discrepancy of .8 between the price of ibroker and the price of fx:ger30 on tradingview
 		var price = *data.Price + .8
 		data.Price = &price
 	}
-	s.BaseTickerClass.CandlesHandler.UpdateCandles(data, s.BaseTickerClass.GetCurrentExecutionTime(), s.lastVolume)
+	s.BaseMarketClass.CandlesHandler.UpdateCandles(data, s.BaseMarketClass.GetCurrentExecutionTime(), s.lastVolume)
 
-	if s.lastCandlesAmount != len(s.BaseTickerClass.CandlesHandler.GetCandles()) {
-		if !utils.IsNowWithinTradingHours(s.BaseTickerClass.GetSymbol()) {
-			s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Doing nothing - Now it's not the time.")
+	if s.lastCandlesAmount != len(s.BaseMarketClass.CandlesHandler.GetCandles()) {
+		if !utils.IsNowWithinTradingHours(s.BaseMarketClass.GetSymbol()) {
+			s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Doing nothing - Now it's not the time.")
 
-			s.BaseTickerClass.APIRetryFacade.CloseOrders(
-				s.BaseTickerClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseTickerClass.APIData.GetOrders(), s.BaseTickerClass.GetSymbol().BrokerAPIName)),
+			s.BaseMarketClass.APIRetryFacade.CloseOrders(
+				s.BaseMarketClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseMarketClass.APIData.GetOrders(), s.BaseMarketClass.GetSymbol().BrokerAPIName)),
 				retryFacade.RetryParams{
 					DelayBetweenRetries: 5 * time.Second,
 					MaxRetries:          30,
 					SuccessCallback: func() {
-						s.BaseTickerClass.SetPendingOrder(nil)
+						s.BaseMarketClass.SetPendingOrder(nil)
 
-						p := utils.FindPositionBySymbol(s.BaseTickerClass.APIData.GetPositions(), s.BaseTickerClass.GetSymbol().BrokerAPIName)
+						p := utils.FindPositionBySymbol(s.BaseMarketClass.APIData.GetPositions(), s.BaseMarketClass.GetSymbol().BrokerAPIName)
 						if p != nil {
-							s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Closing the open position ... "+utils.GetStringRepresentation(p))
-							s.BaseTickerClass.APIRetryFacade.ClosePosition(
+							s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Closing the open position ... "+utils.GetStringRepresentation(p))
+							s.BaseMarketClass.APIRetryFacade.ClosePosition(
 								p.Instrument,
 								retryFacade.RetryParams{
 									DelayBetweenRetries: 5 * time.Second,
 									MaxRetries:          30,
-									SuccessCallback:     func() { s.BaseTickerClass.APIData.SetPositions(nil) },
+									SuccessCallback:     func() { s.BaseMarketClass.APIData.SetPositions(nil) },
 								},
 							)
 						}
@@ -133,11 +133,11 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			return
 		}
 
-		if s.averageSpread > s.BaseTickerClass.GetSymbol().MaxSpread {
-			s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Closing working orders and doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
-			s.BaseTickerClass.SetPendingOrder(nil)
-			s.BaseTickerClass.APIRetryFacade.CloseOrders(
-				s.BaseTickerClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseTickerClass.APIData.GetOrders(), s.BaseTickerClass.GetSymbol().BrokerAPIName)),
+		if s.averageSpread > s.BaseMarketClass.GetSymbol().MaxSpread {
+			s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Closing working orders and doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
+			s.BaseMarketClass.SetPendingOrder(nil)
+			s.BaseMarketClass.APIRetryFacade.CloseOrders(
+				s.BaseMarketClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseMarketClass.APIData.GetOrders(), s.BaseMarketClass.GetSymbol().BrokerAPIName)),
 				retryFacade.RetryParams{
 					DelayBetweenRetries: 5 * time.Second,
 					MaxRetries:          30,
@@ -146,22 +146,22 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 			return
 		}
 
-		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Calling supportBreakoutAnticipationStrategy")
+		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling supportBreakoutAnticipationStrategy")
 		strategies.SupportBreakoutAnticipation(strategies.StrategyParams{
-			BaseTickerClass:       &s.BaseTickerClass,
-			TickerStrategyParams:  &SupportBreakoutParams,
+			BaseMarketClass:       &s.BaseMarketClass,
+			MarketStrategyParams:  &SupportBreakoutParams,
 			WithPendingOrders:     true,
 			CloseOrdersOnBadTrend: true,
 		})
-		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Calling resistanceBreakoutAnticipationStrategy")
+		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling resistanceBreakoutAnticipationStrategy")
 		strategies.ResistanceBreakoutAnticipation(strategies.StrategyParams{
-			BaseTickerClass:       &s.BaseTickerClass,
-			TickerStrategyParams:  &ResistanceBreakoutParams,
+			BaseMarketClass:       &s.BaseMarketClass,
+			MarketStrategyParams:  &ResistanceBreakoutParams,
 			WithPendingOrders:     true,
 			CloseOrdersOnBadTrend: false,
 		})
 	} else {
-		s.BaseTickerClass.Log(s.BaseTickerClass.Name, "Doing nothing - still same candle")
+		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Doing nothing - still same candle")
 	}
 }
 
@@ -184,15 +184,15 @@ func (s *Strategy) updateAverageSpread() {
 	s.averageSpread = sum / float64(len(s.spreads))
 }
 
-// GetStrategyInstance ...
-func GetStrategyInstance(
+// GetMarketInstance ...
+func GetMarketInstance(
 	api api.Interface,
 	apiData api.DataInterface,
 	apiRetryFacade retryFacade.Interface,
 	logger logger.Interface,
 ) *Strategy {
 	return &Strategy{
-		BaseTickerClass: baseTickerClass.BaseTickerClass{
+		BaseMarketClass: baseMarketClass.BaseMarketClass{
 			API:            api,
 			APIRetryFacade: apiRetryFacade,
 			APIData:        apiData,

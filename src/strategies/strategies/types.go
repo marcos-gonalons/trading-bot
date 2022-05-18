@@ -1,13 +1,13 @@
 package strategies
 
 import (
-	"TradingBot/src/strategies/tickers/baseTickerClass"
+	"TradingBot/src/strategies/markets/baseMarketClass"
 	"TradingBot/src/types"
 )
 
 type StrategyParams struct {
-	BaseTickerClass       *baseTickerClass.BaseTickerClass
-	TickerStrategyParams  *types.TickerStrategyParams
+	BaseMarketClass       *baseMarketClass.BaseMarketClass
+	MarketStrategyParams  *types.MarketStrategyParams
 	WithPendingOrders     bool
 	CloseOrdersOnBadTrend bool
 }

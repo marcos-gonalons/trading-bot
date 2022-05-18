@@ -4,7 +4,7 @@ import "TradingBot/src/types"
 
 var priceAdjustment float32 = float32(1) / float32(10000)
 
-var ResistanceBreakoutParams = types.TickerStrategyParams{
+var ResistanceBreakoutParams = types.MarketStrategyParams{
 	RiskPercentage:                  5,
 	StopLossDistance:                80 * priceAdjustment,
 	TakeProfitDistance:              130 * priceAdjustment,
@@ -24,7 +24,7 @@ var ResistanceBreakoutParams = types.TickerStrategyParams{
 	MinPositionSize:                  10000,
 }
 
-var SupportBreakoutParams = types.TickerStrategyParams{
+var SupportBreakoutParams = types.MarketStrategyParams{
 	RiskPercentage:                  5,
 	StopLossDistance:                200 * priceAdjustment,
 	TakeProfitDistance:              120 * priceAdjustment,

@@ -1,11 +1,11 @@
-package AUDUSD
+package NZDUSD
 
 import "TradingBot/src/types"
 
 var priceAdjustment float32 = float32(1) / float32(10000)
 
 /*
-var ResistanceBounceParams = types.TickerStrategyParams{
+var ResistanceBounceParams = types.MarketStrategyParams{
 	RiskPercentage:                  5,
 	StopLossDistance:                0 * priceAdjustment,
 	TakeProfitDistance:              0 * priceAdjustment,
@@ -25,17 +25,17 @@ var ResistanceBounceParams = types.TickerStrategyParams{
 	MinPositionSize: 10000,
 }*/
 
-var SupportBounceParams = types.TickerStrategyParams{
+var SupportBounceParams = types.MarketStrategyParams{
 	RiskPercentage:                  5,
-	StopLossDistance:                90 * priceAdjustment,
-	TakeProfitDistance:              130 * priceAdjustment,
-	TPDistanceShortForTighterSL:     50 * float64(priceAdjustment),
-	SLDistanceWhenTPIsVeryClose:     -60 * float64(priceAdjustment),
-	TrendCandles:                    100,
-	TrendDiff:                       10 * float64(priceAdjustment),
+	StopLossDistance:                60 * priceAdjustment,
+	TakeProfitDistance:              280 * priceAdjustment,
+	TPDistanceShortForTighterSL:     110 * float64(priceAdjustment),
+	SLDistanceWhenTPIsVeryClose:     -10 * float64(priceAdjustment),
+	TrendCandles:                    0,
+	TrendDiff:                       0 * float64(priceAdjustment),
 	CandlesAmountForHorizontalLevel: 30,
 	PriceOffset:                     -20 * float64(priceAdjustment),
-	MaxSecondsOpenTrade:             20 * 24 * 60 * 60,
+	MaxSecondsOpenTrade:             40 * 24 * 60 * 60,
 	ValidTradingTimes: types.TradingTimes{
 		ValidMonths:    []string{},
 		ValidWeekdays:  []string{},

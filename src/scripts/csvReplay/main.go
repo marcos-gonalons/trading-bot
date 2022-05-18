@@ -1,7 +1,7 @@
 package main
 
 import (
-	"TradingBot/src/strategies/tickers/interfaces"
+	"TradingBot/src/strategies/markets/interfaces"
 	"TradingBot/src/types"
 	"encoding/csv"
 	"fmt"
@@ -24,13 +24,14 @@ func main() {
 		panic("Error while reading the .csv file -> " + err.Error())
 	}
 
-	strat := getStrat()
+	// strat := getMarketInstance(getMarketName())
 	for i, line := range csvLines {
 		if i == 0 {
 			continue
 		}
 		candle := getCandleObject(line)
 
+		// strat.OnReceiveMarketData()
 		fmt.Printf("%#v", candle)
 	}
 }
@@ -84,7 +85,7 @@ func getCandleObject(csvLine []string) (candle types.Candle) {
 	return
 }
 
-func getStrat() interfaces.TickerInterface {
+func getMarketInstance(marketName string) interfaces.MarketInterface {
 	simulatorAPI := simulator.CreateAPIServiceInstance()
 
 	apiRetryFacade := &retryFacade.APIFacade{
@@ -98,18 +99,18 @@ func getStrat() interfaces.TickerInterface {
 		APIData:        &api.Data{},
 	}
 
-	for _, strat := range handler.GetStrategies() {
-		if strat.Parent().GetSymbol().BrokerAPIName == getSymbolName() {
-			return strat
+	for _, market := range handler.GetMarkets() {
+		if market.Parent().GetSymbol().BrokerAPIName == marketName {
+			return market
 		}
 	}
 
-	panic("Invalid symbol name")
+	panic("invalid market name")
 }
 
-func getSymbolName() string {
+func getMarketName() string {
 	if len(os.Args) != 2 {
-		panic("Symbol not specified")
+		panic("market not specified")
 	}
 
 	return os.Args[1]

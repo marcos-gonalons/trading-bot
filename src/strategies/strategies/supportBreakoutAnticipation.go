@@ -3,16 +3,16 @@ package strategies
 import (
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
-	"TradingBot/src/strategies/tickers/baseTickerClass"
+	"TradingBot/src/strategies/markets/baseMarketClass"
 	"TradingBot/src/utils"
 	"time"
 )
 
 // SupportBreakoutAnticipation ...
 func SupportBreakoutAnticipation(params StrategyParams) {
-	var strategyName = params.BaseTickerClass.Name + " - SBA"
+	var strategyName = params.BaseMarketClass.Name + " - SBA"
 	var log = func(msg string) {
-		params.BaseTickerClass.Log(strategyName, msg)
+		params.BaseMarketClass.Log(strategyName, msg)
 	}
 
 	log("supportBreakoutAnticipation started")
@@ -20,17 +20,17 @@ func SupportBreakoutAnticipation(params StrategyParams) {
 		log("supportBreakoutAnticipation ended")
 	}()
 
-	validMonths := params.TickerStrategyParams.ValidTradingTimes.ValidMonths
-	validWeekdays := params.TickerStrategyParams.ValidTradingTimes.ValidWeekdays
-	validHalfHours := params.TickerStrategyParams.ValidTradingTimes.ValidHalfHours
+	validMonths := params.MarketStrategyParams.ValidTradingTimes.ValidMonths
+	validWeekdays := params.MarketStrategyParams.ValidTradingTimes.ValidWeekdays
+	validHalfHours := params.MarketStrategyParams.ValidTradingTimes.ValidHalfHours
 
-	if !utils.IsExecutionTimeValid(params.BaseTickerClass.GetCurrentExecutionTime(), validMonths, []string{}, []string{}) || !utils.IsExecutionTimeValid(params.BaseTickerClass.GetCurrentExecutionTime(), []string{}, validWeekdays, []string{}) {
-		log("Today it's not the day for support breakout anticipation for " + params.BaseTickerClass.Symbol.SocketName)
+	if !utils.IsExecutionTimeValid(params.BaseMarketClass.GetCurrentExecutionTime(), validMonths, []string{}, []string{}) || !utils.IsExecutionTimeValid(params.BaseMarketClass.GetCurrentExecutionTime(), []string{}, validWeekdays, []string{}) {
+		log("Today it's not the day for support breakout anticipation for " + params.BaseMarketClass.Symbol.SocketName)
 		return
 	}
 
 	isValidTimeToOpenAPosition := utils.IsExecutionTimeValid(
-		params.BaseTickerClass.GetCurrentExecutionTime(),
+		params.BaseMarketClass.GetCurrentExecutionTime(),
 		validMonths,
 		validWeekdays,
 		validHalfHours,
@@ -38,23 +38,23 @@ func SupportBreakoutAnticipation(params StrategyParams) {
 
 	if params.WithPendingOrders {
 		if !isValidTimeToOpenAPosition {
-			params.BaseTickerClass.SavePendingOrder(ibroker.ShortSide, params.TickerStrategyParams.ValidTradingTimes)
+			params.BaseMarketClass.SavePendingOrder(ibroker.ShortSide, params.MarketStrategyParams.ValidTradingTimes)
 		} else {
-			if params.BaseTickerClass.GetPendingOrder() != nil {
-				params.BaseTickerClass.CreatePendingOrder(ibroker.ShortSide)
+			if params.BaseMarketClass.GetPendingOrder() != nil {
+				params.BaseMarketClass.CreatePendingOrder(ibroker.ShortSide)
 			}
-			params.BaseTickerClass.SetPendingOrder(nil)
+			params.BaseMarketClass.SetPendingOrder(nil)
 		}
 	}
 
-	p := utils.FindPositionBySymbol(params.BaseTickerClass.APIData.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName)
+	p := utils.FindPositionBySymbol(params.BaseMarketClass.APIData.GetPositions(), params.BaseMarketClass.GetSymbol().BrokerAPIName)
 	if p != nil && p.Side == ibroker.ShortSide {
-		params.BaseTickerClass.CheckIfSLShouldBeAdjusted(params.TickerStrategyParams, p)
-		params.BaseTickerClass.CheckOpenPositionTTL(params.TickerStrategyParams, p)
+		params.BaseMarketClass.CheckIfSLShouldBeAdjusted(params.MarketStrategyParams, p)
+		params.BaseMarketClass.CheckOpenPositionTTL(params.MarketStrategyParams, p)
 	}
 
-	lastCompletedCandleIndex := len(params.BaseTickerClass.CandlesHandler.GetCandles()) - 2
-	price, err := params.BaseTickerClass.HorizontalLevelsService.GetSupportPrice(params.TickerStrategyParams.CandlesAmountForHorizontalLevel, lastCompletedCandleIndex)
+	lastCompletedCandleIndex := len(params.BaseMarketClass.CandlesHandler.GetCandles()) - 2
+	price, err := params.BaseMarketClass.HorizontalLevelsService.GetSupportPrice(params.MarketStrategyParams.CandlesAmountForHorizontalLevel, lastCompletedCandleIndex)
 
 	if err != nil {
 		errorMessage := "Not a good short setup yet -> " + err.Error()
@@ -62,25 +62,25 @@ func SupportBreakoutAnticipation(params StrategyParams) {
 		return
 	}
 
-	price = price + params.TickerStrategyParams.PriceOffset
-	if price >= float64(params.BaseTickerClass.GetCurrentBrokerQuote().Bid) {
-		log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, params.BaseTickerClass.GetSymbol().PriceDecimals))
-		log("Quote is -> " + utils.GetStringRepresentation(params.BaseTickerClass.GetCurrentBrokerQuote()))
+	price = price + params.MarketStrategyParams.PriceOffset
+	if price >= float64(params.BaseMarketClass.GetCurrentBrokerQuote().Bid) {
+		log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, params.BaseMarketClass.GetSymbol().PriceDecimals))
+		log("Quote is -> " + utils.GetStringRepresentation(params.BaseMarketClass.GetCurrentBrokerQuote()))
 		return
 	}
 
-	log("Ok, we might have a short setup at price " + utils.FloatToString(price, params.BaseTickerClass.GetSymbol().PriceDecimals))
-	if !params.BaseTickerClass.TrendsService.IsBearishTrend(
-		params.TickerStrategyParams.TrendCandles,
-		params.TickerStrategyParams.TrendDiff,
-		params.BaseTickerClass.CandlesHandler.GetCandles(),
+	log("Ok, we might have a short setup at price " + utils.FloatToString(price, params.BaseMarketClass.GetSymbol().PriceDecimals))
+	if !params.BaseMarketClass.TrendsService.IsBearishTrend(
+		params.MarketStrategyParams.TrendCandles,
+		params.MarketStrategyParams.TrendDiff,
+		params.BaseMarketClass.CandlesHandler.GetCandles(),
 		lastCompletedCandleIndex,
 	) {
 		log("At the end it wasn't a good short setup")
-		if params.CloseOrdersOnBadTrend && utils.FindPositionBySymbol(params.BaseTickerClass.APIData.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName) == nil {
+		if params.CloseOrdersOnBadTrend && utils.FindPositionBySymbol(params.BaseMarketClass.APIData.GetPositions(), params.BaseMarketClass.GetSymbol().BrokerAPIName) == nil {
 			log("There isn't an open position, closing short orders ...")
-			params.BaseTickerClass.APIRetryFacade.CloseOrders(
-				params.BaseTickerClass.API.GetWorkingOrderWithBracketOrders(ibroker.ShortSide, params.BaseTickerClass.GetSymbol().BrokerAPIName, params.BaseTickerClass.APIData.GetOrders()),
+			params.BaseMarketClass.APIRetryFacade.CloseOrders(
+				params.BaseMarketClass.API.GetWorkingOrderWithBracketOrders(ibroker.ShortSide, params.BaseMarketClass.GetSymbol().BrokerAPIName, params.BaseMarketClass.APIData.GetOrders()),
 				retryFacade.RetryParams{
 					DelayBetweenRetries: 5 * time.Second,
 					MaxRetries:          30,
@@ -90,31 +90,31 @@ func SupportBreakoutAnticipation(params StrategyParams) {
 		return
 	}
 
-	onValidTradeSetupParams := baseTickerClass.OnValidTradeSetupParams{
+	onValidTradeSetupParams := baseMarketClass.OnValidTradeSetupParams{
 		Price:              price,
-		StopLossDistance:   params.TickerStrategyParams.StopLossDistance,
-		TakeProfitDistance: params.TickerStrategyParams.TakeProfitDistance,
-		RiskPercentage:     params.TickerStrategyParams.RiskPercentage,
+		StopLossDistance:   params.MarketStrategyParams.StopLossDistance,
+		TakeProfitDistance: params.MarketStrategyParams.TakeProfitDistance,
+		RiskPercentage:     params.MarketStrategyParams.RiskPercentage,
 		IsValidTime:        isValidTimeToOpenAPosition,
 		Side:               ibroker.ShortSide,
 		StrategyName:       strategyName,
 		WithPendingOrders:  params.WithPendingOrders,
 		OrderType:          ibroker.StopType,
-		MinPositionSize:    params.TickerStrategyParams.MinPositionSize,
+		MinPositionSize:    params.MarketStrategyParams.MinPositionSize,
 	}
 
-	if utils.FindPositionBySymbol(params.BaseTickerClass.APIData.GetPositions(), params.BaseTickerClass.GetSymbol().BrokerAPIName) != nil {
+	if utils.FindPositionBySymbol(params.BaseMarketClass.APIData.GetPositions(), params.BaseMarketClass.GetSymbol().BrokerAPIName) != nil {
 		log("There is an open position, no need to close any orders ...")
-		params.BaseTickerClass.OnValidTradeSetup(onValidTradeSetupParams)
+		params.BaseMarketClass.OnValidTradeSetup(onValidTradeSetupParams)
 	} else {
 		log("There isn't any open position. Closing orders first ...")
-		params.BaseTickerClass.APIRetryFacade.CloseOrders(
-			params.BaseTickerClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(params.BaseTickerClass.APIData.GetOrders(), params.BaseTickerClass.GetSymbol().BrokerAPIName)),
+		params.BaseMarketClass.APIRetryFacade.CloseOrders(
+			params.BaseMarketClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(params.BaseMarketClass.APIData.GetOrders(), params.BaseMarketClass.GetSymbol().BrokerAPIName)),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          30,
 				SuccessCallback: func() {
-					params.BaseTickerClass.OnValidTradeSetup(onValidTradeSetupParams)
+					params.BaseMarketClass.OnValidTradeSetup(onValidTradeSetupParams)
 				},
 			},
 		)

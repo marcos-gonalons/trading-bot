@@ -10,16 +10,16 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
-// TickerInterface ...
-type TickerInterface interface {
-	Parent() BaseTickerClassInterface
+// MarketInterface ...
+type MarketInterface interface {
+	Parent() BaseMarketClassInterface
 	Initialize()
 	DailyReset()
 	OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData)
 }
 
-// BaseTickerClassInterface ...
-type BaseTickerClassInterface interface {
+// BaseMarketClassInterface ...
+type BaseMarketClassInterface interface {
 	SetCandlesHandler(candlesHandler candlesHandler.Interface)
 	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
 	SetTrendsService(trendsService trends.Interface)
