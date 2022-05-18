@@ -37,7 +37,7 @@ type Handler struct {
 // Run ...
 func (s *Handler) Run() {
 
-	s.strategies = s.getStrategies()
+	s.strategies = s.GetStrategies()
 
 	s.initSymbolsArrays()
 	s.initStrategies()

@@ -24,6 +24,15 @@ func FloatToString(v float64, decimals int64) string {
 	return fmt.Sprintf("%."+decimalsAsString+"f", v)
 }
 
+// StringToFloat ...
+func StringToFloat(v string) float64 {
+	n, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		return n
+	}
+	return 0.0
+}
+
 // IntToString ...
 func IntToString(v int64) string {
 	return strconv.FormatInt(v, 10)

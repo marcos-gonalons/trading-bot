@@ -180,6 +180,14 @@ func (s *APIFacade) CreateOrder(
 			if err != nil {
 				s.Logger.Error("Error when creating the order -> " + err.Error())
 				// todo: group this errors into 'known errors' or 'acceptable errors'
+				// todo2:
+				// Before creating an order, we first close the previous order of this symbol, if any.
+				// And right afterwards, we call this code to create the order.
+				// But there seems to be some delay between the order is properly closed at ibroker side, causing
+				// an error when trying to create the order that says 'ya existe alguna orden vigente' when in reality,
+				// the order was closed like a couple milliseconds before.
+				// Potential solution to this, is to add a sleep of some seconds in the closeOrder clode, an do not exit
+				// that function until the sleep has finished. This will give ibroker some time to properly close the order at their side.
 				if s.API.IsOrderAlreadyExistsError(err) || s.API.IsNotEnoughFundsError(err) || s.API.IsPositionAlreadyExistsError(err) || s.API.IsInvalidHoursError(err) {
 					err = nil
 				}

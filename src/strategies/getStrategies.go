@@ -15,7 +15,8 @@ import (
 	//"TradingBot/src/strategies/tickers/GER30"
 )
 
-func (s *Handler) getStrategies() []interfaces.TickerInterface {
+// GetStrategies...
+func (s *Handler) GetStrategies() []interfaces.TickerInterface {
 	return []interfaces.TickerInterface{
 		//s.getStrategy(GER30.GetStrategyInstance(s.API, s.APIRetryFacade, s.Logger)),
 		s.getStrategy(EURUSD.GetStrategyInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
