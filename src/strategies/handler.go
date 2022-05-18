@@ -24,8 +24,8 @@ type Handler struct {
 	APIRetryFacade retryFacade.Interface
 	Logger         logger.Interface
 
-	strategies []interfaces.MarketInterface
-	socket     tradingviewsocket.SocketInterface
+	markets []interfaces.MarketInterface
+	socket  tradingviewsocket.SocketInterface
 
 	fetchError        error
 	failedAPIRequests uint
@@ -37,10 +37,10 @@ type Handler struct {
 // Run ...
 func (s *Handler) Run() {
 
-	s.strategies = s.GetMarkets()
+	s.markets = s.GetMarkets()
 
 	s.initSymbolsArrays()
-	s.initStrategies()
+	s.initMarkets()
 	s.initSocket()
 
 	go s.dailyReset()
@@ -74,12 +74,12 @@ func (s *Handler) initSocket() {
 func (s *Handler) onReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
 	s.Logger.Log("Received data -> " + symbol + " -> " + utils.GetStringRepresentation(data))
 
-	for _, strategy := range s.strategies {
-		if symbol != strategy.Parent().GetSymbol().SocketName {
+	for _, market := range s.markets {
+		if symbol != market.Parent().GetSymbol().SocketName {
 			continue
 		}
-		if strategy.Parent().GetCurrentBrokerQuote() != nil {
-			go strategy.OnReceiveMarketData(symbol, data)
+		if market.Parent().GetCurrentBrokerQuote() != nil {
+			go market.OnReceiveMarketData(symbol, data)
 		}
 	}
 }
@@ -111,8 +111,8 @@ func (s *Handler) dailyReset() {
 				s.Logger.Error("Error when restarting the socket -> " + err.Error())
 			}
 
-			for _, strategy := range s.strategies {
-				go strategy.DailyReset()
+			for _, market := range s.markets {
+				go market.DailyReset()
 			}
 
 			s.Logger.Log("Refreshing access token by calling API.Login")
@@ -146,11 +146,11 @@ func (s *Handler) fetchDataLoop() {
 						}).(*api.Quote)
 						s.Logger.Log("Quote is -> " + utils.GetStringRepresentation(quote))
 						if quote != nil {
-							for _, strategy := range s.strategies {
-								if strategy.Parent().GetSymbol().BrokerAPIName != symbol {
+							for _, market := range s.markets {
+								if market.Parent().GetSymbol().BrokerAPIName != symbol {
 									continue
 								}
-								strategy.Parent().SetCurrentBrokerQuote(quote)
+								market.Parent().SetCurrentBrokerQuote(quote)
 							}
 						}
 					}
@@ -268,17 +268,17 @@ func (s *Handler) panicIfTooManyAPIFails() {
 	}
 }
 
-func (s *Handler) initStrategies() {
-	for _, strategy := range s.strategies {
-		s.Logger.Log("Initializing strategy " + strategy.Parent().GetSymbol().BrokerAPIName)
-		go strategy.Initialize()
+func (s *Handler) initMarkets() {
+	for _, market := range s.markets {
+		s.Logger.Log("Initializing market " + market.Parent().GetSymbol().BrokerAPIName)
+		go market.Initialize()
 	}
 }
 
 func (s *Handler) initSymbolsArrays() {
 	s.Logger.Log("Initializing symbols arrays ...")
-	for _, strategy := range s.strategies {
-		symbol := strategy.Parent().GetSymbol()
+	for _, market := range s.markets {
+		symbol := market.Parent().GetSymbol()
 		s.Logger.Log("Symbol: " + utils.GetStringRepresentation(symbol))
 
 		exists := false
