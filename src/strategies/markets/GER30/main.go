@@ -104,65 +104,71 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	s.BaseMarketClass.CandlesHandler.UpdateCandles(data, s.BaseMarketClass.GetCurrentExecutionTime(), s.lastVolume)
 
 	if s.lastCandlesAmount != len(s.BaseMarketClass.CandlesHandler.GetCandles()) {
-		if !utils.IsNowWithinTradingHours(s.BaseMarketClass.GetSymbol()) {
-			s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Doing nothing - Now it's not the time.")
-
-			s.BaseMarketClass.APIRetryFacade.CloseOrders(
-				s.BaseMarketClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseMarketClass.APIData.GetOrders(), s.BaseMarketClass.GetSymbol().BrokerAPIName)),
-				retryFacade.RetryParams{
-					DelayBetweenRetries: 5 * time.Second,
-					MaxRetries:          30,
-					SuccessCallback: func() {
-						s.BaseMarketClass.SetPendingOrder(nil)
-
-						p := utils.FindPositionBySymbol(s.BaseMarketClass.APIData.GetPositions(), s.BaseMarketClass.GetSymbol().BrokerAPIName)
-						if p != nil {
-							s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Closing the open position ... "+utils.GetStringRepresentation(p))
-							s.BaseMarketClass.APIRetryFacade.ClosePosition(
-								p.Instrument,
-								retryFacade.RetryParams{
-									DelayBetweenRetries: 5 * time.Second,
-									MaxRetries:          30,
-									SuccessCallback:     func() { s.BaseMarketClass.APIData.SetPositions(nil) },
-								},
-							)
-						}
-					},
-				})
-
-			return
-		}
-
-		if s.averageSpread > s.BaseMarketClass.GetSymbol().MaxSpread {
-			s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Closing working orders and doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
-			s.BaseMarketClass.SetPendingOrder(nil)
-			s.BaseMarketClass.APIRetryFacade.CloseOrders(
-				s.BaseMarketClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseMarketClass.APIData.GetOrders(), s.BaseMarketClass.GetSymbol().BrokerAPIName)),
-				retryFacade.RetryParams{
-					DelayBetweenRetries: 5 * time.Second,
-					MaxRetries:          30,
-				},
-			)
-			return
-		}
-
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling supportBreakoutAnticipationStrategy")
-		strategies.SupportBreakoutAnticipation(strategies.StrategyParams{
-			BaseMarketClass:       &s.BaseMarketClass,
-			MarketStrategyParams:  &SupportBreakoutParams,
-			WithPendingOrders:     true,
-			CloseOrdersOnBadTrend: true,
-		})
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling resistanceBreakoutAnticipationStrategy")
-		strategies.ResistanceBreakoutAnticipation(strategies.StrategyParams{
-			BaseMarketClass:       &s.BaseMarketClass,
-			MarketStrategyParams:  &ResistanceBreakoutParams,
-			WithPendingOrders:     true,
-			CloseOrdersOnBadTrend: false,
-		})
+		s.OnNewCandle()
 	} else {
 		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Doing nothing - still same candle")
 	}
+}
+
+func (s *Strategy) OnNewCandle() {
+	s.BaseMarketClass.OnNewCandle()
+
+	if !utils.IsNowWithinTradingHours(s.BaseMarketClass.GetSymbol()) {
+		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Doing nothing - Now it's not the time.")
+
+		s.BaseMarketClass.APIRetryFacade.CloseOrders(
+			s.BaseMarketClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseMarketClass.APIData.GetOrders(), s.BaseMarketClass.GetSymbol().BrokerAPIName)),
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 5 * time.Second,
+				MaxRetries:          30,
+				SuccessCallback: func() {
+					s.BaseMarketClass.SetPendingOrder(nil)
+
+					p := utils.FindPositionBySymbol(s.BaseMarketClass.APIData.GetPositions(), s.BaseMarketClass.GetSymbol().BrokerAPIName)
+					if p != nil {
+						s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Closing the open position ... "+utils.GetStringRepresentation(p))
+						s.BaseMarketClass.APIRetryFacade.ClosePosition(
+							p.Instrument,
+							retryFacade.RetryParams{
+								DelayBetweenRetries: 5 * time.Second,
+								MaxRetries:          30,
+								SuccessCallback:     func() { s.BaseMarketClass.APIData.SetPositions(nil) },
+							},
+						)
+					}
+				},
+			})
+
+		return
+	}
+
+	if s.averageSpread > s.BaseMarketClass.GetSymbol().MaxSpread {
+		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Closing working orders and doing nothing since the spread is very big -> "+utils.FloatToString(s.averageSpread, 0))
+		s.BaseMarketClass.SetPendingOrder(nil)
+		s.BaseMarketClass.APIRetryFacade.CloseOrders(
+			s.BaseMarketClass.API.GetWorkingOrders(utils.FilterOrdersBySymbol(s.BaseMarketClass.APIData.GetOrders(), s.BaseMarketClass.GetSymbol().BrokerAPIName)),
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 5 * time.Second,
+				MaxRetries:          30,
+			},
+		)
+		return
+	}
+
+	s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling supportBreakoutAnticipationStrategy")
+	strategies.SupportBreakoutAnticipation(strategies.StrategyParams{
+		BaseMarketClass:       &s.BaseMarketClass,
+		MarketStrategyParams:  &SupportBreakoutParams,
+		WithPendingOrders:     true,
+		CloseOrdersOnBadTrend: true,
+	})
+	s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling resistanceBreakoutAnticipationStrategy")
+	strategies.ResistanceBreakoutAnticipation(strategies.StrategyParams{
+		BaseMarketClass:       &s.BaseMarketClass,
+		MarketStrategyParams:  &ResistanceBreakoutParams,
+		WithPendingOrders:     true,
+		CloseOrdersOnBadTrend: false,
+	})
 }
 
 func (s *Strategy) updateAverageSpread() {

@@ -16,6 +16,7 @@ type MarketInterface interface {
 	Initialize()
 	DailyReset()
 	OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData)
+	OnNewCandle()
 }
 
 // BaseMarketClassInterface ...
@@ -24,6 +25,7 @@ type BaseMarketClassInterface interface {
 	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
 	SetTrendsService(trendsService trends.Interface)
 	OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData)
+	OnNewCandle()
 	SetCurrentBrokerQuote(quote *api.Quote)
 	GetCurrentBrokerQuote() *api.Quote
 	GetTimeframe() *types.Timeframe

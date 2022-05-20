@@ -92,6 +92,11 @@ func (s *BaseMarketClass) OnReceiveMarketData(symbol string, data *tradingviewso
 	s.SetCurrentExecutionTime(time.Now())
 }
 
+// OnNewCandle ...
+func (s *BaseMarketClass) OnNewCandle() {
+	s.Log(s.Name, "New candle has been added. Executing strategy code ...")
+}
+
 func (s *BaseMarketClass) Log(strategyName string, message string) {
 	s.Logger.Log(strategyName+" - "+message, s.GetSymbol().LogType)
 }

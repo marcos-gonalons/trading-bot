@@ -105,26 +105,30 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 	s.BaseMarketClass.CandlesHandler.UpdateCandles(data, s.BaseMarketClass.GetCurrentExecutionTime(), s.lastVolume)
 
 	if s.lastCandlesAmount != len(s.BaseMarketClass.CandlesHandler.GetCandles()) {
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "New candle has been added. Executing strategy code ...")
-
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling supportBounce strategy")
-		strategies.SupportBounce(strategies.StrategyParams{
-			BaseMarketClass:       &s.BaseMarketClass,
-			MarketStrategyParams:  &SupportBounceParams,
-			WithPendingOrders:     false,
-			CloseOrdersOnBadTrend: false,
-		})
-
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling resistanceBounce strategy")
-		strategies.ResistanceBounce(strategies.StrategyParams{
-			BaseMarketClass:       &s.BaseMarketClass,
-			MarketStrategyParams:  &ResistanceBounceParams,
-			WithPendingOrders:     false,
-			CloseOrdersOnBadTrend: false,
-		})
+		s.OnNewCandle()
 	} else {
 		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Doing nothing - still same candle")
 	}
+}
+
+func (s *Strategy) OnNewCandle() {
+	s.BaseMarketClass.OnNewCandle()
+
+	s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling supportBounce strategy")
+	strategies.SupportBounce(strategies.StrategyParams{
+		BaseMarketClass:       &s.BaseMarketClass,
+		MarketStrategyParams:  &SupportBounceParams,
+		WithPendingOrders:     false,
+		CloseOrdersOnBadTrend: false,
+	})
+
+	s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling resistanceBounce strategy")
+	strategies.ResistanceBounce(strategies.StrategyParams{
+		BaseMarketClass:       &s.BaseMarketClass,
+		MarketStrategyParams:  &ResistanceBounceParams,
+		WithPendingOrders:     false,
+		CloseOrdersOnBadTrend: false,
+	})
 }
 
 // GetMarketInstance ...
