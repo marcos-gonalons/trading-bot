@@ -136,6 +136,7 @@ func (s *API) CloseOrder(orderID string) (err error) {
 			break
 		}
 	}
+
 	s.orders = append(s.orders[:orderIndex], s.orders[orderIndex+1:]...)
 	return nil
 }
@@ -147,7 +148,12 @@ func (s *API) GetPositions() (positions []*api.Position, err error) {
 
 // GetState ...
 func (s *API) GetState() (state *api.State, err error) {
-	return s.state, nil
+	// todo: handle state
+	return &api.State{
+		Balance:      1000,
+		UnrealizedPL: 0,
+		Equity:       1000,
+	}, nil
 }
 
 // ModifyPosition ...

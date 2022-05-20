@@ -31,4 +31,6 @@ type BaseMarketClassInterface interface {
 	GetCurrentBrokerQuote() *api.Quote
 	GetTimeframe() *types.Timeframe
 	GetSymbol() *types.Symbol
+	SetEurExchangeRate(rate float64)
+	GetEurExchangeRate() float64
 }

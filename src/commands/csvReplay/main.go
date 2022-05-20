@@ -23,13 +23,40 @@ func main() {
 		panic("Error while reading the .csv file -> " + err.Error())
 	}
 
-	strat := getMarketInstance(getMarketName())
+	simulatorAPI := simulator.CreateAPIServiceInstance()
+	APIData := api.Data{}
+	strat := getMarketInstance(
+		simulatorAPI,
+		&APIData,
+		getMarketName(),
+	)
+	strat.Parent().SetEurExchangeRate(.85)
+
 	for i, line := range csvLines {
 		if i == 0 {
 			continue
 		}
 
-		strat.Parent().GetCandlesHandler().AddNewCandle(getCandleObject(line))
+		candle := getCandleObject(line)
+		strat.Parent().GetCandlesHandler().AddNewCandle(candle)
+
+		// Here, before calling OnNewCandle, need to check the current status
+		// basically, if the price reached a limit or a stop order, and act accordingly
+		// if has reached an limit or stop order: open position if didn't have, or close position if it had
+		// in case of closing a position, update the balance
+
+		// orders := simulatorAPI.GetOrders()
+		// positions := simulatorAPI.GetPositions()
+
+		strat.Parent().SetCurrentBrokerQuote(&api.Quote{
+			Ask:    float32(candle.Close),
+			Bid:    float32(candle.Close),
+			Price:  float32(candle.Close),
+			Volume: 0,
+		})
+
+		updateAPIData(&APIData, simulatorAPI)
+
 		strat.OnNewCandle()
 	}
 }
@@ -83,9 +110,21 @@ func getCandleObject(csvLine []string) (candle types.Candle) {
 	return
 }
 
-func getMarketInstance(marketName string) interfaces.MarketInterface {
-	simulatorAPI := simulator.CreateAPIServiceInstance()
+func updateAPIData(APIData api.DataInterface, simulatorAPI api.Interface) {
+	orders, _ := simulatorAPI.GetOrders()
+	positions, _ := simulatorAPI.GetPositions()
+	state, _ := simulatorAPI.GetState()
 
+	APIData.SetOrders(orders)
+	APIData.SetPositions(positions)
+	APIData.SetState(state)
+}
+
+func getMarketInstance(
+	simulatorAPI api.Interface,
+	APIData api.DataInterface,
+	marketName string,
+) interfaces.MarketInterface {
 	apiRetryFacade := &retryFacade.APIFacade{
 		API:    simulatorAPI,
 		Logger: logger.GetInstance(),
@@ -94,7 +133,7 @@ func getMarketInstance(marketName string) interfaces.MarketInterface {
 		Logger:         logger.GetInstance(),
 		API:            simulatorAPI,
 		APIRetryFacade: apiRetryFacade,
-		APIData:        &api.Data{},
+		APIData:        APIData,
 	}
 
 	for _, market := range handler.GetMarkets() {

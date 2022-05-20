@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"TradingBot/src/services/api"
+	"TradingBot/src/services/api/ibroker/constants"
 )
 
 // IsSessionDisconnectedError ...
@@ -56,35 +57,35 @@ func (s *API) IsPositionNotFoundError(err error) bool {
 
 // IsLimitOrder ...
 func (s *API) IsLimitOrder(order *api.Order) bool {
-	return false
+	return order.Type == constants.LimitType
 }
 
 // IsStopOrder ...
 func (s *API) IsStopOrder(order *api.Order) bool {
-	return false
+	return order.Type == constants.StopType
 }
 
 // IsLongOrder ...
 func (s *API) IsLongOrder(order *api.Order) bool {
-	return false
+	return order.Side == constants.LongSide
 }
 
 // IsShortOrder ...
 func (s *API) IsShortOrder(order *api.Order) bool {
-	return false
+	return order.Side == constants.ShortSide
 }
 
 // IsLongPosition ...
 func (s *API) IsLongPosition(position *api.Position) bool {
-	return false
+	return position.Side == constants.LongSide
 }
 
 // IsShortPosition ...
 func (s *API) IsShortPosition(position *api.Position) bool {
-	return false
+	return position.Side == constants.ShortSide
 }
 
 // IsWorkingOrder ...
 func (s *API) IsWorkingOrder(order *api.Order) bool {
-	return false
+	return true
 }

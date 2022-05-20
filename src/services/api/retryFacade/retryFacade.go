@@ -34,7 +34,6 @@ func (s *APIFacade) CloseOrders(
 	orders []*api.Order,
 	retryParams RetryParams,
 ) {
-
 	s.Logger.Log("Closing specified orders -> " + utils.GetStringRepresentation(orders))
 
 	if len(orders) == 0 {
@@ -45,12 +44,16 @@ func (s *APIFacade) CloseOrders(
 	go utils.RepeatUntilSuccess(
 		"CloseOrders",
 		func() (err error) {
-
+			var orderIDs []string
 			for _, order := range orders {
-				err = s.API.CloseOrder(order.ID)
+				orderIDs = append(orderIDs, order.ID)
+			}
+
+			for _, orderID := range orderIDs {
+				err = s.API.CloseOrder(orderID)
 
 				if err != nil {
-					s.Logger.Error("An error happened while closing this order -> " + utils.GetStringRepresentation(order))
+					s.Logger.Error("An error happened while closing the order with the ID -> " + utils.GetStringRepresentation(orderID))
 					s.Logger.Error("Error -> " + err.Error())
 
 					if s.API.IsOrderPendingCancelError(err) || s.API.IsOrderCancelledError(err) || s.API.IsOrderFilledError(err) {
