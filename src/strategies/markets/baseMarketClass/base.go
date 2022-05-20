@@ -45,6 +45,11 @@ func (s *BaseMarketClass) SetCandlesHandler(candlesHandler candlesHandler.Interf
 	s.CandlesHandler = candlesHandler
 }
 
+// GetCandlesHandler ...
+func (s *BaseMarketClass) GetCandlesHandler() candlesHandler.Interface {
+	return s.CandlesHandler
+}
+
 // SetHorizontalLevelsService ...
 func (s *BaseMarketClass) SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface) {
 	s.HorizontalLevelsService = horizontalLevelsService

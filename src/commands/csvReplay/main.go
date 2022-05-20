@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/strategies/markets/interfaces"
 	"TradingBot/src/types"
 	"encoding/csv"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -24,15 +23,14 @@ func main() {
 		panic("Error while reading the .csv file -> " + err.Error())
 	}
 
-	// strat := getMarketInstance(getMarketName())
+	strat := getMarketInstance(getMarketName())
 	for i, line := range csvLines {
 		if i == 0 {
 			continue
 		}
-		candle := getCandleObject(line)
 
-		// strat.OnReceiveMarketData()
-		fmt.Printf("%#v", candle)
+		strat.Parent().GetCandlesHandler().AddNewCandle(getCandleObject(line))
+		strat.OnNewCandle()
 	}
 }
 

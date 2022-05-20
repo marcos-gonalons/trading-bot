@@ -117,6 +117,11 @@ func (s *Service) UpdateCandles(
 	}
 }
 
+// AddNewCandle ...
+func (s *Service) AddNewCandle(candle types.Candle) {
+	s.candles = append(s.candles, &candle)
+}
+
 // GetCandles ...
 func (s *Service) GetCandles() []*types.Candle {
 	return s.candles

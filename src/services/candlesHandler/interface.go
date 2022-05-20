@@ -15,6 +15,7 @@ type Interface interface {
 		currentExecutionTime time.Time,
 		lastVolume float64,
 	)
+	AddNewCandle(types.Candle)
 	RemoveOldCandles(amount uint)
 	GetCandles() []*types.Candle
 	GetLastCandle() *types.Candle

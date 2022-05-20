@@ -22,6 +22,7 @@ type MarketInterface interface {
 // BaseMarketClassInterface ...
 type BaseMarketClassInterface interface {
 	SetCandlesHandler(candlesHandler candlesHandler.Interface)
+	GetCandlesHandler() candlesHandler.Interface
 	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
 	SetTrendsService(trendsService trends.Interface)
 	OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData)
