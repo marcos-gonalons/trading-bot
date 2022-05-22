@@ -35,6 +35,7 @@ type API struct {
 	credentials *api.Credentials
 	orders      []*api.Order
 	positions   []*api.Position
+	state       *api.State
 }
 
 // Login ...
@@ -125,6 +126,11 @@ func (s *API) GetOrders() (orders []*api.Order, err error) {
 	return
 }
 
+// SetOrders ...
+func (s *API) SetOrders(orders []*api.Order) {
+	s.orders = orders
+}
+
 // ModifyOrder ...
 func (s *API) ModifyOrder(order *api.Order) (err error) {
 	_, err = s.apiCall(
@@ -212,6 +218,11 @@ func (s *API) GetPositions() (positions []*api.Position, err error) {
 	return
 }
 
+// SetPositions ...
+func (s *API) SetPositions(positions []*api.Position) {
+	s.positions = positions
+}
+
 // GetState ...
 func (s *API) GetState() (state *api.State, err error) {
 	returnValue, err := s.apiCall(
@@ -232,6 +243,11 @@ func (s *API) GetState() (state *api.State, err error) {
 
 	state = returnValue.(*api.State)
 	return
+}
+
+// SetState ...
+func (s *API) SetState(state *api.State) {
+	s.state = state
 }
 
 // ModifyPosition ...

@@ -8,14 +8,17 @@ type Interface interface {
 	GetQuote(symbol string) (*Quote, error)
 	CreateOrder(order *Order) error
 	GetOrders() ([]*Order, error)
+	SetOrders(orders []*Order)
 	GetWorkingOrders(orders []*Order) []*Order
 	ModifyOrder(order *Order) error
 	CloseOrder(orderID string) error
+	SetPositions(positions []*Position)
 	GetPositions() ([]*Position, error)
 	ClosePosition(symbol string) error
 	CloseAllOrders() error
 	CloseAllPositions() error
 	GetState() (*State, error)
+	SetState(state *State)
 	ModifyPosition(symbol string, takeProfit *string, stopLoss *string) error
 
 	SetTimeout(t time.Duration)

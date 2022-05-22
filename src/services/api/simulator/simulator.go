@@ -69,7 +69,7 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 		stopLoss.Qty = order.Qty
 		stopLoss.ID = utils.GetRandomString(5)
 		stopLoss.Type = "stop"
-		stopLoss.StopPrice = order.StopPrice
+		stopLoss.StopPrice = order.StopLoss
 		stopLoss.ParentID = &order.ID
 		stopLoss.Instrument = order.Instrument
 		stopLoss.Side = bracketOrdersSide
@@ -81,6 +81,11 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 // GetOrders ...
 func (s *API) GetOrders() (orders []*api.Order, err error) {
 	return s.orders, nil
+}
+
+// SetOrders ...
+func (s *API) SetOrders(orders []*api.Order) {
+	s.orders = orders
 }
 
 // ModifyOrder ...
@@ -146,14 +151,19 @@ func (s *API) GetPositions() (positions []*api.Position, err error) {
 	return s.positions, nil
 }
 
+// SetPositions ...
+func (s *API) SetPositions(positions []*api.Position) {
+	s.positions = positions
+}
+
 // GetState ...
 func (s *API) GetState() (state *api.State, err error) {
-	// todo: handle state
-	return &api.State{
-		Balance:      1000,
-		UnrealizedPL: 0,
-		Equity:       1000,
-	}, nil
+	return s.state, nil
+}
+
+// SetState ...
+func (s *API) SetState(state *api.State) {
+	s.state = state
 }
 
 // ModifyPosition ...

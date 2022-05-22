@@ -1,6 +1,7 @@
 package main
 
 import (
+	"TradingBot/src/commands/marketReplay/brokerSim"
 	"TradingBot/src/strategies/markets/interfaces"
 	"TradingBot/src/types"
 	"encoding/csv"
@@ -11,11 +12,12 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/api/simulator"
-	"TradingBot/src/services/logger"
+	logger "TradingBot/src/services/logger/nullLogger"
 	"TradingBot/src/strategies"
 )
 
 func main() {
+	brokerSim := &brokerSim.BrokerSim{}
 	candlesFile := getCSVFile()
 
 	csvLines, err := csv.NewReader(candlesFile).ReadAll()
@@ -24,6 +26,12 @@ func main() {
 	}
 
 	simulatorAPI := simulator.CreateAPIServiceInstance()
+	simulatorAPI.SetState(&api.State{
+		Balance:      1000,
+		UnrealizedPL: 0,
+		Equity:       1000,
+	})
+
 	APIData := api.Data{}
 	strat := getMarketInstance(
 		simulatorAPI,
@@ -40,14 +48,6 @@ func main() {
 		candle := getCandleObject(line)
 		strat.Parent().GetCandlesHandler().AddNewCandle(candle)
 
-		// Here, before calling OnNewCandle, need to check the current status
-		// basically, if the price reached a limit or a stop order, and act accordingly
-		// if has reached an limit or stop order: open position if didn't have, or close position if it had
-		// in case of closing a position, update the balance
-
-		// orders := simulatorAPI.GetOrders()
-		// positions := simulatorAPI.GetPositions()
-
 		strat.Parent().SetCurrentBrokerQuote(&api.Quote{
 			Ask:    float32(candle.Close),
 			Bid:    float32(candle.Close),
@@ -55,7 +55,7 @@ func main() {
 			Volume: 0,
 		})
 
-		updateAPIData(&APIData, simulatorAPI)
+		brokerSim.OnNewCandle(&APIData, simulatorAPI, strat)
 
 		strat.OnNewCandle()
 	}
@@ -108,16 +108,6 @@ func getCandleObject(csvLine []string) (candle types.Candle) {
 	candle.Volume = volume
 
 	return
-}
-
-func updateAPIData(APIData api.DataInterface, simulatorAPI api.Interface) {
-	orders, _ := simulatorAPI.GetOrders()
-	positions, _ := simulatorAPI.GetPositions()
-	state, _ := simulatorAPI.GetState()
-
-	APIData.SetOrders(orders)
-	APIData.SetPositions(positions)
-	APIData.SetState(state)
 }
 
 func getMarketInstance(
