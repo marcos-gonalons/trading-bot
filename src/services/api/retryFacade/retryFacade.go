@@ -14,7 +14,7 @@ type APIFacade struct {
 
 // Login ...
 func (s *APIFacade) Login(retryParams RetryParams) {
-	utils.RepeatUntilSuccess(
+	go utils.RepeatUntilSuccess(
 		"Login",
 		func() (err error) {
 			_, err = s.API.Login()
@@ -41,7 +41,7 @@ func (s *APIFacade) CloseOrders(
 		return
 	}
 
-	utils.RepeatUntilSuccess(
+	go utils.RepeatUntilSuccess(
 		"CloseOrders",
 		func() (err error) {
 			var orderIDs []string
@@ -75,7 +75,7 @@ func (s *APIFacade) CloseOrders(
 func (s *APIFacade) ClosePositions(retryParams RetryParams) {
 	s.Logger.Log("Closing all positions ...")
 
-	utils.RepeatUntilSuccess(
+	go utils.RepeatUntilSuccess(
 		"ClosePositions",
 		func() (err error) {
 			err = s.API.CloseAllPositions()
@@ -97,7 +97,7 @@ func (s *APIFacade) ClosePositions(retryParams RetryParams) {
 func (s *APIFacade) ClosePosition(symbol string, retryParams RetryParams) {
 	s.Logger.Log("Closing the specified position ..." + symbol)
 
-	utils.RepeatUntilSuccess(
+	go utils.RepeatUntilSuccess(
 		"ClosePosition",
 		func() (err error) {
 			err = s.API.ClosePosition(symbol)
@@ -124,7 +124,7 @@ func (s *APIFacade) ModifyPosition(
 ) {
 	s.Logger.Log("Modifying the current open position with this values: symbol -> " + symbol + ", tp -> " + tp + " and sl -> " + sl)
 
-	utils.RepeatUntilSuccess(
+	go utils.RepeatUntilSuccess(
 		"ModifyPosition",
 		func() (err error) {
 			err = s.API.ModifyPosition(symbol, &tp, &sl)
@@ -151,7 +151,7 @@ func (s *APIFacade) CreateOrder(
 ) {
 	s.Logger.Log("Creating this order -> " + utils.GetStringRepresentation(order))
 
-	utils.RepeatUntilSuccess(
+	go utils.RepeatUntilSuccess(
 		"CreateOrder",
 		func() (err error) {
 			currentQuote := getCurrentBrokerQuote()
