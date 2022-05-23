@@ -179,8 +179,7 @@ func (s *API) AddTrade(
 
 	s.state.Balance = s.state.Balance + float64(tradeResult)
 
-	fmt.Println("trade result", utils.GetStringRepresentation(tradeResult))
-	fmt.Println("size", utils.GetStringRepresentation(position.Qty))
+	fmt.Println(utils.GetStringRepresentation(position.Qty), "| Trade result ->", utils.GetStringRepresentation(tradeResult))
 	s.state.Equity = s.state.Balance
 	s.trades++
 }
