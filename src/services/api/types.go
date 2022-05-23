@@ -60,6 +60,7 @@ type Position struct {
 	Side         string
 	AvgPrice     float32
 	UnrealizedPl float64
+	CreatedAt    *int64
 }
 
 // State ...

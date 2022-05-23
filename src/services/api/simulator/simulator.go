@@ -2,8 +2,10 @@ package simulator
 
 import (
 	"TradingBot/src/services/logger"
+	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"errors"
+	"fmt"
 	"time"
 
 	"TradingBot/src/services/api"
@@ -55,7 +57,7 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 	if order.TakeProfit != nil {
 		takeProfit := api.Order{}
 		takeProfit.Qty = order.Qty
-		takeProfit.ID = utils.GetRandomString(5)
+		takeProfit.ID = utils.GetRandomString(6)
 		takeProfit.Type = "limit"
 		takeProfit.LimitPrice = order.TakeProfit
 		takeProfit.ParentID = &order.ID
@@ -67,7 +69,7 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 	if order.StopLoss != nil {
 		stopLoss := api.Order{}
 		stopLoss.Qty = order.Qty
-		stopLoss.ID = utils.GetRandomString(5)
+		stopLoss.ID = utils.GetRandomString(7)
 		stopLoss.Type = "stop"
 		stopLoss.StopPrice = order.StopLoss
 		stopLoss.ParentID = &order.ID
@@ -75,6 +77,7 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 		stopLoss.Side = bracketOrdersSide
 		s.orders = append(s.orders, &stopLoss)
 	}
+
 	return nil
 }
 
@@ -117,29 +120,77 @@ func (s *API) ClosePosition(symbol string) (err error) {
 			takeProfitOrderIndex = index
 			hasTakeProfit = true
 		}
+	}
+
+	if hasTakeProfit {
+		s.orders = append(s.orders[:takeProfitOrderIndex], s.orders[takeProfitOrderIndex+1:]...)
+	}
+
+	for index, order := range s.orders {
+		if order.Instrument != symbol {
+			continue
+		}
 		if order.StopPrice != nil {
 			stopLossOrderIndex = index
 			hasStopLoss = true
 		}
 	}
 
-	if hasTakeProfit {
-		s.orders = append(s.orders[:takeProfitOrderIndex], s.orders[takeProfitOrderIndex+1:]...)
-	}
 	if hasStopLoss {
 		s.orders = append(s.orders[:stopLossOrderIndex], s.orders[stopLossOrderIndex+1:]...)
 	}
+
 	return nil
+}
+
+func (s *API) AddTrade(
+	order *api.Order,
+	position *api.Position,
+	slippageFunc func(price float32, order *api.Order) float32,
+	eurExchangeRate float64,
+	lastCandle *types.Candle,
+) {
+	finalPrice := float32(.0)
+
+	if order != nil {
+		if order.Type == "stop" {
+			finalPrice = *order.StopPrice
+		}
+		if order.Type == "limit" {
+			finalPrice = *order.LimitPrice
+		}
+	} else {
+		finalPrice = float32(lastCandle.Close)
+	}
+
+	finalPrice = slippageFunc(finalPrice, order)
+	tradeResult := ((float64(position.AvgPrice) - float64(finalPrice)) * float64(position.Qty)) * eurExchangeRate
+
+	fmt.Println("Trade Result -> ", utils.GetStringRepresentation(tradeResult))
+
+	if position.Side == "buy" {
+		s.state.Balance = s.state.Balance - float64(tradeResult)
+	}
+	if position.Side == "sell" {
+		s.state.Balance = s.state.Balance + float64(tradeResult)
+	}
+
+	s.state.Equity = s.state.Balance
 }
 
 // CloseOrder ...
 func (s *API) CloseOrder(orderID string) (err error) {
 	orderIndex := 0
+	found := false
 	for index, order := range s.orders {
 		if order.ID == orderID {
 			orderIndex = index
+			found = true
 			break
 		}
+	}
+	if !found {
+		return errors.New("order not found")
 	}
 
 	s.orders = append(s.orders[:orderIndex], s.orders[orderIndex+1:]...)
@@ -170,7 +221,7 @@ func (s *API) SetState(state *api.State) {
 func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string) (err error) {
 	var position *api.Position
 	for _, p := range s.positions {
-		if position.Instrument != symbol {
+		if p.Instrument != symbol {
 			continue
 		}
 		position = p
@@ -217,7 +268,7 @@ func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string
 	if !hasTP {
 		tpOrder := api.Order{}
 		tpOrder.Qty = position.Qty
-		tpOrder.ID = utils.GetRandomString(5)
+		tpOrder.ID = utils.GetRandomString(6)
 		tpOrder.Type = "limit"
 		tp := float32(utils.StringToFloat(*takeProfit))
 		tpOrder.LimitPrice = &tp
@@ -229,7 +280,7 @@ func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string
 	if !hasSL {
 		slOrder := api.Order{}
 		slOrder.Qty = position.Qty
-		slOrder.ID = utils.GetRandomString(5)
+		slOrder.ID = utils.GetRandomString(7)
 		slOrder.Type = "stop"
 		tp := float32(utils.StringToFloat(*stopLoss))
 		slOrder.StopPrice = &tp

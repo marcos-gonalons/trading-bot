@@ -33,4 +33,5 @@ type BaseMarketClassInterface interface {
 	GetSymbol() *types.Symbol
 	SetEurExchangeRate(rate float64)
 	GetEurExchangeRate() float64
+	SetCurrentPositionExecutedAt(timestamp int64)
 }

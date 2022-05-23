@@ -15,10 +15,6 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
-// todo: for forex, there are no candles on weekends, but the last candle from friday is not saved in the csv
-// until we start receiving the data from sunday's first candle
-// This means that, if we reset the bot on a weekend, we will lose last friday's candle data
-
 const CandlesFolder = ".candles-csv/"
 
 // Service ...
@@ -119,7 +115,38 @@ func (s *Service) UpdateCandles(
 
 // AddNewCandle ...
 func (s *Service) AddNewCandle(candle types.Candle) {
-	s.candles = append(s.candles, &candle)
+	if len(s.candles) == 0 {
+		s.candles = append(s.candles, &candle)
+		return
+	}
+
+	if len(s.candles) == 1 {
+		s.candles = append(s.candles, &candle)
+
+		s.candles = append(s.candles, &types.Candle{
+			Open:      candle.Close,
+			High:      candle.Close,
+			Low:       candle.Close,
+			Close:     candle.Close,
+			Volume:    0,
+			Timestamp: candle.Timestamp,
+		})
+		return
+	}
+
+	if len(s.candles) > 1 {
+		s.candles[len(s.candles)-1] = &candle
+
+		s.candles = append(s.candles, &types.Candle{
+			Open:      candle.Close,
+			High:      candle.Close,
+			Low:       candle.Close,
+			Close:     candle.Close,
+			Volume:    0,
+			Timestamp: candle.Timestamp,
+		})
+	}
+
 }
 
 // GetCandles ...

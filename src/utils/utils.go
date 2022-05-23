@@ -27,7 +27,7 @@ func FloatToString(v float64, decimals int64) string {
 // StringToFloat ...
 func StringToFloat(v string) float64 {
 	n, err := strconv.ParseFloat(v, 64)
-	if err != nil {
+	if err == nil {
 		return n
 	}
 	return 0.0

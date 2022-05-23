@@ -12,7 +12,7 @@ import (
 	modifyorder "TradingBot/src/services/api/ibroker/modifyOrder"
 	modifyposition "TradingBot/src/services/api/ibroker/modifyPosition"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/services/logger/types"
+	loggerTypes "TradingBot/src/services/logger/types"
 	"errors"
 
 	"encoding/json"
@@ -22,6 +22,7 @@ import (
 
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/httpclient"
+	"TradingBot/src/types"
 )
 
 // API ...
@@ -41,7 +42,7 @@ type API struct {
 // Login ...
 func (s *API) Login() (accessToken *api.AccessToken, err error) {
 	returnValue, err := s.apiCall(
-		types.LoginRequest,
+		loggerTypes.LoginRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("authorize")
 			return login.Request(
@@ -63,7 +64,7 @@ func (s *API) Login() (accessToken *api.AccessToken, err error) {
 // GetQuote ...
 func (s *API) GetQuote(symbol string) (quote *api.Quote, err error) {
 	returnValue, err := s.apiCall(
-		types.GetQuoteRequest,
+		loggerTypes.GetQuoteRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("quotes")
 			return getquote.Request(
@@ -86,7 +87,7 @@ func (s *API) GetQuote(symbol string) (quote *api.Quote, err error) {
 // CreateOrder ...
 func (s *API) CreateOrder(order *api.Order) (err error) {
 	_, err = s.apiCall(
-		types.CreateOrderRequest,
+		loggerTypes.CreateOrderRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders"
 			return createorder.Request(
@@ -107,7 +108,7 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 // GetOrders ...
 func (s *API) GetOrders() (orders []*api.Order, err error) {
 	returnValue, err := s.apiCall(
-		types.GetOrdersRequest,
+		loggerTypes.GetOrdersRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders"
 			return getorders.Request(
@@ -134,7 +135,7 @@ func (s *API) SetOrders(orders []*api.Order) {
 // ModifyOrder ...
 func (s *API) ModifyOrder(order *api.Order) (err error) {
 	_, err = s.apiCall(
-		types.ModifyOrderRequest,
+		loggerTypes.ModifyOrderRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + order.ID
 			return modifyorder.Request(
@@ -157,7 +158,7 @@ func (s *API) ModifyOrder(order *api.Order) (err error) {
 // ClosePosition ...
 func (s *API) ClosePosition(symbol string) (err error) {
 	_, err = s.apiCall(
-		types.ClosePositionRequest,
+		loggerTypes.ClosePositionRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + url.QueryEscape(symbol)
 			return closeposition.Request(
@@ -174,10 +175,21 @@ func (s *API) ClosePosition(symbol string) (err error) {
 	return
 }
 
+// AddTrade ...
+func (s *API) AddTrade(
+	order *api.Order,
+	position *api.Position,
+	slippageFunc func(price float32, order *api.Order) float32,
+	eurExchangeRate float64,
+	lastCandle *types.Candle,
+) {
+	// Nothing to do here ...
+}
+
 // CloseOrder ...
 func (s *API) CloseOrder(orderID string) (err error) {
 	_, err = s.apiCall(
-		types.CloseOrderRequest,
+		loggerTypes.CloseOrderRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/orders/" + orderID
 			return closeorder.Request(
@@ -198,7 +210,7 @@ func (s *API) CloseOrder(orderID string) (err error) {
 // GetPositions ...
 func (s *API) GetPositions() (positions []*api.Position, err error) {
 	returnValue, err := s.apiCall(
-		types.GetPositionsRequest,
+		loggerTypes.GetPositionsRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions"
 			return getpositions.Request(
@@ -226,7 +238,7 @@ func (s *API) SetPositions(positions []*api.Position) {
 // GetState ...
 func (s *API) GetState() (state *api.State, err error) {
 	returnValue, err := s.apiCall(
-		types.GetStateRequest,
+		loggerTypes.GetStateRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/state?locale=en"
 			return getstate.Request(
@@ -253,7 +265,7 @@ func (s *API) SetState(state *api.State) {
 // ModifyPosition ...
 func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string) (err error) {
 	_, err = s.apiCall(
-		types.ModifyPositionRequest,
+		loggerTypes.ModifyPositionRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
 			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + url.QueryEscape(symbol)
 			return modifyposition.Request(
@@ -397,7 +409,7 @@ func (s *API) GetWorkingOrderWithBracketOrders(side string, symbol string, order
 }
 
 func (s *API) apiCall(
-	logType types.LogType,
+	logType loggerTypes.LogType,
 	call func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (interface{}, error),
 ) (r interface{}, err error) {
 	defer func() {
@@ -443,7 +455,7 @@ func (s *API) setHeaders(rq *http.Request, isOptionsRequest bool, method string)
 	rq.Header.Set("Accept-Language", "en-US,en;q=0.9,es;q=0.8")
 }
 
-func (s *API) optionsRequest(url string, method string, logType types.LogType) (err error) {
+func (s *API) optionsRequest(url string, method string, logType loggerTypes.LogType) (err error) {
 	// The OPTIONS request is, of course, not really needed outside a browser's context.
 	// But since we want to simulate we are in the browser, we send the options request anyway.
 	rq, err := http.NewRequest(
@@ -464,7 +476,7 @@ func (s *API) optionsRequest(url string, method string, logType types.LogType) (
 	return
 }
 
-func (s *API) logAPIResult(response interface{}, err error, logType types.LogType) {
+func (s *API) logAPIResult(response interface{}, err error, logType loggerTypes.LogType) {
 	if err != nil {
 		s.logger.Error("ERROR -> "+err.Error(), logType)
 	} else {

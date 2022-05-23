@@ -27,7 +27,8 @@ func (logger *Logger) Error(message string, logType ...types.LogType) {
 
 // Log logs a message
 func (logger *Logger) Log(message string, logType ...types.LogType) {
-	go func() {
+	// todo: maybe add back the go routine
+	func() {
 		var logFileName string
 		isError := false
 

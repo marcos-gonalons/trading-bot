@@ -80,6 +80,11 @@ func (s *BaseMarketClass) DailyReset() {
 
 }
 
+// SetCurrentPositionExecutedAt ...
+func (s *BaseMarketClass) SetCurrentPositionExecutedAt(timestamp int64) {
+	s.currentPositionExecutedAt = time.Unix(timestamp, 0)
+}
+
 // SetCurrentBrokerQuote ...
 func (s *BaseMarketClass) SetCurrentBrokerQuote(quote *api.Quote) {
 	s.currentBrokerQuote = quote
@@ -168,8 +173,8 @@ func (s *BaseMarketClass) CheckIfSLShouldBeAdjusted(
 
 		s.APIRetryFacade.ModifyPosition(
 			s.GetSymbol().BrokerAPIName,
-			utils.FloatToString(float64(*tpOrder.LimitPrice), 2),
-			utils.FloatToString(float64(position.AvgPrice)+params.SLDistanceWhenTPIsVeryClose, 2),
+			utils.FloatToString(float64(*tpOrder.LimitPrice), s.GetSymbol().PriceDecimals),
+			utils.FloatToString(float64(position.AvgPrice)+params.SLDistanceWhenTPIsVeryClose, s.GetSymbol().PriceDecimals),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          20,
@@ -238,6 +243,15 @@ func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP(longParams *types.Mar
 								DelayBetweenRetries: 5 * time.Second,
 								MaxRetries:          20,
 							})
+							s.API.AddTrade(
+								nil,
+								s.currentPosition,
+								func(price float32, order *api.Order) float32 {
+									return price
+								},
+								s.GetEurExchangeRate(),
+								s.CandlesHandler.GetLastCandle(),
+							)
 						},
 					})
 			} else {
@@ -500,7 +514,14 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		}
 	}
 
-	if s.currentPosition == nil {
+	var position *api.Position
+	for _, p := range s.APIData.GetPositions() {
+		if p.Instrument == order.Instrument {
+			position = p
+		}
+	}
+
+	if position == nil {
 		s.Log(params.StrategyName, "There isn't any open position, let's create the order ...")
 
 		s.APIRetryFacade.CreateOrder(
@@ -531,24 +552,29 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 	if params.MaxSecondsOpenTrade == 0 {
 		return
 	}
-	if s.currentPosition == nil {
-		s.Log(s.Name, "CheckOpenPositionTTL called, but currentPosition is nil")
-		return
-	}
 
 	s.Log(s.Name, "Checking open position TTL, it was opened on "+s.currentPositionExecutedAt.Format("2006-01-02 15:04:05"))
 	s.Log(s.Name, "Position is "+utils.GetStringRepresentation(position))
 	s.Log(s.Name, "Max seconds open trade is"+strconv.FormatInt(params.MaxSecondsOpenTrade, 10))
 
-	var diffInSeconds = time.Now().Unix() - s.currentPositionExecutedAt.Unix()
+	var diffInSeconds = s.CandlesHandler.GetLastCandle().Timestamp - s.currentPositionExecutedAt.Unix()
 	s.Log(s.Name, "Difference in seconds is "+strconv.FormatInt(diffInSeconds, 10))
 
 	if diffInSeconds > params.MaxSecondsOpenTrade {
 		s.Log(s.Name, "Trade has been opened for too long, closing position ...")
-		s.APIRetryFacade.ClosePosition(s.currentPosition.Instrument, retryFacade.RetryParams{
+		s.APIRetryFacade.ClosePosition(position.Instrument, retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          20,
 		})
+		s.API.AddTrade(
+			nil,
+			position,
+			func(price float32, order *api.Order) float32 {
+				return price
+			},
+			s.GetEurExchangeRate(),
+			s.CandlesHandler.GetLastCandle(),
+		)
 	} else {
 		s.Log(s.Name, "Not closing the trade yet")
 	}

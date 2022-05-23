@@ -12,6 +12,9 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/api/simulator"
+
+	//logger "TradingBot/src/services/logger"
+
 	logger "TradingBot/src/services/logger/nullLogger"
 	"TradingBot/src/strategies"
 )
@@ -27,9 +30,9 @@ func main() {
 
 	simulatorAPI := simulator.CreateAPIServiceInstance()
 	simulatorAPI.SetState(&api.State{
-		Balance:      1000,
+		Balance:      5000,
 		UnrealizedPL: 0,
-		Equity:       1000,
+		Equity:       5000,
 	})
 
 	APIData := api.Data{}
@@ -40,6 +43,14 @@ func main() {
 	)
 	strat.Parent().SetEurExchangeRate(.85)
 
+	strat.Parent().GetCandlesHandler().AddNewCandle(types.Candle{
+		Open:      0,
+		High:      0,
+		Low:       0,
+		Close:     0,
+		Volume:    0,
+		Timestamp: 0,
+	})
 	for i, line := range csvLines {
 		if i == 0 {
 			continue
@@ -58,6 +69,8 @@ func main() {
 		brokerSim.OnNewCandle(&APIData, simulatorAPI, strat)
 
 		strat.OnNewCandle()
+
+		// fmt.Println(float64(i) * 100.0 / float64(len(csvLines)))
 	}
 }
 

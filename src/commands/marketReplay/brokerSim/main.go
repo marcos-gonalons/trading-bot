@@ -32,7 +32,7 @@ func (s *BrokerSim) OnNewCandle(
 	candles := strat.Parent().GetCandlesHandler().GetCandles()
 	orderIDsToRemove := []string{}
 	for _, order := range orders {
-		lastCandle := candles[len(candles)-1]
+		lastCandle := candles[len(candles)-2]
 
 		orderExecutionPrice := getOrderExecutionPrice(order, spread)
 		positionPrice := float32(0)
@@ -50,9 +50,13 @@ func (s *BrokerSim) OnNewCandle(
 
 		position := findPosition(positions, order.Instrument)
 		if position == nil {
-			positions = append(positions, createNewPosition(positionPrice, order, order.Qty, stopOrderSlippage))
-			APIData.SetPositions(positions)
+			if order.ParentID != nil {
+				continue
+			}
+			positions = append(positions, createNewPosition(positionPrice, order, order.Qty, stopOrderSlippage, lastCandle))
 			simulatorAPI.SetPositions(positions)
+
+			strat.Parent().SetCurrentPositionExecutedAt(lastCandle.Timestamp)
 		} else {
 			if position.Side == order.Side {
 				position.Qty = position.Qty + order.Qty
@@ -60,15 +64,23 @@ func (s *BrokerSim) OnNewCandle(
 
 				panic("right now it will never enter here if everything works as expected")
 			} else {
-				addTrade(position, order, state, order.Qty, stopOrderSlippage)
+				simulatorAPI.AddTrade(
+					order,
+					position,
+					func(price float32, order *api.Order) float32 {
+						return addSlippage(price, order, stopOrderSlippage)
+					},
+					eurExchangeRate,
+					lastCandle,
+				)
 
 				if order.Qty == position.Qty {
 					simulatorAPI.ClosePosition(position.Instrument)
 				} else {
 					if order.Qty > position.Qty {
 						simulatorAPI.ClosePosition(position.Instrument)
-						positions = append(positions, createNewPosition(positionPrice, order, order.Qty-position.Qty, stopOrderSlippage))
-						APIData.SetPositions(positions)
+						p, _ := simulatorAPI.GetPositions()
+						positions = append(p, createNewPosition(positionPrice, order, order.Qty-position.Qty, stopOrderSlippage, lastCandle))
 						simulatorAPI.SetPositions(positions)
 					} else {
 						position.Qty -= order.Qty
@@ -87,6 +99,9 @@ func (s *BrokerSim) OnNewCandle(
 
 	o, _ := simulatorAPI.GetOrders()
 	APIData.SetOrders(o)
+
+	p, _ := simulatorAPI.GetPositions()
+	APIData.SetPositions(p)
 
 	APIData.SetState(state)
 	simulatorAPI.SetState(state)
@@ -144,6 +159,7 @@ func createNewPosition(
 	order *api.Order,
 	size float32,
 	stopOrderSlippage float32,
+	lastCandle *types.Candle,
 ) *api.Position {
 	price := addSlippage(positionPrice, order, stopOrderSlippage)
 
@@ -153,6 +169,7 @@ func createNewPosition(
 		Side:         order.Side,
 		AvgPrice:     price,
 		UnrealizedPl: .0,
+		CreatedAt:    &lastCandle.Timestamp,
 	}
 }
 
@@ -169,34 +186,4 @@ func addSlippage(price float32, order *api.Order, slippage float32) float32 {
 	}
 
 	return price
-}
-
-func addTrade(
-	position *api.Position,
-	order *api.Order,
-	state *api.State,
-	size float32,
-	stopOrderSlippage float32,
-) {
-	finalPrice := float32(.0)
-	if order.Type == "stop" {
-		finalPrice = *order.StopPrice
-	}
-	if order.Type == "limit" {
-		finalPrice = *order.LimitPrice
-	}
-	finalPrice = addSlippage(finalPrice, order, stopOrderSlippage)
-	tradeResult := position.AvgPrice - finalPrice
-	if position.Side == "buy" {
-		state.Balance = state.Balance - float64(tradeResult)
-	}
-	if position.Side == "sell" {
-		state.Balance = state.Balance + float64(tradeResult)
-	}
-
-	state.Balance *= float64(size)
-	state.Balance *= eurExchangeRate
-
-	state.Equity = state.Balance
-
 }

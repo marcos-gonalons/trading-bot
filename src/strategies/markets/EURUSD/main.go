@@ -47,7 +47,6 @@ func (s *Strategy) Initialize() {
 		&ResistanceBounceParams,
 	)
 
-	// todo: get the usdeur quote
 	s.BaseMarketClass.SetEurExchangeRate(.85)
 
 	s.isReady = true

@@ -1,6 +1,9 @@
 package api
 
-import "time"
+import (
+	"TradingBot/src/types"
+	"time"
+)
 
 // Interface implemented by the broker APIs
 type Interface interface {
@@ -15,6 +18,13 @@ type Interface interface {
 	SetPositions(positions []*Position)
 	GetPositions() ([]*Position, error)
 	ClosePosition(symbol string) error
+	AddTrade(
+		order *Order,
+		position *Position,
+		slippageFunc func(price float32, order *Order) float32,
+		eurExchangeRate float64,
+		lastCandle *types.Candle,
+	)
 	CloseAllOrders() error
 	CloseAllPositions() error
 	GetState() (*State, error)
