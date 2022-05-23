@@ -40,7 +40,7 @@ func (s *BrokerSim) OnNewCandle(
 		if isPriceWithinCandle(float64(orderExecutionPrice), lastCandle) {
 			positionPrice = orderExecutionPrice
 		}
-		if hasCandleGapOvercameExecutionPrice(float64(orderExecutionPrice), lastCandle, candles[len(candles)-2]) {
+		if hasCandleGapOvercameExecutionPrice(float64(orderExecutionPrice), lastCandle, candles[len(candles)-3]) {
 			positionPrice = float32(lastCandle.Open)
 		}
 
