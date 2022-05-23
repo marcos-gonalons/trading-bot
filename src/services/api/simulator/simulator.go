@@ -5,7 +5,6 @@ import (
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"errors"
-	"fmt"
 	"time"
 
 	"TradingBot/src/services/api"
@@ -165,8 +164,6 @@ func (s *API) AddTrade(
 
 	finalPrice = slippageFunc(finalPrice, order)
 	tradeResult := ((float64(position.AvgPrice) - float64(finalPrice)) * float64(position.Qty)) * eurExchangeRate
-
-	fmt.Println("Trade Result -> ", utils.GetStringRepresentation(tradeResult))
 
 	if position.Side == "buy" {
 		s.state.Balance = s.state.Balance - float64(tradeResult)

@@ -4,7 +4,9 @@ import (
 	"TradingBot/src/commands/marketReplay/brokerSim"
 	"TradingBot/src/strategies/markets/interfaces"
 	"TradingBot/src/types"
+	"TradingBot/src/utils"
 	"encoding/csv"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -72,6 +74,8 @@ func main() {
 
 		// fmt.Println(float64(i) * 100.0 / float64(len(csvLines)))
 	}
+	s, _ := simulatorAPI.GetState()
+	fmt.Println("balance ", utils.GetStringRepresentation(s))
 }
 
 func getCSVFile() *os.File {
