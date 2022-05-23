@@ -566,6 +566,7 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          20,
 		})
+		candles := s.CandlesHandler.GetCandles()
 		s.API.AddTrade(
 			nil,
 			position,
@@ -573,7 +574,7 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 				return price
 			},
 			s.GetEurExchangeRate(),
-			s.CandlesHandler.GetLastCandle(),
+			candles[len(candles)-3],
 		)
 	} else {
 		s.Log(s.Name, "Not closing the trade yet")

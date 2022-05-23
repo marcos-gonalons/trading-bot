@@ -41,6 +41,7 @@ var Symbols = []types.Symbol{
 		MaxSpread:           999999,
 		LogType:             logger.EURUSD,
 		MarketType:          ForexType,
+		Rollover:            .7,
 	},
 	{
 		BrokerAPIName: ibroker.GBPUSDSymbolName,
@@ -54,6 +55,7 @@ var Symbols = []types.Symbol{
 		MaxSpread:           999999,
 		LogType:             logger.GBPUSD,
 		MarketType:          ForexType,
+		Rollover:            .7,
 	},
 	{
 		BrokerAPIName: ibroker.USDCADSymbolName,
@@ -67,6 +69,7 @@ var Symbols = []types.Symbol{
 		MaxSpread:           999999,
 		LogType:             logger.USDCAD,
 		MarketType:          ForexType,
+		Rollover:            .7,
 	},
 	{
 		BrokerAPIName: ibroker.USDJPYSymbolName,
@@ -80,6 +83,7 @@ var Symbols = []types.Symbol{
 		MaxSpread:           999999,
 		LogType:             logger.USDJPY,
 		MarketType:          ForexType,
+		Rollover:            0.6,
 	},
 	{
 		BrokerAPIName: ibroker.USDCHFSymbolName,
@@ -93,6 +97,7 @@ var Symbols = []types.Symbol{
 		MaxSpread:           999999,
 		LogType:             logger.USDCHF,
 		MarketType:          ForexType,
+		Rollover:            .7,
 	},
 	{
 		BrokerAPIName: ibroker.NZDUSDSymbolName,
@@ -106,6 +111,7 @@ var Symbols = []types.Symbol{
 		MaxSpread:           999999,
 		LogType:             logger.NZDUSD,
 		MarketType:          ForexType,
+		Rollover:            .7,
 	},
 	{
 		BrokerAPIName: ibroker.AUDUSDSymbolName,
@@ -119,5 +125,6 @@ var Symbols = []types.Symbol{
 		MaxSpread:           999999,
 		LogType:             logger.AUDUSD,
 		MarketType:          ForexType,
+		Rollover:            .7,
 	},
 }

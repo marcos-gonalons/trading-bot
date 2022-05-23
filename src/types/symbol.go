@@ -11,6 +11,7 @@ type Symbol struct {
 	MaxSpread           float64
 	LogType             logger.LogType
 	MarketType          MarketType
+	Rollover            float64
 }
 type MarketType string
 

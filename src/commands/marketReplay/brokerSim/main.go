@@ -6,14 +6,9 @@ import (
 	"TradingBot/src/types"
 )
 
-type Trade struct{}
-
-type BrokerSim struct{}
-
 var eurExchangeRate float64
-var trades []*Trade
 
-func (s *BrokerSim) OnNewCandle(
+func OnNewCandle(
 	APIData api.DataInterface,
 	simulatorAPI api.Interface,
 	strat interfaces.MarketInterface,
@@ -34,7 +29,7 @@ func (s *BrokerSim) OnNewCandle(
 	for _, order := range orders {
 		lastCandle := candles[len(candles)-2]
 
-		orderExecutionPrice := getOrderExecutionPrice(order, spread)
+		orderExecutionPrice := getOrderExecutionPrice(simulatorAPI, order, spread)
 		positionPrice := float32(0)
 
 		if isPriceWithinCandle(float64(orderExecutionPrice), lastCandle) {
@@ -111,22 +106,25 @@ func isPriceWithinCandle(price float64, candle *types.Candle) bool {
 	return price >= candle.Low && price <= candle.High
 }
 
-func getOrderExecutionPrice(order *api.Order, spread float32) float32 {
-	// todo: simulator constants, like ibroker constants
-	if order.Type == "limit" {
-		if order.Side == "buy" {
+func getOrderExecutionPrice(
+	simulatorAPI api.Interface,
+	order *api.Order,
+	spread float32,
+) float32 {
+	if simulatorAPI.IsLimitOrder(order) {
+		if simulatorAPI.IsLongOrder(order) {
 			return *order.LimitPrice - spread/2
 		}
-		if order.Side == "sell" {
+		if simulatorAPI.IsShortOrder(order) {
 			return *order.LimitPrice + spread/2
 		}
 	}
 
-	if order.Type == "stop" {
-		if order.Side == "buy" {
+	if simulatorAPI.IsStopOrder(order) {
+		if simulatorAPI.IsLongOrder(order) {
 			return *order.StopPrice + spread/2
 		}
-		if order.Side == "sell" {
+		if simulatorAPI.IsShortOrder(order) {
 			return *order.StopPrice - spread/2
 		}
 	}

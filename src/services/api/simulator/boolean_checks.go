@@ -2,7 +2,7 @@ package simulator
 
 import (
 	"TradingBot/src/services/api"
-	"TradingBot/src/services/api/ibroker/constants"
+	"TradingBot/src/services/api/simulator/constants"
 )
 
 // IsSessionDisconnectedError ...

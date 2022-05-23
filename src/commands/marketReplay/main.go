@@ -22,7 +22,6 @@ import (
 )
 
 func main() {
-	brokerSim := &brokerSim.BrokerSim{}
 	candlesFile := getCSVFile()
 
 	csvLines, err := csv.NewReader(candlesFile).ReadAll()
@@ -76,6 +75,7 @@ func main() {
 	}
 	s, _ := simulatorAPI.GetState()
 	fmt.Println("balance ", utils.GetStringRepresentation(s))
+	fmt.Println("total trades ", simulatorAPI.GetTrades())
 }
 
 func getCSVFile() *os.File {

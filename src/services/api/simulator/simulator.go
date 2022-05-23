@@ -1,13 +1,17 @@
 package simulator
 
 import (
+	"TradingBot/src/constants"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"errors"
+	"fmt"
+	"math"
 	"time"
 
 	"TradingBot/src/services/api"
+	apiConstants "TradingBot/src/services/api/simulator/constants"
 )
 
 // API ...
@@ -17,6 +21,8 @@ type API struct {
 	state     *api.State
 	orders    []*api.Order
 	positions []*api.Position
+
+	trades int64
 }
 
 // Login ...
@@ -48,16 +54,16 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 	s.orders = append(s.orders, order)
 
 	bracketOrdersSide := ""
-	if order.Side == "buy" {
-		bracketOrdersSide = "sell"
-	} else if order.Side == "sell" {
-		bracketOrdersSide = "buy"
+	if s.IsLongOrder(order) {
+		bracketOrdersSide = apiConstants.ShortSide
+	} else if s.IsShortOrder(order) {
+		bracketOrdersSide = apiConstants.LongSide
 	}
 	if order.TakeProfit != nil {
 		takeProfit := api.Order{}
 		takeProfit.Qty = order.Qty
 		takeProfit.ID = utils.GetRandomString(6)
-		takeProfit.Type = "limit"
+		takeProfit.Type = apiConstants.LimitType
 		takeProfit.LimitPrice = order.TakeProfit
 		takeProfit.ParentID = &order.ID
 		takeProfit.Instrument = order.Instrument
@@ -69,7 +75,7 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 		stopLoss := api.Order{}
 		stopLoss.Qty = order.Qty
 		stopLoss.ID = utils.GetRandomString(7)
-		stopLoss.Type = "stop"
+		stopLoss.Type = apiConstants.StopType
 		stopLoss.StopPrice = order.StopLoss
 		stopLoss.ParentID = &order.ID
 		stopLoss.Instrument = order.Instrument
@@ -152,10 +158,10 @@ func (s *API) AddTrade(
 	finalPrice := float32(.0)
 
 	if order != nil {
-		if order.Type == "stop" {
+		if s.IsStopOrder(order) {
 			finalPrice = *order.StopPrice
 		}
-		if order.Type == "limit" {
+		if s.IsLimitOrder(order) {
 			finalPrice = *order.LimitPrice
 		}
 	} else {
@@ -163,16 +169,24 @@ func (s *API) AddTrade(
 	}
 
 	finalPrice = slippageFunc(finalPrice, order)
-	tradeResult := ((float64(position.AvgPrice) - float64(finalPrice)) * float64(position.Qty)) * eurExchangeRate
+	tradeResult := (float64(position.AvgPrice) - float64(finalPrice)) * float64(position.Qty)
 
-	if position.Side == "buy" {
-		s.state.Balance = s.state.Balance - float64(tradeResult)
-	}
-	if position.Side == "sell" {
-		s.state.Balance = s.state.Balance + float64(tradeResult)
+	if s.IsLongPosition(position) {
+		tradeResult = -tradeResult
 	}
 
+	tradeResult = adjustResultWithRollover(tradeResult, position, lastCandle) * eurExchangeRate
+
+	s.state.Balance = s.state.Balance + float64(tradeResult)
+
+	fmt.Println("trade result", utils.GetStringRepresentation(tradeResult))
+	fmt.Println("size", utils.GetStringRepresentation(position.Qty))
 	s.state.Equity = s.state.Balance
+	s.trades++
+}
+
+func (s *API) GetTrades() int64 {
+	return s.trades
 }
 
 // CloseOrder ...
@@ -257,16 +271,16 @@ func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string
 	}
 
 	var side string
-	if position.Side == "buy" {
-		side = "sell"
+	if s.IsLongPosition(position) {
+		side = apiConstants.ShortSide
 	} else {
-		side = "buy"
+		side = apiConstants.LongSide
 	}
 	if !hasTP {
 		tpOrder := api.Order{}
 		tpOrder.Qty = position.Qty
 		tpOrder.ID = utils.GetRandomString(6)
-		tpOrder.Type = "limit"
+		tpOrder.Type = apiConstants.LimitType
 		tp := float32(utils.StringToFloat(*takeProfit))
 		tpOrder.LimitPrice = &tp
 		tpOrder.Instrument = position.Instrument
@@ -278,7 +292,7 @@ func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string
 		slOrder := api.Order{}
 		slOrder.Qty = position.Qty
 		slOrder.ID = utils.GetRandomString(7)
-		slOrder.Type = "stop"
+		slOrder.Type = apiConstants.StopType
 		tp := float32(utils.StringToFloat(*stopLoss))
 		slOrder.StopPrice = &tp
 		slOrder.Instrument = position.Instrument
@@ -364,4 +378,21 @@ func CreateAPIServiceInstance() api.Interface {
 	}
 
 	return instance
+}
+
+func findSymbol(n string) *types.Symbol {
+	for _, s := range constants.Symbols {
+		if s.BrokerAPIName == n {
+			return &s
+		}
+	}
+
+	return nil
+}
+
+func adjustResultWithRollover(tradeResult float64, position *api.Position, lastCandle *types.Candle) float64 {
+	symbol := findSymbol(position.Instrument)
+	days := int64((lastCandle.Timestamp - *position.CreatedAt) / 60 / 60 / 24)
+	rollover := float64((symbol.Rollover * float64(position.Qty)) / math.Pow(10, float64(symbol.PriceDecimals)-1))
+	return tradeResult - float64(days)*rollover
 }

@@ -25,6 +25,7 @@ type Interface interface {
 		eurExchangeRate float64,
 		lastCandle *types.Candle,
 	)
+	GetTrades() int64
 	CloseAllOrders() error
 	CloseAllPositions() error
 	GetState() (*State, error)
