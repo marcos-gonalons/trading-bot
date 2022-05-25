@@ -62,14 +62,14 @@ func (s *Service) UpdateCandles(
 		currentPrice = 0
 	}
 
-	var volume float64
+	var volume float64 = 0
 	if data.Volume != nil {
-		volume = *data.Volume - lastVolume
-		if volume < 0 {
-			volume = 0
+		if lastVolume > 0 {
+			volume = *data.Volume - lastVolume
 		}
-	} else {
-		volume = 0
+		if volume < 0 {
+			volume = *data.Volume
+		}
 	}
 
 	if s.shouldAddNewCandle(currentExecutionTime) {
