@@ -8,3 +8,5 @@ services:
       - '2345:2345'
     volumes:
       - .:/TradingBot
+    command:
+      tail -f /dev/null

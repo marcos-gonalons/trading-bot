@@ -4,44 +4,33 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/api/retryFacade"
+	"TradingBot/src/services/api/simulator"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/strategies"
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"runtime/debug"
 	"sync"
 	"syscall"
-
-	_ "TradingBot/src/services/logger"
 )
 
 func main() {
-	var ibrokerAPI api.Interface
+	var brokerAPI api.Interface
 
 	// TODO: Add functionality to pause/resume the bot with os signals
 	defer func() {
-		panicCatcher(recover(), ibrokerAPI)
+		panicCatcher(recover(), brokerAPI)
 	}()
 
-	user, password, accountID, apiURL, err := getEnvVars()
-	if err != nil {
-		fmt.Printf("%#v", err.Error())
-		return
+	brokerAPI = getAPIInstance()
+	if brokerAPI == nil {
+		panic("Failed to get the broker API instance")
 	}
 
-	ibrokerAPI = ibroker.CreateAPIServiceInstance(
-		&api.Credentials{
-			Username:  user,
-			Password:  password,
-			AccountID: accountID,
-		},
-		apiURL,
-	)
-	setupOSSignalsNotifications(ibrokerAPI)
+	setupOSSignalsNotifications(brokerAPI)
 
-	_, err = ibrokerAPI.Login()
+	_, err := brokerAPI.Login()
 	if err != nil {
 		fmt.Printf("%#v", "Login error -> "+err.Error())
 		return
@@ -50,39 +39,17 @@ func main() {
 	var waitingGroup sync.WaitGroup
 	waitingGroup.Add(1)
 	apiRetryFacade := &retryFacade.APIFacade{
-		API:    ibrokerAPI,
+		API:    brokerAPI,
 		Logger: logger.GetInstance(),
 	}
 	handler := &strategies.Handler{
 		Logger:         logger.GetInstance(),
-		API:            ibrokerAPI,
+		API:            brokerAPI,
 		APIRetryFacade: apiRetryFacade,
 		APIData:        &api.Data{},
 	}
 	handler.Run()
 	waitingGroup.Wait() // Wait forever, this script should never die
-}
-
-func getEnvVars() (user, password, accountID, apiURL string, err error) {
-	user = os.Getenv("USERNAME")
-	password = os.Getenv("PASSWORD")
-	accountID = os.Getenv("ACCOUNT_ID")
-	apiURL = os.Getenv("API_URL")
-
-	if user == "" {
-		err = errors.New("empty USER env var")
-	}
-	if password == "" {
-		err = errors.New("empty PASSWORD env var")
-	}
-	if accountID == "" {
-		err = errors.New("empty ACCOUNT_ID env var")
-	}
-	if apiURL == "" {
-		err = errors.New("empty API_URL env var")
-	}
-
-	return
 }
 
 func panicCatcher(err interface{}, API api.Interface) {
@@ -110,4 +77,35 @@ func setupOSSignalsNotifications(API api.Interface) {
 		//API.CloseAllOrders()
 		os.Exit(0)
 	}()
+}
+
+func getAPIInstance() api.Interface {
+	user, password, accountID, apiName := getEnvVars()
+
+	apis := make(map[string]api.Interface)
+
+	apis["simulator"] = simulator.CreateAPIServiceInstance()
+
+	apis["ibroker"] = ibroker.CreateAPIServiceInstance(
+		&api.Credentials{
+			Username:  user,
+			Password:  password,
+			AccountID: accountID,
+		},
+	)
+
+	return apis[apiName]
+}
+
+func getEnvVars() (user, password, accountID, apiName string) {
+	user = os.Getenv("USERNAME")
+	password = os.Getenv("PASSWORD")
+	accountID = os.Getenv("ACCOUNT_ID")
+	apiName = os.Getenv("API_NAME")
+
+	if apiName == "" {
+		panic("empty API_NAME env var")
+	}
+
+	return
 }

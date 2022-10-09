@@ -500,7 +500,7 @@ func (s *API) setCredentials(credentials *api.Credentials) {
 }
 
 // CreateAPIServiceInstance ...
-func CreateAPIServiceInstance(credentials *api.Credentials, apiURL string) api.Interface {
+func CreateAPIServiceInstance(credentials *api.Credentials) api.Interface {
 	httpclient := &httpclient.Service{
 		Logger: logger.GetInstance(),
 	}
@@ -508,7 +508,7 @@ func CreateAPIServiceInstance(credentials *api.Credentials, apiURL string) api.I
 	instance := &API{
 		httpclient: httpclient,
 		logger:     logger.GetInstance(),
-		url:        apiURL,
+		url:        "https://www.ibroker.es/tradingview/api/",
 	}
 	instance.setCredentials(credentials)
 	instance.SetTimeout(time.Second * 10)
