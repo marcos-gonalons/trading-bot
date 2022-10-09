@@ -292,9 +292,6 @@ func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
 		panic("Error while reading the .csv file -> " + err.Error())
 	}
 
-	tempFileName := utils.GetRandomString(10) + ".csv"
-	s.createCSVFile(tempFileName)
-
 	for index, line := range csvLines {
 		candle := &types.Candle{
 			Timestamp:  s.getAsInt64(line[0], index),
@@ -306,28 +303,9 @@ func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
 			Indicators: types.Indicators{},
 		}
 		s.candles = append(s.candles, candle)
-
-		if index < len(csvLines)-1 {
-			s.writeRowIntoCSVFile(s.getRowForCSV(candle), tempFileName)
-		}
 	}
 
-	if len(s.candles) > 0 {
-		s.csvFileMtx.Lock()
-		defer func() {
-			s.csvFileMtx.Unlock()
-		}()
-
-		err := os.Remove(CandlesFolder + s.csvFileName)
-		if err != nil {
-			panic("Error while removing the csv file -> " + err.Error())
-		}
-
-		err = os.Rename(CandlesFolder+tempFileName, CandlesFolder+s.csvFileName)
-		if err != nil {
-			panic("Error renaming the temp csv file -> " + err.Error())
-		}
-	} else {
+	if len(s.candles) == 0 {
 		s.candles = append(s.candles, &types.Candle{
 			Open:      0,
 			Low:       0,
