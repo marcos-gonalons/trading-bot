@@ -28,13 +28,13 @@ func main() {
 		panic("Failed to get the broker API instance")
 	}
 
-	setupOSSignalsNotifications(brokerAPI)
-
 	_, err := brokerAPI.Login()
 	if err != nil {
 		fmt.Printf("%#v", "Login error -> "+err.Error())
 		return
 	}
+
+	setupOSSignalsNotifications(brokerAPI)
 
 	var waitingGroup sync.WaitGroup
 	waitingGroup.Add(1)
@@ -84,15 +84,14 @@ func getAPIInstance() api.Interface {
 
 	apis := make(map[string]api.Interface)
 
-	apis["simulator"] = simulator.CreateAPIServiceInstance()
+	credentials := &api.Credentials{
+		Username:  user,
+		Password:  password,
+		AccountID: accountID,
+	}
 
-	apis["ibroker"] = ibroker.CreateAPIServiceInstance(
-		&api.Credentials{
-			Username:  user,
-			Password:  password,
-			AccountID: accountID,
-		},
-	)
+	apis["simulator"] = simulator.CreateAPIServiceInstance()
+	apis["ibroker"] = ibroker.CreateAPIServiceInstance(credentials)
 
 	return apis[apiName]
 }
