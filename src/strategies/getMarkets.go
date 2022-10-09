@@ -2,6 +2,7 @@ package strategies
 
 import (
 	"TradingBot/src/services/candlesHandler"
+	"TradingBot/src/services/candlesHandler/indicators"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/strategies/markets/AUDUSD"
@@ -31,9 +32,10 @@ func (s *Handler) GetMarkets() []interfaces.MarketInterface {
 
 func (s *Handler) getMarket(strategy interfaces.MarketInterface) interfaces.MarketInterface {
 	candlesHandler := &candlesHandler.Service{
-		Logger:    s.Logger,
-		Symbol:    strategy.Parent().GetSymbol(),
-		Timeframe: *strategy.Parent().GetTimeframe(),
+		Logger:            s.Logger,
+		Symbol:            strategy.Parent().GetSymbol(),
+		Timeframe:         *strategy.Parent().GetTimeframe(),
+		IndicatorsBuilder: indicators.GetInstance(),
 	}
 
 	strategy.Parent().SetCandlesHandler(candlesHandler)

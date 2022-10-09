@@ -2,6 +2,7 @@ package candlesHandler
 
 import (
 	"TradingBot/src/constants"
+	"TradingBot/src/services/candlesHandler/indicators"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
@@ -19,9 +20,10 @@ const CandlesFolder = ".candles-csv/"
 
 // Service ...
 type Service struct {
-	Logger    logger.Interface
-	Symbol    *types.Symbol
-	Timeframe types.Timeframe
+	Logger            logger.Interface
+	Symbol            *types.Symbol
+	Timeframe         types.Timeframe
+	IndicatorsBuilder indicators.MainInterface
 
 	candles     []*types.Candle
 	csvFileName string
@@ -35,17 +37,21 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 		s.initCandlesFromFile(currentExecutionTime)
 	} else {
 		s.candles = []*types.Candle{{
-			Open:      0,
-			High:      0,
-			Low:       0,
-			Close:     0,
-			Volume:    0,
-			Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
+			Open:       0,
+			High:       0,
+			Low:        0,
+			Close:      0,
+			Volume:     0,
+			Indicators: types.Indicators{},
+			Timestamp:  utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
 		}}
+
 		now := time.Now()
 		s.csvFileName = s.Symbol.BrokerAPIName + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
 		s.createCSVFile(s.csvFileName)
 	}
+
+	s.IndicatorsBuilder.AddIndicators(s.candles)
 }
 
 // UpdateCandles ...
@@ -291,12 +297,13 @@ func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
 
 	for index, line := range csvLines {
 		candle := &types.Candle{
-			Timestamp: s.getAsInt64(line[0], index),
-			Open:      s.getAsFloat64(line[1], index),
-			High:      s.getAsFloat64(line[2], index),
-			Low:       s.getAsFloat64(line[3], index),
-			Close:     s.getAsFloat64(line[4], index),
-			Volume:    s.getAsFloat64(line[5], index),
+			Timestamp:  s.getAsInt64(line[0], index),
+			Open:       s.getAsFloat64(line[1], index),
+			High:       s.getAsFloat64(line[2], index),
+			Low:        s.getAsFloat64(line[3], index),
+			Close:      s.getAsFloat64(line[4], index),
+			Volume:     s.getAsFloat64(line[5], index),
+			Indicators: types.Indicators{},
 		}
 		s.candles = append(s.candles, candle)
 
