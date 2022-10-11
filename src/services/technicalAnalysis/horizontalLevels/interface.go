@@ -1,13 +1,15 @@
 package horizontalLevels
 
+import "TradingBot/src/types"
+
 // Interface ...
 type Interface interface {
 	GetResistancePrice(
-		candlesWithLowerPriceToBeConsideredTop int,
+		candlesWithLowerPriceToBeConsideredTop types.CandlesAmountForHorizontalLevel,
 		lastCompletedCandleIndex int,
 	) (float64, error)
 	GetSupportPrice(
-		candlesWithHigherPriceToBeConsideredBottom int,
+		candlesWithHigherPriceToBeConsideredBottom types.CandlesAmountForHorizontalLevel,
 		lastCompletedCandleIndex int,
 	) (float64, error)
 }

@@ -90,6 +90,9 @@ func (s *Service) UpdateCandles(
 			Volume:    volume,
 			Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
 		})
+
+		// todo: no need to do it again for all candles, it's just enough to add it to the last one.
+		s.IndicatorsBuilder.AddIndicators(s.candles)
 	} else {
 		index := len(s.candles) - 1
 		if data.Price != nil {

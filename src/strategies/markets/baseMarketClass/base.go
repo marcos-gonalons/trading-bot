@@ -147,7 +147,7 @@ func (s *BaseMarketClass) CheckIfSLShouldBeAdjusted(
 	params *types.MarketStrategyParams,
 	position *api.Position,
 ) {
-	if params.TPDistanceShortForTighterSL <= 0 {
+	if params.TrailingStopLoss != nil && params.TrailingStopLoss.TPDistanceShortForTighterSL <= 0 {
 		return
 	}
 
@@ -163,9 +163,9 @@ func (s *BaseMarketClass) CheckIfSLShouldBeAdjusted(
 
 	shouldBeAdjusted := false
 	if s.API.IsLongPosition(position) {
-		shouldBeAdjusted = float64(*tpOrder.LimitPrice)-s.CandlesHandler.GetLastCandle().High < params.TPDistanceShortForTighterSL
+		shouldBeAdjusted = float64(*tpOrder.LimitPrice)-s.CandlesHandler.GetLastCandle().High < params.TrailingStopLoss.TPDistanceShortForTighterSL
 	} else {
-		shouldBeAdjusted = s.CandlesHandler.GetLastCandle().Low-float64(*tpOrder.LimitPrice) < params.TPDistanceShortForTighterSL
+		shouldBeAdjusted = s.CandlesHandler.GetLastCandle().Low-float64(*tpOrder.LimitPrice) < params.TrailingStopLoss.TPDistanceShortForTighterSL
 	}
 
 	if shouldBeAdjusted {
@@ -174,7 +174,7 @@ func (s *BaseMarketClass) CheckIfSLShouldBeAdjusted(
 		s.APIRetryFacade.ModifyPosition(
 			s.GetSymbol().BrokerAPIName,
 			utils.FloatToString(float64(*tpOrder.LimitPrice), s.GetSymbol().PriceDecimals),
-			utils.FloatToString(float64(position.AvgPrice)+params.SLDistanceWhenTPIsVeryClose, s.GetSymbol().PriceDecimals),
+			utils.FloatToString(float64(position.AvgPrice)+params.TrailingStopLoss.SLDistanceWhenTPIsVeryClose, s.GetSymbol().PriceDecimals),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          20,
@@ -308,7 +308,7 @@ func (s *BaseMarketClass) GetEurExchangeRate() float64 {
 	return s.eurExchangeRate
 }
 
-func (s *BaseMarketClass) SavePendingOrder(side string, validTimes types.TradingTimes) {
+func (s *BaseMarketClass) SavePendingOrder(side string, validTimes *types.TradingTimes) {
 	go func() {
 		s.Log(s.Name, "Save pending order called for side "+side)
 
@@ -336,11 +336,15 @@ func (s *BaseMarketClass) SavePendingOrder(side string, validTimes types.Trading
 			return
 		}
 
+		validHalfHours := []string{}
+		if validTimes != nil {
+			validHalfHours = validTimes.ValidHalfHours
+		}
 		if utils.IsExecutionTimeValid(
 			s.currentExecutionTime,
 			[]string{},
 			[]string{},
-			validTimes.ValidHalfHours,
+			validHalfHours,
 		) {
 			s.Log(s.Name, "No need to save the pending order since we are in the right time")
 			return

@@ -63,4 +63,10 @@ const (
 
 	// AUDUSD 107
 	AUDUSD LogType = 107
+
+	// SP500 108
+	SP500 LogType = 108
+
+	// EUROSTOXX 109
+	EUROSTOXX LogType = 109
 )

@@ -2,6 +2,7 @@ package horizontalLevels
 
 import (
 	"TradingBot/src/services/candlesHandler"
+	"TradingBot/src/types"
 	"errors"
 )
 
@@ -10,28 +11,28 @@ type Service struct {
 }
 
 func (s *Service) GetResistancePrice(
-	candlesWithLowerPriceToBeConsideredTop int,
+	candlesWithLowerPriceToBeConsideredTop types.CandlesAmountForHorizontalLevel,
 	lastCompletedCandleIndex int,
 ) (price float64, err error) {
 	return s.getPrice(candlesWithLowerPriceToBeConsideredTop, lastCompletedCandleIndex, ResistanceName)
 }
 
 func (s *Service) GetSupportPrice(
-	candlesWithHigherPriceToBeConsideredBottom int,
+	candlesWithHigherPriceToBeConsideredBottom types.CandlesAmountForHorizontalLevel,
 	lastCompletedCandleIndex int,
 ) (price float64, err error) {
 	return s.getPrice(candlesWithHigherPriceToBeConsideredBottom, lastCompletedCandleIndex, SupportName)
 }
 
 func (s *Service) getPrice(
-	candlesAmount int,
+	candlesAmount types.CandlesAmountForHorizontalLevel,
 	lastCompletedCandleIndex int,
 	supportOrResistance string,
 ) (price float64, err error) {
 	candles := s.CandlesHandler.GetCandles()
 
-	horizontalLevelCandleIndex := lastCompletedCandleIndex - candlesAmount
-	if horizontalLevelCandleIndex < 0 || lastCompletedCandleIndex < candlesAmount*2 {
+	horizontalLevelCandleIndex := lastCompletedCandleIndex - candlesAmount.Future
+	if horizontalLevelCandleIndex < 0 || lastCompletedCandleIndex < candlesAmount.Future+candlesAmount.Past {
 		err = errors.New(NotEnoughCandlesError)
 		return
 	}
@@ -58,7 +59,7 @@ func (s *Service) getPrice(
 	}
 
 	pastCandlesOvercomePrice := false
-	for j := horizontalLevelCandleIndex - candlesAmount; j < horizontalLevelCandleIndex; j++ {
+	for j := horizontalLevelCandleIndex - candlesAmount.Past; j < horizontalLevelCandleIndex; j++ {
 		if j < 1 || j > lastCompletedCandleIndex {
 			continue
 		}

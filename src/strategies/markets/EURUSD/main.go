@@ -8,7 +8,6 @@ import (
 	"TradingBot/src/services/logger"
 	"TradingBot/src/strategies/markets/baseMarketClass"
 	"TradingBot/src/strategies/markets/interfaces"
-	"TradingBot/src/strategies/strategies"
 	"TradingBot/src/types"
 	"strconv"
 	"sync"
@@ -41,10 +40,10 @@ func (s *Strategy) Initialize() {
 	s.BaseMarketClass.Initialize()
 
 	s.mutex = &sync.Mutex{}
-	s.BaseMarketClass.CandlesHandler.InitCandles(time.Now(), "EURUSD-1H.csv")
+	s.BaseMarketClass.CandlesHandler.InitCandles(time.Now(), "EURUSD-4H.csv")
 	go s.BaseMarketClass.CheckNewestOpenedPositionSLandTP(
-		&SupportBounceParams,
-		&ResistanceBounceParams,
+		&EMACrossoverLongParams,
+		&EMACrossoverShortParams,
 	)
 
 	s.BaseMarketClass.SetEurExchangeRate(.85)
@@ -113,21 +112,24 @@ func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.Qu
 func (s *Strategy) OnNewCandle() {
 	s.BaseMarketClass.OnNewCandle()
 
-	s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling resistanceBounce strategy")
-	strategies.ResistanceBounce(strategies.StrategyParams{
-		BaseMarketClass:       &s.BaseMarketClass,
-		MarketStrategyParams:  &ResistanceBounceParams,
-		WithPendingOrders:     false,
-		CloseOrdersOnBadTrend: false,
-	})
+	// todo: call ema crossover strategy, longs and shorts
+	/*
+		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling resistanceBounce strategy")
+		strategies.ResistanceBounce(strategies.StrategyParams{
+			BaseMarketClass:       &s.BaseMarketClass,
+			MarketStrategyParams:  &ResistanceBounceParams,
+			WithPendingOrders:     false,
+			CloseOrdersOnBadTrend: false,
+		})
 
-	s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling supportBounce strategy")
-	strategies.SupportBounce(strategies.StrategyParams{
-		BaseMarketClass:       &s.BaseMarketClass,
-		MarketStrategyParams:  &SupportBounceParams,
-		WithPendingOrders:     false,
-		CloseOrdersOnBadTrend: false,
-	})
+		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling supportBounce strategy")
+		strategies.SupportBounce(strategies.StrategyParams{
+			BaseMarketClass:       &s.BaseMarketClass,
+			MarketStrategyParams:  &SupportBounceParams,
+			WithPendingOrders:     false,
+			CloseOrdersOnBadTrend: false,
+		})
+	*/
 }
 
 // GetMarketInstance ...
@@ -151,7 +153,7 @@ func GetMarketInstance(
 				},
 			).(types.Symbol),
 			Timeframe: types.Timeframe{
-				Value: 1,
+				Value: 4,
 				Unit:  "h",
 			},
 		},

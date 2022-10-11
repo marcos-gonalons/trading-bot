@@ -4,42 +4,52 @@ import "TradingBot/src/types"
 
 var priceAdjustment float32 = float32(1) / float32(10000)
 
-var ResistanceBounceParams = types.MarketStrategyParams{
-	RiskPercentage:                  5,
-	StopLossDistance:                290 * priceAdjustment,
-	TakeProfitDistance:              460 * priceAdjustment,
-	TPDistanceShortForTighterSL:     150 * float64(priceAdjustment),
-	SLDistanceWhenTPIsVeryClose:     0 * float64(priceAdjustment),
-	TrendCandles:                    120,
-	TrendDiff:                       200 * float64(priceAdjustment),
-	CandlesAmountForHorizontalLevel: 27,
-	PriceOffset:                     -10 * float64(priceAdjustment),
-	MaxSecondsOpenTrade:             35 * 24 * 60 * 60,
-	ValidTradingTimes: types.TradingTimes{
-		ValidMonths:    []string{},
-		ValidWeekdays:  []string{},
-		ValidHalfHours: []string{},
+var EMACrossoverLongParams = types.MarketStrategyParams{
+	RiskPercentage: 1,
+
+	StopLossPriceOffset: float64(75 * priceAdjustment),
+	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
+		Future: 30,
+		Past:   40,
 	},
+	MinStopLossDistance: 50 * priceAdjustment,
+	MaxStopLossDistance: 600 * priceAdjustment,
+	TakeProfitDistance:  200 * priceAdjustment,
+	MinProfit:           99999 * priceAdjustment,
+	TrailingStopLoss: &types.TrailingStopLoss{
+		TPDistanceShortForTighterSL: float64(30 * priceAdjustment),
+		SLDistanceWhenTPIsVeryClose: float64(90 * priceAdjustment),
+	},
+	TrailingTakeProfit: &types.TrailingTakeProfit{
+		SLDistanceShortForTighterTP: float64(100 * priceAdjustment),
+		TPDistanceWhenSLIsVeryClose: float64(-20 * priceAdjustment),
+	},
+	CandlesAmountWithoutEMAsCrossing: 12,
+	MaxSecondsOpenTrade:              0,
+
 	MaxTradeExecutionPriceDifference: 9999,
 	MinPositionSize:                  10000,
 }
 
-var SupportBounceParams = types.MarketStrategyParams{
-	RiskPercentage:                  5,
-	StopLossDistance:                180 * priceAdjustment,
-	TakeProfitDistance:              370 * priceAdjustment,
-	TPDistanceShortForTighterSL:     200 * float64(priceAdjustment),
-	SLDistanceWhenTPIsVeryClose:     40 * float64(priceAdjustment),
-	TrendCandles:                    200,
-	TrendDiff:                       220 * float64(priceAdjustment),
-	CandlesAmountForHorizontalLevel: 27,
-	PriceOffset:                     18 * float64(priceAdjustment),
-	MaxSecondsOpenTrade:             20 * 24 * 60 * 60,
-	ValidTradingTimes: types.TradingTimes{
-		ValidMonths:    []string{},
-		ValidWeekdays:  []string{},
-		ValidHalfHours: []string{},
+var EMACrossoverShortParams = types.MarketStrategyParams{
+	RiskPercentage: 1,
+
+	StopLossPriceOffset: float64(150 * priceAdjustment),
+	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
+		Future: 50,
+		Past:   15,
 	},
+	MinStopLossDistance: 20 * priceAdjustment,
+	MaxStopLossDistance: 1000 * priceAdjustment,
+	TakeProfitDistance:  350 * priceAdjustment,
+	MinProfit:           120 * priceAdjustment,
+	TrailingTakeProfit: &types.TrailingTakeProfit{
+		SLDistanceShortForTighterTP: float64(40 * priceAdjustment),
+		TPDistanceWhenSLIsVeryClose: float64(-100 * priceAdjustment),
+	},
+	CandlesAmountWithoutEMAsCrossing: 0,
+	MaxSecondsOpenTrade:              0,
+
 	MaxTradeExecutionPriceDifference: 9999,
 	MinPositionSize:                  10000,
 }

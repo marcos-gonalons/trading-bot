@@ -54,7 +54,7 @@ func SupportBreakoutAnticipation(params StrategyParams) {
 	}
 
 	lastCompletedCandleIndex := len(params.BaseMarketClass.CandlesHandler.GetCandles()) - 2
-	price, err := params.BaseMarketClass.HorizontalLevelsService.GetSupportPrice(params.MarketStrategyParams.CandlesAmountForHorizontalLevel, lastCompletedCandleIndex)
+	price, err := params.BaseMarketClass.HorizontalLevelsService.GetSupportPrice(*params.MarketStrategyParams.CandlesAmountForHorizontalLevel, lastCompletedCandleIndex)
 
 	if err != nil {
 		errorMessage := "Not a good short setup yet -> " + err.Error()
@@ -62,7 +62,7 @@ func SupportBreakoutAnticipation(params StrategyParams) {
 		return
 	}
 
-	price = price + params.MarketStrategyParams.PriceOffset
+	price = price + params.MarketStrategyParams.LimitAndStopOrderPriceOffset
 	if price >= float64(params.BaseMarketClass.GetCurrentBrokerQuote().Bid) {
 		log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, params.BaseMarketClass.GetSymbol().PriceDecimals))
 		log("Quote is -> " + utils.GetStringRepresentation(params.BaseMarketClass.GetCurrentBrokerQuote()))

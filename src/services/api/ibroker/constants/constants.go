@@ -4,6 +4,8 @@ const GER30SymbolName = "GER30"
 
 const SP500SymbolName = "SPX500"
 
+const EUROSTOXXSymbolName = "EUSTX50"
+
 const EURUSDSymbolName = "EUR/USD"
 
 const GBPUSDSymbolName = "GBP/USD"
