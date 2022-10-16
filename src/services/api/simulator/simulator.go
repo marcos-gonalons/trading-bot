@@ -103,10 +103,10 @@ func (s *API) ModifyOrder(order *api.Order) (err error) {
 }
 
 // ClosePosition ...
-func (s *API) ClosePosition(symbol string) (err error) {
+func (s *API) ClosePosition(marketName string) (err error) {
 	positionIndex := 0
 	for index, position := range s.positions {
-		if position.Instrument == symbol {
+		if position.Instrument == marketName {
 			positionIndex = index
 			break
 		}
@@ -118,7 +118,7 @@ func (s *API) ClosePosition(symbol string) (err error) {
 	stopLossOrderIndex := 0
 	hasStopLoss := false
 	for index, order := range s.orders {
-		if order.Instrument != symbol {
+		if order.Instrument != marketName {
 			continue
 		}
 		if order.LimitPrice != nil {
@@ -132,7 +132,7 @@ func (s *API) ClosePosition(symbol string) (err error) {
 	}
 
 	for index, order := range s.orders {
-		if order.Instrument != symbol {
+		if order.Instrument != marketName {
 			continue
 		}
 		if order.StopPrice != nil {
@@ -228,10 +228,10 @@ func (s *API) SetState(state *api.State) {
 }
 
 // ModifyPosition ...
-func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string) (err error) {
+func (s *API) ModifyPosition(marketName string, takeProfit *string, stopLoss *string) (err error) {
 	var position *api.Position
 	for _, p := range s.positions {
-		if p.Instrument != symbol {
+		if p.Instrument != marketName {
 			continue
 		}
 		position = p
@@ -243,7 +243,7 @@ func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string
 	hasTP := false
 	hasSL := false
 	for _, o := range s.orders {
-		if o.Instrument != symbol {
+		if o.Instrument != marketName {
 			continue
 		}
 
@@ -346,11 +346,11 @@ func (s *API) GetBracketOrdersForOpenedPosition(position *api.Position) (
 	return
 }
 
-func (s *API) GetWorkingOrderWithBracketOrders(side string, symbol string, orders []*api.Order) []*api.Order {
+func (s *API) GetWorkingOrderWithBracketOrders(side string, marketName string, orders []*api.Order) []*api.Order {
 	var workingOrders []*api.Order
 
 	for _, order := range s.orders {
-		if order.Side != side || order.Instrument != symbol || order.ParentID != nil {
+		if order.Side != side || order.Instrument != marketName || order.ParentID != nil {
 			continue
 		}
 
@@ -379,8 +379,8 @@ func CreateAPIServiceInstance() api.Interface {
 	return instance
 }
 
-func findSymbol(n string) *types.Symbol {
-	for _, s := range constants.Symbols {
+func findMarket(n string) *types.Market {
+	for _, s := range constants.Markets {
 		if s.BrokerAPIName == n {
 			return &s
 		}
@@ -390,8 +390,8 @@ func findSymbol(n string) *types.Symbol {
 }
 
 func adjustResultWithRollover(tradeResult float64, position *api.Position, lastCandle *types.Candle) float64 {
-	symbol := findSymbol(position.Instrument)
+	market := findMarket(position.Instrument)
 	days := int64((lastCandle.Timestamp - *position.CreatedAt) / 60 / 60 / 24)
-	rollover := float64((symbol.Rollover * float64(position.Qty)) / math.Pow(10, float64(symbol.PriceDecimals)-1))
+	rollover := float64((market.Rollover * float64(position.Qty)) / math.Pow(10, float64(market.PriceDecimals)-1))
 	return tradeResult - float64(days)*rollover
 }

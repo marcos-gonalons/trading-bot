@@ -1,11 +1,10 @@
 package strategies
 
 import (
+	"TradingBot/src/markets/interfaces"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/strategies/markets/interfaces"
-	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"net"
 	"strings"
@@ -29,9 +28,6 @@ type Handler struct {
 
 	fetchError        error
 	failedAPIRequests uint
-
-	symbolsForAPI    []*types.Symbol
-	symbolsForSocket []*types.Symbol
 }
 
 // Run ...
@@ -39,7 +35,6 @@ func (s *Handler) Run() {
 
 	s.markets = s.GetMarkets()
 
-	s.initSymbolsArrays()
 	s.initMarkets()
 	s.initSocket()
 
@@ -52,17 +47,16 @@ func (s *Handler) Run() {
 func (s *Handler) initSocket() {
 	s.Logger.Log("Initializing the socket ...")
 	tradingviewsocket, err := tradingviewsocket.Connect(
-		s.onReceiveMarketData,
+		s.OnReceiveMarketData,
 		s.onSocketError,
 	)
 	if err != nil {
 		panic("Error while initializing the trading view socket -> " + err.Error())
 	}
 
-	s.Logger.Log("Adding symbols to socket " + utils.GetStringRepresentation(s.symbolsForSocket))
-	for _, symbol := range s.symbolsForSocket {
-		s.Logger.Log("Adding symbol to socket ... " + symbol.SocketName)
-		err = tradingviewsocket.AddSymbol(symbol.SocketName)
+	for _, market := range s.markets {
+		s.Logger.Log("Adding market to socket ... " + market.Parent().GetMarket().SocketName)
+		err = tradingviewsocket.AddSymbol(market.Parent().GetMarket().SocketName)
 		if err != nil {
 			panic("Error while adding the symbol -> " + err.Error())
 		}
@@ -71,15 +65,15 @@ func (s *Handler) initSocket() {
 	s.socket = tradingviewsocket
 }
 
-func (s *Handler) onReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
-	s.Logger.Log("Received data -> " + symbol + " -> " + utils.GetStringRepresentation(data))
+func (s *Handler) OnReceiveMarketData(marketName string, data *tradingviewsocket.QuoteData) {
+	s.Logger.Log("Received data -> " + marketName + " -> " + utils.GetStringRepresentation(data))
 
 	for _, market := range s.markets {
-		if symbol != market.Parent().GetSymbol().SocketName {
+		if marketName != market.Parent().GetMarket().SocketName {
 			continue
 		}
 		if market.Parent().GetCurrentBrokerQuote() != nil {
-			go market.OnReceiveMarketData(symbol, data)
+			go market.OnReceiveMarketData(data)
 		}
 	}
 }
@@ -131,30 +125,30 @@ func (s *Handler) fetchDataLoop() {
 		var waitingGroup sync.WaitGroup
 		var fetchFuncs []func()
 
-		for _, symbol := range s.symbolsForAPI {
-			if !utils.IsNowWithinTradingHours(symbol) {
+		for _, market := range s.markets {
+			if !utils.IsNowWithinTradingHours(market.Parent().GetMarket()) {
 				continue
 			}
 
 			fetchFuncs = append(fetchFuncs,
-				func(symbol string) func() {
+				func(marketName string) func() {
 					return func() {
 						quote := s.fetch(func() (interface{}, error) {
 							defer waitingGroup.Done()
 							s.Logger.Log("Fetching quote ...")
-							return s.API.GetQuote(symbol)
+							return s.API.GetQuote(marketName)
 						}).(*api.Quote)
 						s.Logger.Log("Quote is -> " + utils.GetStringRepresentation(quote))
 						if quote != nil {
 							for _, market := range s.markets {
-								if market.Parent().GetSymbol().BrokerAPIName != symbol {
+								if market.Parent().GetMarket().BrokerAPIName != marketName {
 									continue
 								}
 								market.Parent().SetCurrentBrokerQuote(quote)
 							}
 						}
 					}
-				}(symbol.BrokerAPIName),
+				}(market.Parent().GetMarket().BrokerAPIName),
 			)
 		}
 
@@ -270,37 +264,7 @@ func (s *Handler) panicIfTooManyAPIFails() {
 
 func (s *Handler) initMarkets() {
 	for _, market := range s.markets {
-		s.Logger.Log("Initializing market " + market.Parent().GetSymbol().BrokerAPIName)
+		s.Logger.Log("Initializing market " + market.Parent().GetMarket().BrokerAPIName)
 		go market.Initialize()
-	}
-}
-
-func (s *Handler) initSymbolsArrays() {
-	s.Logger.Log("Initializing symbols arrays ...")
-	for _, market := range s.markets {
-		symbol := market.Parent().GetSymbol()
-		s.Logger.Log("Symbol: " + utils.GetStringRepresentation(symbol))
-
-		exists := false
-		for _, s := range s.symbolsForAPI {
-			if s.BrokerAPIName == symbol.BrokerAPIName {
-				exists = true
-				break
-			}
-		}
-		if !exists {
-			s.symbolsForAPI = append(s.symbolsForAPI, symbol)
-		}
-
-		exists = false
-		for _, s := range s.symbolsForSocket {
-			if s.SocketName == symbol.SocketName {
-				exists = true
-				break
-			}
-		}
-		if !exists {
-			s.symbolsForSocket = append(s.symbolsForSocket, symbol)
-		}
 	}
 }

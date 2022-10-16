@@ -21,7 +21,7 @@ const CandlesFolder = ".candles-csv/"
 // Service ...
 type Service struct {
 	Logger            logger.Interface
-	Symbol            *types.Symbol
+	Market            *types.Market
 	Timeframe         types.Timeframe
 	IndicatorsBuilder indicators.MainInterface
 
@@ -47,7 +47,7 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 		}}
 
 		now := time.Now()
-		s.csvFileName = s.Symbol.BrokerAPIName + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
+		s.csvFileName = s.Market.BrokerAPIName + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
 		s.createCSVFile(s.csvFileName)
 	}
 
@@ -225,11 +225,11 @@ func (s *Service) writeRowIntoCSVFile(row []byte, fileName string) (err error) {
 func (s *Service) getRowForCSV(candle *types.Candle) []byte {
 	return []byte("" +
 		strconv.FormatInt(candle.Timestamp, 10) + "," +
-		utils.FloatToString(float64(candle.Open), s.Symbol.PriceDecimals) + "," +
-		utils.FloatToString(float64(candle.High), s.Symbol.PriceDecimals) + "," +
-		utils.FloatToString(float64(candle.Low), s.Symbol.PriceDecimals) + "," +
-		utils.FloatToString(float64(candle.Close), s.Symbol.PriceDecimals) + "," +
-		utils.FloatToString(candle.Volume, s.Symbol.PriceDecimals) + "\n")
+		utils.FloatToString(float64(candle.Open), s.Market.PriceDecimals) + "," +
+		utils.FloatToString(float64(candle.High), s.Market.PriceDecimals) + "," +
+		utils.FloatToString(float64(candle.Low), s.Market.PriceDecimals) + "," +
+		utils.FloatToString(float64(candle.Close), s.Market.PriceDecimals) + "," +
+		utils.FloatToString(candle.Volume, s.Market.PriceDecimals) + "\n")
 }
 
 func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
@@ -253,13 +253,13 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 	cond1 := currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
 
 	cond2 := true
-	if s.Symbol.MarketType == constants.ForexType {
+	if s.Market.MarketType == constants.ForexType {
 		if utils.IsOutsideForexHours(currentExecutionTime) {
 			cond2 = false
 		}
 	}
 
-	s.Logger.Log("Should add new candle for " + s.Symbol.BrokerAPIName)
+	s.Logger.Log("Should add new candle for " + s.Market.BrokerAPIName)
 	s.Logger.Log("condition 1 is -> " + strconv.FormatBool(cond1))
 	s.Logger.Log("condition 2 is -> " + strconv.FormatBool(cond2))
 

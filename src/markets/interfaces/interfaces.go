@@ -15,7 +15,7 @@ type MarketInterface interface {
 	Parent() BaseMarketClassInterface
 	Initialize()
 	DailyReset()
-	OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData)
+	OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 	OnNewCandle()
 }
 
@@ -25,12 +25,12 @@ type BaseMarketClassInterface interface {
 	GetCandlesHandler() candlesHandler.Interface
 	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
 	SetTrendsService(trendsService trends.Interface)
-	OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData)
+	OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 	OnNewCandle()
 	SetCurrentBrokerQuote(quote *api.Quote)
 	GetCurrentBrokerQuote() *api.Quote
 	GetTimeframe() *types.Timeframe
-	GetSymbol() *types.Symbol
+	GetMarket() *types.Market
 	SetEurExchangeRate(rate float64)
 	GetEurExchangeRate() float64
 	SetCurrentPositionExecutedAt(timestamp int64)

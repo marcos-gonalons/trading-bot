@@ -1,7 +1,7 @@
 package strategies
 
 import (
-	"TradingBot/src/strategies/markets/baseMarketClass"
+	"TradingBot/src/markets/baseMarketClass"
 	"TradingBot/src/types"
 )
 

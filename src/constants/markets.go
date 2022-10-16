@@ -15,7 +15,7 @@ import (
 var ForexType types.MarketType = "forex"
 var IndexType types.MarketType = "index"
 
-var Symbols = []types.Symbol{
+var Markets = []types.Market{
 	{
 		BrokerAPIName: ibroker.GER30SymbolName,
 		SocketName:    "FX:GER30",

@@ -95,15 +95,15 @@ func (s *APIFacade) ClosePositions(retryParams RetryParams) {
 }
 
 // ClosePosition ...
-func (s *APIFacade) ClosePosition(symbol string, retryParams RetryParams) {
-	s.Logger.Log("Closing the specified position ..." + symbol)
+func (s *APIFacade) ClosePosition(marketName string, retryParams RetryParams) {
+	s.Logger.Log("Closing the specified position ..." + marketName)
 
 	utils.RepeatUntilSuccess(
 		"ClosePosition",
 		func() (err error) {
-			err = s.API.ClosePosition(symbol)
+			err = s.API.ClosePosition(marketName)
 			if err != nil {
-				s.Logger.Error("An error happened while closing the position for " + symbol + " -> " + err.Error())
+				s.Logger.Error("An error happened while closing the position for " + marketName + " -> " + err.Error())
 			}
 			if s.API.IsInvalidHoursError(err) {
 				err = nil
@@ -118,17 +118,17 @@ func (s *APIFacade) ClosePosition(symbol string, retryParams RetryParams) {
 
 // ModifyPosition ...
 func (s *APIFacade) ModifyPosition(
-	symbol string,
+	marketName string,
 	tp string,
 	sl string,
 	retryParams RetryParams,
 ) {
-	s.Logger.Log("Modifying the current open position with this values: symbol -> " + symbol + ", tp -> " + tp + " and sl -> " + sl)
+	s.Logger.Log("Modifying the current open position with this values: marketName -> " + marketName + ", tp -> " + tp + " and sl -> " + sl)
 
 	utils.RepeatUntilSuccess(
 		"ModifyPosition",
 		func() (err error) {
-			err = s.API.ModifyPosition(symbol, &tp, &sl)
+			err = s.API.ModifyPosition(marketName, &tp, &sl)
 			if err != nil {
 				s.Logger.Error("An error happened while modifying the position -> " + err.Error())
 				if s.API.IsPositionNotFoundError(err) || s.API.IsInvalidHoursError(err) {

@@ -2,7 +2,7 @@ package types
 
 import logger "TradingBot/src/services/logger/types"
 
-type Symbol struct {
+type Market struct {
 	BrokerAPIName       string
 	SocketName          string
 	PriceDecimals       int64

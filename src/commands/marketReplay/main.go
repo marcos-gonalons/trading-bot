@@ -2,7 +2,7 @@ package main
 
 import (
 	"TradingBot/src/commands/marketReplay/brokerSim"
-	"TradingBot/src/strategies/markets/interfaces"
+	"TradingBot/src/markets/interfaces"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"encoding/csv"
@@ -144,7 +144,7 @@ func getMarketInstance(
 	}
 
 	for _, market := range handler.GetMarkets() {
-		if market.Parent().GetSymbol().BrokerAPIName == marketName {
+		if market.Parent().GetMarket().BrokerAPIName == marketName {
 			return market
 		}
 	}

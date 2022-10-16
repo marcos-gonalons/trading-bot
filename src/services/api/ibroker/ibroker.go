@@ -62,7 +62,7 @@ func (s *API) Login() (accessToken *api.AccessToken, err error) {
 }
 
 // GetQuote ...
-func (s *API) GetQuote(symbol string) (quote *api.Quote, err error) {
+func (s *API) GetQuote(marketName string) (quote *api.Quote, err error) {
 	returnValue, err := s.apiCall(
 		loggerTypes.GetQuoteRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
@@ -75,7 +75,7 @@ func (s *API) GetQuote(symbol string) (quote *api.Quote, err error) {
 				&getquote.RequestParameters{
 					AccessToken: s.accessToken.Token,
 					AccountID:   s.credentials.AccountID,
-					Symbol:      symbol,
+					Symbol:      marketName,
 				},
 			)
 		},
@@ -156,11 +156,11 @@ func (s *API) ModifyOrder(order *api.Order) (err error) {
 }
 
 // ClosePosition ...
-func (s *API) ClosePosition(symbol string) (err error) {
+func (s *API) ClosePosition(marketName string) (err error) {
 	_, err = s.apiCall(
 		loggerTypes.ClosePositionRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
-			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + url.QueryEscape(symbol)
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + url.QueryEscape(marketName)
 			return closeposition.Request(
 				url,
 				s.httpclient,
@@ -269,11 +269,11 @@ func (s *API) SetState(state *api.State) {
 }
 
 // ModifyPosition ...
-func (s *API) ModifyPosition(symbol string, takeProfit *string, stopLoss *string) (err error) {
+func (s *API) ModifyPosition(marketName string, takeProfit *string, stopLoss *string) (err error) {
 	_, err = s.apiCall(
 		loggerTypes.ModifyPositionRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {
-			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + url.QueryEscape(symbol)
+			url := s.getURL("accounts") + "/" + s.credentials.AccountID + "/positions/" + url.QueryEscape(marketName)
 			return modifyposition.Request(
 				url,
 				s.httpclient,
@@ -390,11 +390,11 @@ func (s *API) GetBracketOrdersForOpenedPosition(position *api.Position) (
 	return
 }
 
-func (s *API) GetWorkingOrderWithBracketOrders(side string, symbol string, orders []*api.Order) []*api.Order {
+func (s *API) GetWorkingOrderWithBracketOrders(side string, marketName string, orders []*api.Order) []*api.Order {
 	var workingOrders []*api.Order
 
 	for _, order := range s.orders {
-		if order.Status != "working" || order.Side != side || order.Instrument != symbol || order.ParentID != nil {
+		if order.Status != "working" || order.Side != side || order.Instrument != marketName || order.ParentID != nil {
 			continue
 		}
 

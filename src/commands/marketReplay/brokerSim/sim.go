@@ -1,8 +1,8 @@
 package brokerSim
 
 import (
+	"TradingBot/src/markets/interfaces"
 	"TradingBot/src/services/api"
-	"TradingBot/src/strategies/markets/interfaces"
 	"TradingBot/src/types"
 )
 

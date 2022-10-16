@@ -2,12 +2,12 @@ package USDCHF
 
 import (
 	"TradingBot/src/constants"
+	"TradingBot/src/markets/baseMarketClass"
+	"TradingBot/src/markets/interfaces"
 	"TradingBot/src/services/api"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/strategies/markets/baseMarketClass"
-	"TradingBot/src/strategies/markets/interfaces"
 	"TradingBot/src/types"
 	"strconv"
 	"sync"
@@ -72,8 +72,8 @@ func (s *Strategy) DailyReset() {
 }
 
 // OnReceiveMarketData ...
-func (s *Strategy) OnReceiveMarketData(symbol string, data *tradingviewsocket.QuoteData) {
-	s.BaseMarketClass.OnReceiveMarketData(symbol, data)
+func (s *Strategy) OnReceiveMarketData(data *tradingviewsocket.QuoteData) {
+	s.BaseMarketClass.OnReceiveMarketData(data)
 
 	if !s.isReady {
 		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Not ready to process yet, doing nothing ...")
@@ -147,12 +147,12 @@ func GetMarketInstance(
 			APIData:        apiData,
 			Logger:         logger,
 			Name:           "USDCHF Strategy",
-			Symbol: funk.Find(
-				constants.Symbols,
-				func(s types.Symbol) bool {
+			Market: funk.Find(
+				constants.Markets,
+				func(s types.Market) bool {
 					return s.BrokerAPIName == ibroker.USDCHFSymbolName
 				},
-			).(types.Symbol),
+			).(types.Market),
 			Timeframe: types.Timeframe{
 				Value: 4,
 				Unit:  "h",

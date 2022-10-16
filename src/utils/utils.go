@@ -137,18 +137,18 @@ func GetCurrentTimeHourAndMinutes() (int, int) {
 }
 
 // IsNowWithinTradingHours ...
-func IsNowWithinTradingHours(symbol *types.Symbol) bool {
-	if symbol.MarketType == constants.ForexType {
+func IsNowWithinTradingHours(market *types.Market) bool {
+	if market.MarketType == constants.ForexType {
 		if IsOutsideForexHours(time.Now()) {
 			return false
 		}
 	} else {
-		if IsNowWeekend() && !symbol.TradeableOnWeekends {
+		if IsNowWeekend() && !market.TradeableOnWeekends {
 			return false
 		}
 	}
 
-	if symbol.TradingHours.Start == symbol.TradingHours.End {
+	if market.TradingHours.Start == market.TradingHours.End {
 		return true
 	}
 
@@ -157,13 +157,13 @@ func IsNowWithinTradingHours(symbol *types.Symbol) bool {
 	currentHour, _ := GetCurrentTimeHourAndMinutes()
 	currentHourTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02 15:00:00"))
 
-	timeStartingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(symbol.TradingHours.Start), 0, 0, 0, currentHourTime.Location())
-	timeEndingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(symbol.TradingHours.End), 0, 0, 0, currentHourTime.Location())
+	timeStartingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(market.TradingHours.Start), 0, 0, 0, currentHourTime.Location())
+	timeEndingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(market.TradingHours.End), 0, 0, 0, currentHourTime.Location())
 
-	if symbol.TradingHours.End < symbol.TradingHours.Start {
-		if currentHour < int(symbol.TradingHours.End) {
+	if market.TradingHours.End < market.TradingHours.Start {
+		if currentHour < int(market.TradingHours.End) {
 			timeStartingHour = timeStartingHour.Add(-24 * time.Hour)
-		} else if currentHour >= int(symbol.TradingHours.Start) {
+		} else if currentHour >= int(market.TradingHours.Start) {
 			timeEndingHour = timeEndingHour.Add(24 * time.Hour)
 		}
 	}
@@ -180,16 +180,16 @@ func IsNowWeekend() bool {
 	return weekDay == 0 || weekDay == 6
 }
 
-// FilterOrdersBySymbol ...
-func FilterOrdersBySymbol(orders []*api.Order, symbol string) []*api.Order {
+// FilterOrdersByMarket ...
+func FilterOrdersByMarket(orders []*api.Order, marketName string) []*api.Order {
 	filteredOrders := funk.Filter(orders, func(o *api.Order) bool {
-		return o.Instrument == symbol
+		return o.Instrument == marketName
 	})
 
 	return filteredOrders.([]*api.Order)
 }
 
-// FilterOrdersBySymbol ...
+// FilterOrdersBySide ...
 func FilterOrdersBySide(orders []*api.Order, side string) []*api.Order {
 	filteredOrders := funk.Filter(orders, func(o *api.Order) bool {
 		return o.Side == side
@@ -198,10 +198,10 @@ func FilterOrdersBySide(orders []*api.Order, side string) []*api.Order {
 	return filteredOrders.([]*api.Order)
 }
 
-// FindPositionBySymbol ...
-func FindPositionBySymbol(positions []*api.Position, symbol string) *api.Position {
+// FindPositionByMarket ...
+func FindPositionByMarket(positions []*api.Position, marketName string) *api.Position {
 	p := funk.Find(positions, func(p *api.Position) bool {
-		return p.Instrument == symbol
+		return p.Instrument == marketName
 	})
 
 	if p == nil {
