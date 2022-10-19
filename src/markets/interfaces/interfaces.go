@@ -10,28 +10,55 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
+// todo: move this method to a dedicated class
+type OnValidTradeSetupParams struct {
+	Price              float64
+	StrategyName       string
+	StopLossDistance   float32
+	TakeProfitDistance float32
+	RiskPercentage     float64
+	IsValidTime        bool
+	Side               string
+	WithPendingOrders  bool
+	OrderType          string
+	MinPositionSize    int64
+}
+
 // MarketInterface ...
+// todo: sort the methods and add a description
+// and maybe divide the interface into smaller ones.
 type MarketInterface interface {
-	Parent() BaseMarketClassInterface
 	Initialize()
 	DailyReset()
 	OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 	OnNewCandle()
-}
-
-// BaseMarketClassInterface ...
-type BaseMarketClassInterface interface {
-	SetCandlesHandler(candlesHandler candlesHandler.Interface)
-	GetCandlesHandler() candlesHandler.Interface
-	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
-	SetTrendsService(trendsService trends.Interface)
-	OnReceiveMarketData(data *tradingviewsocket.QuoteData)
-	OnNewCandle()
-	SetCurrentBrokerQuote(quote *api.Quote)
+	GetSocketMarketName() string
+	GetAPIMarketName() string
 	GetCurrentBrokerQuote() *api.Quote
+	GetMarketType() types.MarketType
+	IsTradeableOnWeekends() bool
+	GetTradingHours() *types.TradingHours
+	SetCurrentBrokerQuote(quote *api.Quote)
 	GetTimeframe() *types.Timeframe
-	GetMarket() *types.Market
+	GetMarketData() *types.MarketData
 	SetEurExchangeRate(rate float64)
 	GetEurExchangeRate() float64
 	SetCurrentPositionExecutedAt(timestamp int64)
+	GetAPIData() api.DataInterface
+
+	Log(strategyName string, message string)
+	SavePendingOrder(side string, validTimes *types.TradingTimes)
+	GetPendingOrder() *api.Order
+	CreatePendingOrder(side string)
+	SetPendingOrder(order *api.Order)
+	CheckIfSLShouldBeAdjusted(params *types.MarketStrategyParams, position *api.Position)
+	CheckOpenPositionTTL(params *types.MarketStrategyParams, position *api.Position)
+	OnValidTradeSetup(params OnValidTradeSetupParams)
+
+	SetCandlesHandler(candlesHandler candlesHandler.Interface)
+	GetCandlesHandler() candlesHandler.Interface
+	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
+	GetHorizontalLevelsService() horizontalLevels.Interface
+	SetTrendsService(trendsService trends.Interface)
+	GetTrendsService() trends.Interface
 }

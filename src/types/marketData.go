@@ -2,7 +2,7 @@ package types
 
 import logger "TradingBot/src/services/logger/types"
 
-type Market struct {
+type MarketData struct {
 	BrokerAPIName       string
 	SocketName          string
 	PriceDecimals       int64
@@ -12,6 +12,7 @@ type Market struct {
 	LogType             logger.LogType
 	MarketType          MarketType
 	Rollover            float64
+	Timeframe           Timeframe
 }
 type MarketType string
 

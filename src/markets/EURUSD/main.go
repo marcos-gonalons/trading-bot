@@ -1,26 +1,24 @@
 package EURUSD
 
 import (
-	"TradingBot/src/constants"
 	"TradingBot/src/markets/baseMarketClass"
 	"TradingBot/src/markets/interfaces"
 	"TradingBot/src/services/api"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
+	loggerTypes "TradingBot/src/services/logger/types"
 	"TradingBot/src/types"
 	"strconv"
 	"sync"
 	"time"
 
-	funk "github.com/thoas/go-funk"
-
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
-// Strategy ...
-type Strategy struct {
-	BaseMarketClass baseMarketClass.BaseMarketClass
+// Market ...
+type Market struct {
+	baseMarketClass.BaseMarketClass
 
 	isReady           bool
 	lastCandlesAmount int
@@ -31,55 +29,50 @@ type Strategy struct {
 	mutex *sync.Mutex
 }
 
-func (s *Strategy) Parent() interfaces.BaseMarketClassInterface {
-	return &s.BaseMarketClass
-}
-
 // Initialize ...
-func (s *Strategy) Initialize() {
+func (s *Market) Initialize() {
 	s.BaseMarketClass.Initialize()
 
 	s.mutex = &sync.Mutex{}
-	s.BaseMarketClass.CandlesHandler.InitCandles(time.Now(), "EURUSD-4H.csv")
-	go s.BaseMarketClass.CheckNewestOpenedPositionSLandTP(
+	s.CandlesHandler.InitCandles(time.Now(), "EURUSD-4H.csv")
+	go s.CheckNewestOpenedPositionSLandTP(
 		&EMACrossoverLongParams,
 		&EMACrossoverShortParams,
 	)
 
-	s.BaseMarketClass.SetEurExchangeRate(.85)
+	s.SetEurExchangeRate(.85)
 
 	s.isReady = true
 }
 
 // DailyReset ...
-func (s *Strategy) DailyReset() {
+func (s *Market) DailyReset() {
 	// todo: get the usdeur quote
-	s.BaseMarketClass.SetEurExchangeRate(.85)
+	s.SetEurExchangeRate(.85)
 
 	minCandles := 7 * 2 * 24
-	totalCandles := len(s.BaseMarketClass.CandlesHandler.GetCandles())
+	totalCandles := len(s.CandlesHandler.GetCandles())
 
-	s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Total candles is "+strconv.Itoa(totalCandles)+" - min candles is "+strconv.Itoa(minCandles))
+	s.Log(s.Name, "Total candles is "+strconv.Itoa(totalCandles)+" - min candles is "+strconv.Itoa(minCandles))
 	if totalCandles < minCandles {
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Not removing any candles yet")
+		s.Log(s.Name, "Not removing any candles yet")
 		return
 	}
 
 	var candlesToRemove uint = 25
-	s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Removing old candles ... "+strconv.Itoa(int(candlesToRemove)))
-	s.BaseMarketClass.CandlesHandler.RemoveOldCandles(candlesToRemove)
+	s.Log(s.Name, "Removing old candles ... "+strconv.Itoa(int(candlesToRemove)))
+	s.CandlesHandler.RemoveOldCandles(candlesToRemove)
 }
 
 // OnReceiveMarketData ...
-func (s *Strategy) OnReceiveMarketData(data *tradingviewsocket.QuoteData) {
-	s.BaseMarketClass.OnReceiveMarketData(data)
+func (s *Market) OnReceiveMarketData(data *tradingviewsocket.QuoteData) {
+	s.OnReceiveMarketData(data)
 
 	if !s.isReady {
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Not ready to process yet, doing nothing ...")
+		s.Log(s.Name, "Not ready to process yet, doing nothing ...")
 		return
 	}
 
-	s.BaseMarketClass.SetCurrentExecutionTime(time.Now())
 	s.mutex.Lock()
 	defer func() {
 		s.mutex.Unlock()
@@ -95,26 +88,26 @@ func (s *Strategy) OnReceiveMarketData(data *tradingviewsocket.QuoteData) {
 			s.lastAsk = data.Ask
 		}
 
-		s.lastCandlesAmount = len(s.BaseMarketClass.CandlesHandler.GetCandles())
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
+		s.lastCandlesAmount = len(s.CandlesHandler.GetCandles())
+		s.Log(s.Name, "Candles amount -> "+strconv.Itoa(s.lastCandlesAmount))
 	}()
 
-	s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Updating candles... ")
-	s.BaseMarketClass.CandlesHandler.UpdateCandles(data, s.BaseMarketClass.GetCurrentExecutionTime(), s.lastVolume)
+	s.Log(s.Name, "Updating candles... ")
+	s.CandlesHandler.UpdateCandles(data, s.lastVolume)
 
-	if s.lastCandlesAmount != len(s.BaseMarketClass.CandlesHandler.GetCandles()) {
+	if s.lastCandlesAmount != len(s.CandlesHandler.GetCandles()) {
 		s.OnNewCandle()
 	} else {
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Doing nothing - still same candle")
+		s.Log(s.Name, "Doing nothing - still same candle")
 	}
 }
 
-func (s *Strategy) OnNewCandle() {
-	s.BaseMarketClass.OnNewCandle()
+func (s *Market) OnNewCandle() {
+	s.OnNewCandle()
 
 	// todo: call ema crossover strategy, longs and shorts
 	/*
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling resistanceBounce strategy")
+		s.Log(s.Name, "Calling resistanceBounce strategy")
 		strategies.ResistanceBounce(strategies.StrategyParams{
 			BaseMarketClass:       &s.BaseMarketClass,
 			MarketStrategyParams:  &ResistanceBounceParams,
@@ -122,7 +115,7 @@ func (s *Strategy) OnNewCandle() {
 			CloseOrdersOnBadTrend: false,
 		})
 
-		s.BaseMarketClass.Log(s.BaseMarketClass.Name, "Calling supportBounce strategy")
+		s.Log(s.Name, "Calling supportBounce strategy")
 		strategies.SupportBounce(strategies.StrategyParams{
 			BaseMarketClass:       &s.BaseMarketClass,
 			MarketStrategyParams:  &SupportBounceParams,
@@ -138,24 +131,47 @@ func GetMarketInstance(
 	apiData api.DataInterface,
 	apiRetryFacade retryFacade.Interface,
 	logger logger.Interface,
-) *Strategy {
-	return &Strategy{
-		BaseMarketClass: baseMarketClass.BaseMarketClass{
+) interfaces.MarketInterface {
+	market := &Market{}
+
+	market.MarketData = types.MarketData{
+		BrokerAPIName: ibroker.EURUSDSymbolName,
+		SocketName:    "FX:EURUSD",
+		PriceDecimals: 5,
+		TradingHours: types.TradingHours{
+			Start: 0,
+			End:   0,
+		},
+		TradeableOnWeekends: false,
+		MaxSpread:           999999,
+		LogType:             loggerTypes.EURUSD,
+		MarketType:          "forex", // todo: move to constant. we have 'forex' and 'index' for now
+		Rollover:            .7,
+		Timeframe: types.Timeframe{
+			Value: 4,
+			Unit:  "h",
+		},
+	}
+
+	market.API = api
+	market.APIData = apiData
+	market.APIRetryFacade = apiRetryFacade
+	market.Logger = logger
+
+	return market
+
+	/*
+		return &Strategy{
 			API:            api,
 			APIRetryFacade: apiRetryFacade,
 			APIData:        apiData,
 			Logger:         logger,
-			Name:           "EURUSD Strategy",
 			Market: funk.Find(
 				constants.Markets,
 				func(s types.Market) bool {
 					return s.BrokerAPIName == ibroker.EURUSDSymbolName
 				},
 			).(types.Market),
-			Timeframe: types.Timeframe{
-				Value: 4,
-				Unit:  "h",
-			},
-		},
-	}
+		}
+	*/
 }

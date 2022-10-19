@@ -42,9 +42,9 @@ func main() {
 		&APIData,
 		getMarketName(),
 	)
-	strat.Parent().SetEurExchangeRate(.85)
+	strat.SetEurExchangeRate(.85)
 
-	strat.Parent().GetCandlesHandler().AddNewCandle(types.Candle{
+	strat.GetCandlesHandler().AddNewCandle(types.Candle{
 		Open:      0,
 		High:      0,
 		Low:       0,
@@ -58,9 +58,9 @@ func main() {
 		}
 
 		candle := getCandleObject(line)
-		strat.Parent().GetCandlesHandler().AddNewCandle(candle)
+		strat.GetCandlesHandler().AddNewCandle(candle)
 
-		strat.Parent().SetCurrentBrokerQuote(&api.Quote{
+		strat.SetCurrentBrokerQuote(&api.Quote{
 			Ask:    float32(candle.Close),
 			Bid:    float32(candle.Close),
 			Price:  float32(candle.Close),
@@ -144,7 +144,7 @@ func getMarketInstance(
 	}
 
 	for _, market := range handler.GetMarkets() {
-		if market.Parent().GetMarket().BrokerAPIName == marketName {
+		if market.GetMarketData().BrokerAPIName == marketName {
 			return market
 		}
 	}

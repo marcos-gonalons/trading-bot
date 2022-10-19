@@ -182,6 +182,7 @@ func (s *API) AddTrade(
 	slippageFunc func(price float32, order *api.Order) float32,
 	eurExchangeRate float64,
 	lastCandle *types.Candle,
+	marketData *types.MarketData,
 ) {
 	// Nothing to do here ...
 }

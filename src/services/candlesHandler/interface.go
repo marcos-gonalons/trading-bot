@@ -10,11 +10,7 @@ import (
 // Interface ...
 type Interface interface {
 	InitCandles(currentExecutionTime time.Time, fileName string)
-	UpdateCandles(
-		data *tradingviewsocket.QuoteData,
-		currentExecutionTime time.Time,
-		lastVolume float64,
-	)
+	UpdateCandles(data *tradingviewsocket.QuoteData, lastVolume float64)
 	AddNewCandle(types.Candle)
 	RemoveOldCandles(amount uint)
 	GetCandles() []*types.Candle

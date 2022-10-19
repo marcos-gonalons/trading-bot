@@ -24,6 +24,7 @@ type Interface interface {
 		slippageFunc func(price float32, order *Order) float32,
 		eurExchangeRate float64,
 		lastCandle *types.Candle,
+		marketData *types.MarketData,
 	)
 	GetTrades() int64
 	CloseAllOrders() error

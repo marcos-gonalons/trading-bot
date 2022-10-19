@@ -1,7 +1,6 @@
 package simulator
 
 import (
-	"TradingBot/src/constants"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
@@ -154,6 +153,7 @@ func (s *API) AddTrade(
 	slippageFunc func(price float32, order *api.Order) float32,
 	eurExchangeRate float64,
 	lastCandle *types.Candle,
+	marketData *types.MarketData,
 ) {
 	finalPrice := float32(.0)
 
@@ -175,7 +175,7 @@ func (s *API) AddTrade(
 		tradeResult = -tradeResult
 	}
 
-	tradeResult = adjustResultWithRollover(tradeResult, position, lastCandle) * eurExchangeRate
+	tradeResult = adjustResultWithRollover(tradeResult, position, lastCandle, marketData) * eurExchangeRate
 
 	s.state.Balance = s.state.Balance + float64(tradeResult)
 
@@ -379,19 +379,13 @@ func CreateAPIServiceInstance() api.Interface {
 	return instance
 }
 
-func findMarket(n string) *types.Market {
-	for _, s := range constants.Markets {
-		if s.BrokerAPIName == n {
-			return &s
-		}
-	}
-
-	return nil
-}
-
-func adjustResultWithRollover(tradeResult float64, position *api.Position, lastCandle *types.Candle) float64 {
-	market := findMarket(position.Instrument)
+func adjustResultWithRollover(
+	tradeResult float64,
+	position *api.Position,
+	lastCandle *types.Candle,
+	marketData *types.MarketData,
+) float64 {
 	days := int64((lastCandle.Timestamp - *position.CreatedAt) / 60 / 60 / 24)
-	rollover := float64((market.Rollover * float64(position.Qty)) / math.Pow(10, float64(market.PriceDecimals)-1))
+	rollover := float64((marketData.Rollover * float64(position.Qty)) / math.Pow(10, float64(marketData.PriceDecimals)-1))
 	return tradeResult - float64(days)*rollover
 }

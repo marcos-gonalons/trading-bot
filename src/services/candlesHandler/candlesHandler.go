@@ -21,7 +21,7 @@ const CandlesFolder = ".candles-csv/"
 // Service ...
 type Service struct {
 	Logger            logger.Interface
-	Market            *types.Market
+	MarketData        *types.MarketData
 	Timeframe         types.Timeframe
 	IndicatorsBuilder indicators.MainInterface
 
@@ -47,7 +47,7 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 		}}
 
 		now := time.Now()
-		s.csvFileName = s.Market.BrokerAPIName + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
+		s.csvFileName = s.MarketData.BrokerAPIName + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
 		s.createCSVFile(s.csvFileName)
 	}
 
@@ -55,11 +55,7 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 }
 
 // UpdateCandles ...
-func (s *Service) UpdateCandles(
-	data *tradingviewsocket.QuoteData,
-	currentExecutionTime time.Time,
-	lastVolume float64,
-) {
+func (s *Service) UpdateCandles(data *tradingviewsocket.QuoteData, lastVolume float64) {
 
 	var currentPrice float64
 	if data.Price != nil {
@@ -78,7 +74,8 @@ func (s *Service) UpdateCandles(
 		}
 	}
 
-	if s.shouldAddNewCandle(currentExecutionTime) {
+	now := time.Now()
+	if s.shouldAddNewCandle(now) {
 		s.updateCSVWithLastCandle()
 		lastCandle, _ := json.Marshal(s.GetLastCandle())
 		s.Logger.Log("Adding new candle to the candles array -> " + string(lastCandle))
@@ -88,7 +85,7 @@ func (s *Service) UpdateCandles(
 			High:      s.GetLastCandle().Close,
 			Close:     s.GetLastCandle().Close,
 			Volume:    volume,
-			Timestamp: utils.GetTimestamp(currentExecutionTime, s.getTimeLayout()),
+			Timestamp: utils.GetTimestamp(now, s.getTimeLayout()),
 		})
 
 		// todo: no need to do it again for all candles, it's just enough to add it to the last one.
@@ -117,7 +114,7 @@ func (s *Service) UpdateCandles(
 			s.candles[index].Volume += volume
 		}
 		if s.candles[index].Timestamp == 0 {
-			s.candles[index].Timestamp = utils.GetTimestamp(currentExecutionTime, s.getTimeLayout())
+			s.candles[index].Timestamp = utils.GetTimestamp(now, s.getTimeLayout())
 		}
 	}
 }
@@ -225,11 +222,11 @@ func (s *Service) writeRowIntoCSVFile(row []byte, fileName string) (err error) {
 func (s *Service) getRowForCSV(candle *types.Candle) []byte {
 	return []byte("" +
 		strconv.FormatInt(candle.Timestamp, 10) + "," +
-		utils.FloatToString(float64(candle.Open), s.Market.PriceDecimals) + "," +
-		utils.FloatToString(float64(candle.High), s.Market.PriceDecimals) + "," +
-		utils.FloatToString(float64(candle.Low), s.Market.PriceDecimals) + "," +
-		utils.FloatToString(float64(candle.Close), s.Market.PriceDecimals) + "," +
-		utils.FloatToString(candle.Volume, s.Market.PriceDecimals) + "\n")
+		utils.FloatToString(float64(candle.Open), s.MarketData.PriceDecimals) + "," +
+		utils.FloatToString(float64(candle.High), s.MarketData.PriceDecimals) + "," +
+		utils.FloatToString(float64(candle.Low), s.MarketData.PriceDecimals) + "," +
+		utils.FloatToString(float64(candle.Close), s.MarketData.PriceDecimals) + "," +
+		utils.FloatToString(candle.Volume, s.MarketData.PriceDecimals) + "\n")
 }
 
 func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
@@ -253,13 +250,13 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 	cond1 := currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
 
 	cond2 := true
-	if s.Market.MarketType == constants.ForexType {
+	if s.MarketData.MarketType == constants.ForexType {
 		if utils.IsOutsideForexHours(currentExecutionTime) {
 			cond2 = false
 		}
 	}
 
-	s.Logger.Log("Should add new candle for " + s.Market.BrokerAPIName)
+	s.Logger.Log("Should add new candle for " + s.MarketData.BrokerAPIName)
 	s.Logger.Log("condition 1 is -> " + strconv.FormatBool(cond1))
 	s.Logger.Log("condition 2 is -> " + strconv.FormatBool(cond2))
 

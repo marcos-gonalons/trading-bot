@@ -55,8 +55,8 @@ func (s *Handler) initSocket() {
 	}
 
 	for _, market := range s.markets {
-		s.Logger.Log("Adding market to socket ... " + market.Parent().GetMarket().SocketName)
-		err = tradingviewsocket.AddSymbol(market.Parent().GetMarket().SocketName)
+		s.Logger.Log("Adding market to socket ... " + market.GetSocketMarketName())
+		err = tradingviewsocket.AddSymbol(market.GetSocketMarketName())
 		if err != nil {
 			panic("Error while adding the symbol -> " + err.Error())
 		}
@@ -69,10 +69,10 @@ func (s *Handler) OnReceiveMarketData(marketName string, data *tradingviewsocket
 	s.Logger.Log("Received data -> " + marketName + " -> " + utils.GetStringRepresentation(data))
 
 	for _, market := range s.markets {
-		if marketName != market.Parent().GetMarket().SocketName {
+		if marketName != market.GetSocketMarketName() {
 			continue
 		}
-		if market.Parent().GetCurrentBrokerQuote() != nil {
+		if market.GetCurrentBrokerQuote() != nil {
 			go market.OnReceiveMarketData(data)
 		}
 	}
@@ -126,7 +126,11 @@ func (s *Handler) fetchDataLoop() {
 		var fetchFuncs []func()
 
 		for _, market := range s.markets {
-			if !utils.IsNowWithinTradingHours(market.Parent().GetMarket()) {
+			if !utils.IsNowWithinTradingHours(
+				market.GetMarketType(),
+				market.IsTradeableOnWeekends(),
+				market.GetTradingHours(),
+			) {
 				continue
 			}
 
@@ -141,14 +145,14 @@ func (s *Handler) fetchDataLoop() {
 						s.Logger.Log("Quote is -> " + utils.GetStringRepresentation(quote))
 						if quote != nil {
 							for _, market := range s.markets {
-								if market.Parent().GetMarket().BrokerAPIName != marketName {
+								if market.GetMarketData().BrokerAPIName != marketName {
 									continue
 								}
-								market.Parent().SetCurrentBrokerQuote(quote)
+								market.SetCurrentBrokerQuote(quote)
 							}
 						}
 					}
-				}(market.Parent().GetMarket().BrokerAPIName),
+				}(market.GetMarketData().BrokerAPIName),
 			)
 		}
 
@@ -264,7 +268,7 @@ func (s *Handler) panicIfTooManyAPIFails() {
 
 func (s *Handler) initMarkets() {
 	for _, market := range s.markets {
-		s.Logger.Log("Initializing market " + market.Parent().GetMarket().BrokerAPIName)
+		s.Logger.Log("Initializing market " + market.GetMarketData().BrokerAPIName)
 		go market.Initialize()
 	}
 }

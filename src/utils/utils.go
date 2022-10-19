@@ -137,18 +137,22 @@ func GetCurrentTimeHourAndMinutes() (int, int) {
 }
 
 // IsNowWithinTradingHours ...
-func IsNowWithinTradingHours(market *types.Market) bool {
-	if market.MarketType == constants.ForexType {
+func IsNowWithinTradingHours(
+	marketType types.MarketType,
+	isTradeableOnWeekends bool,
+	tradingHours *types.TradingHours,
+) bool {
+	if marketType == constants.ForexType {
 		if IsOutsideForexHours(time.Now()) {
 			return false
 		}
 	} else {
-		if IsNowWeekend() && !market.TradeableOnWeekends {
+		if IsNowWeekend() && !isTradeableOnWeekends {
 			return false
 		}
 	}
 
-	if market.TradingHours.Start == market.TradingHours.End {
+	if tradingHours.Start == tradingHours.End {
 		return true
 	}
 
@@ -157,13 +161,13 @@ func IsNowWithinTradingHours(market *types.Market) bool {
 	currentHour, _ := GetCurrentTimeHourAndMinutes()
 	currentHourTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02 15:00:00"))
 
-	timeStartingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(market.TradingHours.Start), 0, 0, 0, currentHourTime.Location())
-	timeEndingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(market.TradingHours.End), 0, 0, 0, currentHourTime.Location())
+	timeStartingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(tradingHours.Start), 0, 0, 0, currentHourTime.Location())
+	timeEndingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(tradingHours.End), 0, 0, 0, currentHourTime.Location())
 
-	if market.TradingHours.End < market.TradingHours.Start {
-		if currentHour < int(market.TradingHours.End) {
+	if tradingHours.End < tradingHours.Start {
+		if currentHour < int(tradingHours.End) {
 			timeStartingHour = timeStartingHour.Add(-24 * time.Hour)
-		} else if currentHour >= int(market.TradingHours.Start) {
+		} else if currentHour >= int(tradingHours.Start) {
 			timeEndingHour = timeEndingHour.Add(24 * time.Hour)
 		}
 	}

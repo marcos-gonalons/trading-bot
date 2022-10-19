@@ -11,9 +11,9 @@ var eurExchangeRate float64
 func OnNewCandle(
 	APIData api.DataInterface,
 	simulatorAPI api.Interface,
-	strat interfaces.MarketInterface,
+	market interfaces.MarketInterface,
 ) {
-	eurExchangeRate = strat.Parent().GetEurExchangeRate()
+	eurExchangeRate = market.GetEurExchangeRate()
 
 	orders, _ := simulatorAPI.GetOrders()
 	positions, _ := simulatorAPI.GetPositions()
@@ -24,7 +24,7 @@ func OnNewCandle(
 	stopOrderSlippage := float32(.0)
 	///////////////////////
 
-	candles := strat.Parent().GetCandlesHandler().GetCandles()
+	candles := market.GetCandlesHandler().GetCandles()
 	orderIDsToRemove := []string{}
 	for _, order := range orders {
 		lastCandle := candles[len(candles)-2]
@@ -51,7 +51,7 @@ func OnNewCandle(
 			positions = append(positions, createNewPosition(positionPrice, order, order.Qty, stopOrderSlippage, lastCandle))
 			simulatorAPI.SetPositions(positions)
 
-			strat.Parent().SetCurrentPositionExecutedAt(lastCandle.Timestamp)
+			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
 		} else {
 			if position.Side == order.Side {
 				position.Qty = position.Qty + order.Qty
@@ -67,6 +67,7 @@ func OnNewCandle(
 					},
 					eurExchangeRate,
 					lastCandle,
+					market.GetMarketData(),
 				)
 
 				if order.Qty == position.Qty {

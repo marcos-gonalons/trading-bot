@@ -29,6 +29,9 @@ type MarketStrategyParams struct {
 	MinPositionSize                  int64
 
 	ValidTradingTimes *TradingTimes
+
+	WithPendingOrders     bool
+	CloseOrdersOnBadTrend bool
 }
 
 type TradingTimes struct {

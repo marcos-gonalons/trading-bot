@@ -24,14 +24,14 @@ func (s *Handler) GetMarkets() []interfaces.MarketInterface {
 func (s *Handler) getMarket(strategy interfaces.MarketInterface) interfaces.MarketInterface {
 	candlesHandler := &candlesHandler.Service{
 		Logger:            s.Logger,
-		Market:            strategy.Parent().GetMarket(),
-		Timeframe:         *strategy.Parent().GetTimeframe(),
+		MarketData:        strategy.GetMarketData(),
+		Timeframe:         *strategy.GetTimeframe(),
 		IndicatorsBuilder: indicators.GetInstance(),
 	}
 
-	strategy.Parent().SetCandlesHandler(candlesHandler)
-	strategy.Parent().SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
-	strategy.Parent().SetTrendsService(trends.GetServiceInstance())
+	strategy.SetCandlesHandler(candlesHandler)
+	strategy.SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
+	strategy.SetTrendsService(trends.GetServiceInstance())
 
 	return strategy
 }
