@@ -55,8 +55,8 @@ func (s *Handler) initSocket() {
 	}
 
 	for _, market := range s.markets {
-		s.Logger.Log("Adding market to socket ... " + market.GetSocketMarketName())
-		err = tradingviewsocket.AddSymbol(market.GetSocketMarketName())
+		s.Logger.Log("Adding market to socket ... " + market.GetMarketData().SocketName)
+		err = tradingviewsocket.AddSymbol(market.GetMarketData().SocketName)
 		if err != nil {
 			panic("Error while adding the symbol -> " + err.Error())
 		}
@@ -69,7 +69,7 @@ func (s *Handler) OnReceiveMarketData(marketName string, data *tradingviewsocket
 	s.Logger.Log("Received data -> " + marketName + " -> " + utils.GetStringRepresentation(data))
 
 	for _, market := range s.markets {
-		if marketName != market.GetSocketMarketName() {
+		if marketName != market.GetMarketData().SocketName {
 			continue
 		}
 		if market.GetCurrentBrokerQuote() != nil {
@@ -126,11 +126,7 @@ func (s *Handler) fetchDataLoop() {
 		var fetchFuncs []func()
 
 		for _, market := range s.markets {
-			if !utils.IsNowWithinTradingHours(
-				market.GetMarketType(),
-				market.IsTradeableOnWeekends(),
-				market.GetTradingHours(),
-			) {
+			if !utils.IsNowWithinTradingHours(market.GetMarketData()) {
 				continue
 			}
 

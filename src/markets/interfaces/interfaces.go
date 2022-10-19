@@ -13,7 +13,6 @@ import (
 // todo: move this method to a dedicated class
 type OnValidTradeSetupParams struct {
 	Price              float64
-	StrategyName       string
 	StopLossDistance   float32
 	TakeProfitDistance float32
 	RiskPercentage     float64
@@ -32,21 +31,14 @@ type MarketInterface interface {
 	DailyReset()
 	OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 	OnNewCandle()
-	GetSocketMarketName() string
-	GetAPIMarketName() string
 	GetCurrentBrokerQuote() *api.Quote
-	GetMarketType() types.MarketType
-	IsTradeableOnWeekends() bool
-	GetTradingHours() *types.TradingHours
 	SetCurrentBrokerQuote(quote *api.Quote)
-	GetTimeframe() *types.Timeframe
 	GetMarketData() *types.MarketData
-	SetEurExchangeRate(rate float64)
 	GetEurExchangeRate() float64
 	SetCurrentPositionExecutedAt(timestamp int64)
 	GetAPIData() api.DataInterface
 
-	Log(strategyName string, message string)
+	Log(message string)
 	SavePendingOrder(side string, validTimes *types.TradingTimes)
 	GetPendingOrder() *api.Order
 	CreatePendingOrder(side string)

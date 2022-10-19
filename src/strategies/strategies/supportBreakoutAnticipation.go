@@ -10,14 +10,9 @@ import (
 
 // SupportBreakoutAnticipation ...
 func SupportBreakoutAnticipation(params StrategyParams) {
-	var strategyName = params.MarketData.SocketName + " - SBA"
-	var log = func(msg string) {
-		params.Market.Log(strategyName, msg)
-	}
-
-	log("supportBreakoutAnticipation started")
+	params.Market.Log("supportBreakoutAnticipation started")
 	defer func() {
-		log("supportBreakoutAnticipation ended")
+		params.Market.Log("supportBreakoutAnticipation ended")
 	}()
 
 	validMonths := params.MarketStrategyParams.ValidTradingTimes.ValidMonths
@@ -26,7 +21,7 @@ func SupportBreakoutAnticipation(params StrategyParams) {
 
 	now := time.Now()
 	if !utils.IsExecutionTimeValid(now, validMonths, []string{}, []string{}) || !utils.IsExecutionTimeValid(now, []string{}, validWeekdays, []string{}) {
-		log("Today it's not the day for support breakout anticipation for " + params.MarketData.SocketName)
+		params.Market.Log("Today it's not the day for support breakout anticipation for " + params.MarketData.SocketName)
 		return
 	}
 
@@ -59,27 +54,27 @@ func SupportBreakoutAnticipation(params StrategyParams) {
 
 	if err != nil {
 		errorMessage := "Not a good short setup yet -> " + err.Error()
-		log(errorMessage)
+		params.Market.Log(errorMessage)
 		return
 	}
 
 	price = price + params.MarketStrategyParams.LimitAndStopOrderPriceOffset
 	if price >= float64(params.Market.GetCurrentBrokerQuote().Bid) {
-		log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, params.MarketData.PriceDecimals))
-		log("Quote is -> " + utils.GetStringRepresentation(params.Market.GetCurrentBrokerQuote()))
+		params.Market.Log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, params.MarketData.PriceDecimals))
+		params.Market.Log("Quote is -> " + utils.GetStringRepresentation(params.Market.GetCurrentBrokerQuote()))
 		return
 	}
 
-	log("Ok, we might have a short setup at price " + utils.FloatToString(price, params.MarketData.PriceDecimals))
+	params.Market.Log("Ok, we might have a short setup at price " + utils.FloatToString(price, params.MarketData.PriceDecimals))
 	if !params.TrendsService.IsBearishTrend(
 		params.MarketStrategyParams.TrendCandles,
 		params.MarketStrategyParams.TrendDiff,
 		params.CandlesHandler.GetCandles(),
 		lastCompletedCandleIndex,
 	) {
-		log("At the end it wasn't a good short setup")
+		params.Market.Log("At the end it wasn't a good short setup")
 		if params.MarketStrategyParams.CloseOrdersOnBadTrend && utils.FindPositionByMarket(params.APIData.GetPositions(), params.MarketData.BrokerAPIName) == nil {
-			log("There isn't an open position, closing short orders ...")
+			params.Market.Log("There isn't an open position, closing short orders ...")
 			params.APIRetryFacade.CloseOrders(
 				params.API.GetWorkingOrderWithBracketOrders(ibroker.ShortSide, params.MarketData.BrokerAPIName, params.APIData.GetOrders()),
 				retryFacade.RetryParams{
@@ -98,17 +93,16 @@ func SupportBreakoutAnticipation(params StrategyParams) {
 		RiskPercentage:     params.MarketStrategyParams.RiskPercentage,
 		IsValidTime:        isValidTimeToOpenAPosition,
 		Side:               ibroker.ShortSide,
-		StrategyName:       strategyName,
 		WithPendingOrders:  params.MarketStrategyParams.WithPendingOrders,
 		OrderType:          ibroker.StopType,
 		MinPositionSize:    params.MarketStrategyParams.MinPositionSize,
 	}
 
 	if utils.FindPositionByMarket(params.APIData.GetPositions(), params.MarketData.BrokerAPIName) != nil {
-		log("There is an open position, no need to close any orders ...")
+		params.Market.Log("There is an open position, no need to close any orders ...")
 		params.Market.OnValidTradeSetup(onValidTradeSetupParams)
 	} else {
-		log("There isn't any open position. Closing orders first ...")
+		params.Market.Log("There isn't any open position. Closing orders first ...")
 		params.APIRetryFacade.CloseOrders(
 			params.API.GetWorkingOrders(utils.FilterOrdersByMarket(params.APIData.GetOrders(), params.MarketData.BrokerAPIName)),
 			retryFacade.RetryParams{

@@ -22,7 +22,6 @@ const CandlesFolder = ".candles-csv/"
 type Service struct {
 	Logger            logger.Interface
 	MarketData        *types.MarketData
-	Timeframe         types.Timeframe
 	IndicatorsBuilder indicators.MainInterface
 
 	candles     []*types.Candle
@@ -47,7 +46,7 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 		}}
 
 		now := time.Now()
-		s.csvFileName = s.MarketData.BrokerAPIName + "-" + s.Timeframe.Unit + strconv.Itoa(int(s.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
+		s.csvFileName = s.MarketData.BrokerAPIName + "-" + s.MarketData.Timeframe.Unit + strconv.Itoa(int(s.MarketData.Timeframe.Value)) + "-" + now.Format("2006-01-02") + "-candles.csv"
 		s.createCSVFile(s.csvFileName)
 	}
 
@@ -234,17 +233,17 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 	var currentTimestamp int64
 	var candleDurationInSeconds uint
 
-	if s.Timeframe.Unit == "m" {
+	if s.MarketData.Timeframe.Unit == "m" {
 		multiplier = 60
 	}
-	if s.Timeframe.Unit == "h" {
+	if s.MarketData.Timeframe.Unit == "h" {
 		multiplier = 60 * 60
 	}
-	if s.Timeframe.Unit == "d" {
+	if s.MarketData.Timeframe.Unit == "d" {
 		multiplier = 60 * 60 * 24
 	}
 
-	candleDurationInSeconds = s.Timeframe.Value * multiplier
+	candleDurationInSeconds = s.MarketData.Timeframe.Value * multiplier
 	currentTimestamp = utils.GetTimestamp(currentExecutionTime, s.getTimeLayout())
 
 	cond1 := currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
@@ -334,15 +333,15 @@ func (s *Service) getAsInt64(v string, index int) int64 {
 }
 
 func (s *Service) getTimeLayout() string {
-	if s.Timeframe.Unit == "m" {
+	if s.MarketData.Timeframe.Unit == "m" {
 		return "15:04:00"
 	}
 
-	if s.Timeframe.Unit == "h" {
+	if s.MarketData.Timeframe.Unit == "h" {
 		return "15:00:00"
 	}
 
-	if s.Timeframe.Unit == "d" {
+	if s.MarketData.Timeframe.Unit == "d" {
 		return "00:00:00"
 	}
 

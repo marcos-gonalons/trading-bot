@@ -12,7 +12,7 @@ import (
 // GetMarkets...
 func (s *Handler) GetMarkets() []interfaces.MarketInterface {
 	return []interfaces.MarketInterface{
-		s.getMarket(EURUSD.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
+		s.setupMarketInstance(EURUSD.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
 		/*s.getMarket(GBPUSD.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
 		s.getMarket(USDCAD.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
 		s.getMarket(USDCHF.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
@@ -21,17 +21,16 @@ func (s *Handler) GetMarkets() []interfaces.MarketInterface {
 	}
 }
 
-func (s *Handler) getMarket(strategy interfaces.MarketInterface) interfaces.MarketInterface {
+func (s *Handler) setupMarketInstance(market interfaces.MarketInterface) interfaces.MarketInterface {
 	candlesHandler := &candlesHandler.Service{
 		Logger:            s.Logger,
-		MarketData:        strategy.GetMarketData(),
-		Timeframe:         *strategy.GetTimeframe(),
+		MarketData:        market.GetMarketData(),
 		IndicatorsBuilder: indicators.GetInstance(),
 	}
 
-	strategy.SetCandlesHandler(candlesHandler)
-	strategy.SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
-	strategy.SetTrendsService(trends.GetServiceInstance())
+	market.SetCandlesHandler(candlesHandler)
+	market.SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
+	market.SetTrendsService(trends.GetServiceInstance())
 
-	return strategy
+	return market
 }

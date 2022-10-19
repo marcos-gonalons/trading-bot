@@ -12,6 +12,7 @@ import (
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"strconv"
+	"sync"
 	"time"
 
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
@@ -27,9 +28,7 @@ type BaseMarketClass struct {
 	HorizontalLevelsService horizontalLevels.Interface
 	TrendsService           trends.Interface
 
-	Name       string
 	MarketData types.MarketData
-	Timeframe  types.Timeframe
 
 	currentBrokerQuote        *api.Quote
 	currentPosition           *api.Position
@@ -38,26 +37,14 @@ type BaseMarketClass struct {
 	currentOrder              *api.Order
 
 	eurExchangeRate float64
-}
 
-func (s *BaseMarketClass) GetAPIMarketName() string {
-	return "a"
-}
+	isReady           bool
+	lastCandlesAmount int
+	lastVolume        float64
+	lastBid           *float64
+	lastAsk           *float64
 
-func (s *BaseMarketClass) GetMarketType() types.MarketType {
-	return "a"
-}
-
-func (s *BaseMarketClass) GetSocketMarketName() string {
-	return "a"
-}
-
-func (s *BaseMarketClass) GetTradingHours() *types.TradingHours {
-	return &types.TradingHours{}
-}
-
-func (s *BaseMarketClass) IsTradeableOnWeekends() bool {
-	return false
+	mutex *sync.Mutex
 }
 
 // SetCandlesHandler ...
@@ -90,11 +77,6 @@ func (s *BaseMarketClass) GetTrendsService() trends.Interface {
 	return s.TrendsService
 }
 
-// GetTimeframe ...
-func (s *BaseMarketClass) GetTimeframe() *types.Timeframe {
-	return &s.Timeframe
-}
-
 // GetMarketData ...
 func (s *BaseMarketClass) GetMarketData() *types.MarketData {
 	return &s.MarketData
@@ -107,8 +89,11 @@ func (s *BaseMarketClass) GetAPIData() api.DataInterface {
 
 // Initialize ...
 func (s *BaseMarketClass) Initialize() {
-	s.SetEurExchangeRate(1)
+	s.CandlesHandler.InitCandles(time.Now(), s.MarketData.CandlesFileName)
+	go s.CheckNewestOpenedPositionSLandTP()
 
+	s.mutex = &sync.Mutex{}
+	s.isReady = true
 }
 
 // DailyReset ...
@@ -133,16 +118,49 @@ func (s *BaseMarketClass) GetCurrentBrokerQuote() *api.Quote {
 
 // OnReceiveMarketData ...
 func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData) {
-	s.Log("", "Received data -> "+utils.GetStringRepresentation(data))
+	s.Log("Received data -> " + utils.GetStringRepresentation(data))
+
+	if !s.isReady {
+		s.Log("Not ready to process yet, doing nothing ...")
+		return
+	}
+
+	s.mutex.Lock()
+	defer func() {
+		s.mutex.Unlock()
+	}()
+	defer func() {
+		if data.Volume != nil {
+			s.lastVolume = *data.Volume
+		}
+		if data.Bid != nil {
+			s.lastBid = data.Bid
+		}
+		if data.Ask != nil {
+			s.lastAsk = data.Ask
+		}
+
+		s.lastCandlesAmount = len(s.CandlesHandler.GetCandles())
+		s.Log("Candles amount -> " + strconv.Itoa(s.lastCandlesAmount))
+	}()
+
+	s.Log("Updating candles... ")
+	s.CandlesHandler.UpdateCandles(data, s.lastVolume)
+
+	if s.lastCandlesAmount != len(s.CandlesHandler.GetCandles()) {
+		s.OnNewCandle()
+	} else {
+		s.Log("Doing nothing - still same candle")
+	}
 }
 
 // OnNewCandle ...
 func (s *BaseMarketClass) OnNewCandle() {
-	s.Log(s.Name, "New candle has been added. Executing strategy code ...")
+	s.Log("New candle has been added. Executing strategy code ...")
 }
 
-func (s *BaseMarketClass) Log(strategyName string, message string) {
-	s.Logger.Log(strategyName+" - "+message, s.GetMarketData().LogType)
+func (s *BaseMarketClass) Log(message string) {
+	s.Logger.Log(s.MarketData.SocketName+" - "+message, s.GetMarketData().LogType)
 }
 
 func (s *BaseMarketClass) SetStringValues(order *api.Order) {
@@ -185,13 +203,13 @@ func (s *BaseMarketClass) CheckIfSLShouldBeAdjusted(
 		return
 	}
 
-	s.Log(s.Name, "Checking if the position needs to have the SL adjusted with this params ... "+utils.GetStringRepresentation(params))
-	s.Log(s.Name, "Position is "+utils.GetStringRepresentation(position))
+	s.Log("Checking if the position needs to have the SL adjusted with this params ... " + utils.GetStringRepresentation(params))
+	s.Log("Position is " + utils.GetStringRepresentation(position))
 
 	_, tpOrder := s.API.GetBracketOrdersForOpenedPosition(position)
 
 	if tpOrder == nil {
-		s.Log(s.Name, "Take Profit order not found ...")
+		s.Log("Take Profit order not found ...")
 		return
 	}
 
@@ -203,7 +221,7 @@ func (s *BaseMarketClass) CheckIfSLShouldBeAdjusted(
 	}
 
 	if shouldBeAdjusted {
-		s.Log(s.Name, "The price is very close to the TP. Adjusting SL...")
+		s.Log("The price is very close to the TP. Adjusting SL...")
 
 		s.APIRetryFacade.ModifyPosition(
 			s.GetMarketData().BrokerAPIName,
@@ -215,20 +233,23 @@ func (s *BaseMarketClass) CheckIfSLShouldBeAdjusted(
 			},
 		)
 	} else {
-		s.Log(s.Name, "The price is not close to the TP yet. Doing nothing ...")
+		s.Log("The price is not close to the TP yet. Doing nothing ...")
 	}
 }
 
-func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP(longParams *types.MarketStrategyParams, shortParams *types.MarketStrategyParams) {
+func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP() {
+	longParams := s.MarketData.LongSetupParams
+	shortParams := s.MarketData.ShortSetupParams
+
 	for {
 		positions := s.APIData.GetPositions()
 		marketName := s.GetMarketData().BrokerAPIName
-		s.Log(s.Name, "Checking newest open position")
-		s.Log(s.Name, "Positions is -> "+utils.GetStringRepresentation(positions))
-		s.Log(s.Name, "Market name is -> "+marketName)
+		s.Log("Checking newest open position")
+		s.Log("Positions is -> " + utils.GetStringRepresentation(positions))
+		s.Log("Market name is -> " + marketName)
 		position := utils.FindPositionByMarket(positions, marketName)
-		s.Log(s.Name, "Position ->"+utils.GetStringRepresentation(position))
-		s.Log(s.Name, "Current position ->"+utils.GetStringRepresentation(s.currentPosition))
+		s.Log("Position ->" + utils.GetStringRepresentation(position))
+		s.Log("Current position ->" + utils.GetStringRepresentation(s.currentPosition))
 
 		if position != nil && s.currentPosition == nil {
 			s.currentPosition = position
@@ -253,16 +274,16 @@ func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP(longParams *types.Mar
 					sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-longParams.StopLossDistance), s.GetMarketData().PriceDecimals)
 				}
 			} else {
-				s.Log(s.Name, "current order is nil (because the order was created manually on the broker)")
+				s.Log("current order is nil (because the order was created manually on the broker)")
 			}
 
 			if closePosition {
-				s.Log(s.Name, "Will immediately close the position since it was executed very far away from the stop price")
-				s.Log(s.Name, "Order is "+utils.GetStringRepresentation(s.currentOrder))
-				s.Log(s.Name, "Position is "+utils.GetStringRepresentation(s.currentPosition))
+				s.Log("Will immediately close the position since it was executed very far away from the stop price")
+				s.Log("Order is " + utils.GetStringRepresentation(s.currentOrder))
+				s.Log("Position is " + utils.GetStringRepresentation(s.currentPosition))
 
 				workingOrders := s.API.GetWorkingOrders(utils.FilterOrdersByMarket(s.APIData.GetOrders(), s.GetMarketData().BrokerAPIName))
-				s.Log(s.Name, "Closing working orders first ... "+utils.GetStringRepresentation(workingOrders))
+				s.Log("Closing working orders first ... " + utils.GetStringRepresentation(workingOrders))
 
 				s.APIRetryFacade.CloseOrders(
 					workingOrders,
@@ -272,7 +293,7 @@ func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP(longParams *types.Mar
 						SuccessCallback: func() {
 							s.SetPendingOrder(nil)
 
-							s.Log(s.Name, "Closed all orders. Closing the position now ... ")
+							s.Log("Closed all orders. Closing the position now ... ")
 							s.APIRetryFacade.ClosePosition(s.currentPosition.Instrument, retryFacade.RetryParams{
 								DelayBetweenRetries: 5 * time.Second,
 								MaxRetries:          20,
@@ -294,7 +315,7 @@ func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP(longParams *types.Mar
 					// TODO: investigate why this executed at 23:00, causing an error saying
 					// that it can't be traded at 23:00 (since it's not market hours),
 					// causing the app to panic after reaching lot's of unsuccessful tries
-					s.Log(s.Name, "Modifying the SL and TP of the recently opened position ... ")
+					s.Log("Modifying the SL and TP of the recently opened position ... ")
 					s.APIRetryFacade.ModifyPosition(s.GetMarketData().BrokerAPIName, tp, sl, retryFacade.RetryParams{
 						DelayBetweenRetries: 5 * time.Second,
 						MaxRetries:          20,
@@ -327,27 +348,23 @@ func (s *BaseMarketClass) SetCurrentOrder(order *api.Order) {
 	s.currentOrder = order
 }
 
-func (s *BaseMarketClass) SetEurExchangeRate(rate float64) {
-	s.eurExchangeRate = rate
-}
-
 func (s *BaseMarketClass) GetEurExchangeRate() float64 {
-	return s.eurExchangeRate
+	return s.MarketData.EurExchangeRate
 }
 
 func (s *BaseMarketClass) SavePendingOrder(side string, validTimes *types.TradingTimes) {
 	go func() {
-		s.Log(s.Name, "Save pending order called for side "+side)
+		s.Log("Save pending order called for side " + side)
 
 		if utils.FindPositionByMarket(s.APIData.GetPositions(), s.GetMarketData().BrokerAPIName) != nil {
-			s.Log(s.Name, "Can't save pending order since there is an open position")
+			s.Log("Can't save pending order since there is an open position")
 			return
 		}
 
 		workingOrders := s.API.GetWorkingOrders(s.APIData.GetOrders())
 
 		if len(workingOrders) == 0 {
-			s.Log(s.Name, "There aren't any working orders, doing nothing ...")
+			s.Log("There aren't any working orders, doing nothing ...")
 			return
 		}
 
@@ -359,7 +376,7 @@ func (s *BaseMarketClass) SavePendingOrder(side string, validTimes *types.Tradin
 		}
 
 		if mainOrder == nil {
-			s.Log(s.Name, "There isn't an active order for this side "+side)
+			s.Log("There isn't an active order for this side " + side)
 			return
 		}
 
@@ -373,12 +390,12 @@ func (s *BaseMarketClass) SavePendingOrder(side string, validTimes *types.Tradin
 			[]string{},
 			validHalfHours,
 		) {
-			s.Log(s.Name, "No need to save the pending order since we are in the right time")
+			s.Log("No need to save the pending order since we are in the right time")
 			return
 		}
 
-		s.Log(s.Name, "Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
-		s.Log(s.Name, "This is the current order -> "+utils.GetStringRepresentation(mainOrder))
+		s.Log("Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
+		s.Log("This is the current order -> " + utils.GetStringRepresentation(mainOrder))
 
 		slOrder, tpOrder := s.getSlAndTpOrders(mainOrder.ID, workingOrders)
 
@@ -403,7 +420,7 @@ func (s *BaseMarketClass) SavePendingOrder(side string, validTimes *types.Tradin
 				MaxRetries:          30,
 				SuccessCallback: func() {
 					s.SetPendingOrder(mainOrder)
-					s.Log(s.Name, "Closed all working orders correctly and pending order saved -> "+utils.GetStringRepresentation(s.GetPendingOrder()))
+					s.Log("Closed all working orders correctly and pending order saved -> " + utils.GetStringRepresentation(s.GetPendingOrder()))
 				},
 			},
 		)
@@ -417,7 +434,7 @@ func (s *BaseMarketClass) CreatePendingOrder(side string) {
 
 	p := utils.FindPositionByMarket(s.APIData.GetPositions(), s.GetMarketData().BrokerAPIName)
 	if p != nil {
-		s.Log(s.Name, "Can't create the pending order since there is an open position -> "+utils.GetStringRepresentation(p))
+		s.Log("Can't create the pending order since there is an open position -> " + utils.GetStringRepresentation(p))
 		return
 	}
 
@@ -431,29 +448,29 @@ func (s *BaseMarketClass) CreatePendingOrder(side string) {
 
 		candles := s.CandlesHandler.GetCandles()
 		lastCompletedCandle := candles[len(candles)-2]
-		s.Log(s.Name, "Last completed candle -> "+utils.GetStringRepresentation(lastCompletedCandle))
+		s.Log("Last completed candle -> " + utils.GetStringRepresentation(lastCompletedCandle))
 
 		if side == ibroker.LongSide {
 			if s.API.IsStopOrder(pendingOrder) && price <= float32(lastCompletedCandle.Close) {
-				s.Log(s.Name, "STOP ORDER -> Price is lower than last completed candle.close - Can't create the pending order")
+				s.Log("STOP ORDER -> Price is lower than last completed candle.close - Can't create the pending order")
 				return
 			}
 			if s.API.IsLimitOrder(pendingOrder) && price >= float32(lastCompletedCandle.Close) {
-				s.Log(s.Name, "LIMIT ORDER -> Price is higher than last completed candle.close - Can't create the pending order")
+				s.Log("LIMIT ORDER -> Price is higher than last completed candle.close - Can't create the pending order")
 				return
 			}
 		} else {
 			if s.API.IsStopOrder(pendingOrder) && price >= float32(lastCompletedCandle.Close) {
-				s.Log(s.Name, "STOP ORDER -> Price is greater than last completed candle.close - Can't create the pending order")
+				s.Log("STOP ORDER -> Price is greater than last completed candle.close - Can't create the pending order")
 				return
 			}
 			if s.API.IsLimitOrder(pendingOrder) && price <= float32(lastCompletedCandle.Close) {
-				s.Log(s.Name, "LIMIT ORDER -> Price is lower than last completed candle.close - Can't create the pending order")
+				s.Log("LIMIT ORDER -> Price is lower than last completed candle.close - Can't create the pending order")
 				return
 			}
 		}
 
-		s.Log(s.Name, "Everything is good - Creating the pending order")
+		s.Log("Everything is good - Creating the pending order")
 		order := s.GetPendingOrder()
 		s.APIRetryFacade.CreateOrder(
 			pendingOrder,
@@ -467,7 +484,7 @@ func (s *BaseMarketClass) CreatePendingOrder(side string) {
 				SuccessCallback: func(order *api.Order) func() {
 					return func() {
 						s.SetCurrentOrder(order)
-						s.Log(s.Name, "Pending order successfully created ... "+utils.GetStringRepresentation(s.GetCurrentOrder()))
+						s.Log("Pending order successfully created ... " + utils.GetStringRepresentation(s.GetCurrentOrder()))
 					}
 				}(order),
 			},
@@ -516,17 +533,17 @@ func (s *BaseMarketClass) OnValidTradeSetup(params interfaces.OnValidTradeSetupP
 		order.LimitPrice = &float32Price
 	}
 
-	s.Log(params.StrategyName, params.Side+" order to be created -> "+utils.GetStringRepresentation(order))
+	s.Log(params.Side + " order to be created -> " + utils.GetStringRepresentation(order))
 
 	if params.WithPendingOrders {
 		if utils.FindPositionByMarket(s.APIData.GetPositions(), s.GetMarketData().BrokerAPIName) != nil {
-			s.Log(params.StrategyName, "There is an open position, saving the order for later ...")
+			s.Log("There is an open position, saving the order for later ...")
 			s.SetPendingOrder(order)
 			return
 		}
 
 		if !params.IsValidTime {
-			s.Log(params.StrategyName, "Now is not the time for opening any "+params.Side+" orders, saving it for later ...")
+			s.Log("Now is not the time for opening any " + params.Side + " orders, saving it for later ...")
 			s.SetPendingOrder(order)
 			return
 		}
@@ -540,7 +557,7 @@ func (s *BaseMarketClass) OnValidTradeSetup(params interfaces.OnValidTradeSetupP
 	}
 
 	if position == nil {
-		s.Log(params.StrategyName, "There isn't any open position, let's create the order ...")
+		s.Log("There isn't any open position, let's create the order ...")
 
 		s.APIRetryFacade.CreateOrder(
 			order,
@@ -554,14 +571,14 @@ func (s *BaseMarketClass) OnValidTradeSetup(params interfaces.OnValidTradeSetupP
 				SuccessCallback: func(order *api.Order) func() {
 					return func() {
 						s.SetCurrentOrder(order)
-						s.Log(params.StrategyName, "New order successfully created ... "+utils.GetStringRepresentation(s.GetCurrentOrder()))
+						s.Log("New order successfully created ... " + utils.GetStringRepresentation(s.GetCurrentOrder()))
 					}
 				}(order),
 			},
 		)
 	} else {
-		s.Log(params.StrategyName, "Not creating the order since there is an open position")
-		s.Log(params.StrategyName, "Position is -> "+utils.GetStringRepresentation(s.currentPosition))
+		s.Log("Not creating the order since there is an open position")
+		s.Log("Position is -> " + utils.GetStringRepresentation(s.currentPosition))
 	}
 
 }
@@ -571,15 +588,15 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 		return
 	}
 
-	s.Log(s.Name, "Checking open position TTL, it was opened on "+s.currentPositionExecutedAt.Format("2006-01-02 15:04:05"))
-	s.Log(s.Name, "Position is "+utils.GetStringRepresentation(position))
-	s.Log(s.Name, "Max seconds open trade is"+strconv.FormatInt(params.MaxSecondsOpenTrade, 10))
+	s.Log("Checking open position TTL, it was opened on " + s.currentPositionExecutedAt.Format("2006-01-02 15:04:05"))
+	s.Log("Position is " + utils.GetStringRepresentation(position))
+	s.Log("Max seconds open trade is" + strconv.FormatInt(params.MaxSecondsOpenTrade, 10))
 
 	var diffInSeconds = s.CandlesHandler.GetLastCandle().Timestamp - s.currentPositionExecutedAt.Unix()
-	s.Log(s.Name, "Difference in seconds is "+strconv.FormatInt(diffInSeconds, 10))
+	s.Log("Difference in seconds is " + strconv.FormatInt(diffInSeconds, 10))
 
 	if diffInSeconds > params.MaxSecondsOpenTrade {
-		s.Log(s.Name, "Trade has been opened for too long, closing position ...")
+		s.Log("Trade has been opened for too long, closing position ...")
 		s.APIRetryFacade.ClosePosition(position.Instrument, retryFacade.RetryParams{
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          20,
@@ -596,7 +613,7 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 			s.GetMarketData(),
 		)
 	} else {
-		s.Log(s.Name, "Not closing the trade yet")
+		s.Log("Not closing the trade yet")
 	}
 }
 

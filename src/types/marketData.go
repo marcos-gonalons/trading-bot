@@ -1,6 +1,8 @@
 package types
 
-import logger "TradingBot/src/services/logger/types"
+import (
+	logger "TradingBot/src/services/logger/types"
+)
 
 type MarketData struct {
 	BrokerAPIName       string
@@ -13,6 +15,10 @@ type MarketData struct {
 	MarketType          MarketType
 	Rollover            float64
 	Timeframe           Timeframe
+	CandlesFileName     string
+	EurExchangeRate     float64
+	LongSetupParams     *MarketStrategyParams
+	ShortSetupParams    *MarketStrategyParams
 }
 type MarketType string
 

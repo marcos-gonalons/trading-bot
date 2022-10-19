@@ -42,7 +42,6 @@ func main() {
 		&APIData,
 		getMarketName(),
 	)
-	strat.SetEurExchangeRate(.85)
 
 	strat.GetCandlesHandler().AddNewCandle(types.Candle{
 		Open:      0,

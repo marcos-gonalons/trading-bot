@@ -137,22 +137,18 @@ func GetCurrentTimeHourAndMinutes() (int, int) {
 }
 
 // IsNowWithinTradingHours ...
-func IsNowWithinTradingHours(
-	marketType types.MarketType,
-	isTradeableOnWeekends bool,
-	tradingHours *types.TradingHours,
-) bool {
-	if marketType == constants.ForexType {
+func IsNowWithinTradingHours(marketData *types.MarketData) bool {
+	if marketData.MarketType == constants.ForexType {
 		if IsOutsideForexHours(time.Now()) {
 			return false
 		}
 	} else {
-		if IsNowWeekend() && !isTradeableOnWeekends {
+		if IsNowWeekend() && !marketData.TradeableOnWeekends {
 			return false
 		}
 	}
 
-	if tradingHours.Start == tradingHours.End {
+	if marketData.TradingHours.Start == marketData.TradingHours.End {
 		return true
 	}
 
@@ -161,13 +157,13 @@ func IsNowWithinTradingHours(
 	currentHour, _ := GetCurrentTimeHourAndMinutes()
 	currentHourTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02 15:00:00"))
 
-	timeStartingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(tradingHours.Start), 0, 0, 0, currentHourTime.Location())
-	timeEndingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(tradingHours.End), 0, 0, 0, currentHourTime.Location())
+	timeStartingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(marketData.TradingHours.Start), 0, 0, 0, currentHourTime.Location())
+	timeEndingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(marketData.TradingHours.End), 0, 0, 0, currentHourTime.Location())
 
-	if tradingHours.End < tradingHours.Start {
-		if currentHour < int(tradingHours.End) {
+	if marketData.TradingHours.End < marketData.TradingHours.Start {
+		if currentHour < int(marketData.TradingHours.End) {
 			timeStartingHour = timeStartingHour.Add(-24 * time.Hour)
-		} else if currentHour >= int(tradingHours.Start) {
+		} else if currentHour >= int(marketData.TradingHours.Start) {
 			timeEndingHour = timeEndingHour.Add(24 * time.Hour)
 		}
 	}
