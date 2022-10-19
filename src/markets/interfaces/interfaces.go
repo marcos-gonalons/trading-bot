@@ -2,7 +2,9 @@ package interfaces
 
 import (
 	"TradingBot/src/services/api"
+	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/candlesHandler"
+	"TradingBot/src/services/logger"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/types"
@@ -21,6 +23,16 @@ type OnValidTradeSetupParams struct {
 	WithPendingOrders  bool
 	OrderType          string
 	MinPositionSize    int64
+}
+
+type MarketInstanceDependencies struct {
+	APIRetryFacade          retryFacade.Interface
+	API                     api.Interface
+	APIData                 api.DataInterface
+	Logger                  logger.Interface
+	CandlesHandler          candlesHandler.Interface
+	HorizontalLevelsService horizontalLevels.Interface
+	TrendsService           trends.Interface
 }
 
 // MarketInterface ...
@@ -47,10 +59,7 @@ type MarketInterface interface {
 	CheckOpenPositionTTL(params *types.MarketStrategyParams, position *api.Position)
 	OnValidTradeSetup(params OnValidTradeSetupParams)
 
-	SetCandlesHandler(candlesHandler candlesHandler.Interface)
 	GetCandlesHandler() candlesHandler.Interface
-	SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface)
-	GetHorizontalLevelsService() horizontalLevels.Interface
-	SetTrendsService(trendsService trends.Interface)
-	GetTrendsService() trends.Interface
+
+	SetDependencies(MarketInstanceDependencies)
 }

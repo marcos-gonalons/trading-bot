@@ -3,34 +3,14 @@ package EURUSD
 import (
 	"TradingBot/src/markets/baseMarketClass"
 	"TradingBot/src/markets/interfaces"
-	"TradingBot/src/services/api"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
-	"TradingBot/src/services/api/retryFacade"
-	"TradingBot/src/services/logger"
 	loggerTypes "TradingBot/src/services/logger/types"
 	"TradingBot/src/types"
-	"strconv"
 )
 
 // Market ...
 type Market struct {
 	baseMarketClass.BaseMarketClass
-}
-
-// DailyReset ...
-func (s *Market) DailyReset() {
-	minCandles := 7 * 2 * 24
-	totalCandles := len(s.CandlesHandler.GetCandles())
-
-	s.Log("Total candles is " + strconv.Itoa(totalCandles) + " - min candles is " + strconv.Itoa(minCandles))
-	if totalCandles < minCandles {
-		s.Log("Not removing any candles yet")
-		return
-	}
-
-	var candlesToRemove uint = 25
-	s.Log("Removing old candles ... " + strconv.Itoa(int(candlesToRemove)))
-	s.CandlesHandler.RemoveOldCandles(candlesToRemove)
 }
 
 func (s *Market) OnNewCandle() {
@@ -56,13 +36,7 @@ func (s *Market) OnNewCandle() {
 	*/
 }
 
-// GetMarketInstance ...
-func GetMarketInstance(
-	api api.Interface,
-	apiData api.DataInterface,
-	apiRetryFacade retryFacade.Interface,
-	logger logger.Interface,
-) interfaces.MarketInterface {
+func GetMarketInstance() interfaces.MarketInterface {
 	market := &Market{}
 
 	market.MarketData = types.MarketData{
@@ -87,11 +61,6 @@ func GetMarketInstance(
 		ShortSetupParams: &EMACrossoverShortParams,
 		EurExchangeRate:  1,
 	}
-
-	market.API = api
-	market.APIData = apiData
-	market.APIRetryFacade = apiRetryFacade
-	market.Logger = logger
 
 	return market
 }

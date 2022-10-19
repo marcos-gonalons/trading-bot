@@ -15,6 +15,8 @@ import (
 const ForexType types.MarketType = "forex"
 const IndexType types.MarketType = "index"
 
+// todo: finish moving this data to markets folder
+
 var Markets = []types.MarketData{
 	{
 		BrokerAPIName: ibroker.GER30SymbolName,

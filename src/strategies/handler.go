@@ -17,6 +17,8 @@ import (
 const DailyResetHour = 2
 
 // Handler ...
+// todo: change name to manager
+// todo2: all the services will be initialized here, example trends and horizontal levels service
 type Handler struct {
 	API            api.Interface
 	APIData        api.DataInterface
@@ -32,7 +34,6 @@ type Handler struct {
 
 // Run ...
 func (s *Handler) Run() {
-
 	s.markets = s.GetMarkets()
 
 	s.initMarkets()

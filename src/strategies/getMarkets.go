@@ -11,26 +11,32 @@ import (
 
 // GetMarkets...
 func (s *Handler) GetMarkets() []interfaces.MarketInterface {
-	return []interfaces.MarketInterface{
-		s.setupMarketInstance(EURUSD.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
-		/*s.getMarket(GBPUSD.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
-		s.getMarket(USDCAD.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
-		s.getMarket(USDCHF.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
-		s.getMarket(NZDUSD.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),
-		s.getMarket(AUDUSD.GetMarketInstance(s.API, s.APIData, s.APIRetryFacade, s.Logger)),*/
-	}
-}
-
-func (s *Handler) setupMarketInstance(market interfaces.MarketInterface) interfaces.MarketInterface {
-	candlesHandler := &candlesHandler.Service{
-		Logger:            s.Logger,
-		MarketData:        market.GetMarketData(),
-		IndicatorsBuilder: indicators.GetInstance(),
+	instances := []interfaces.MarketInterface{
+		EURUSD.GetMarketInstance(),
+		// GBPUSD.GetMarketInstance(),
+		// etc etc
 	}
 
-	market.SetCandlesHandler(candlesHandler)
-	market.SetHorizontalLevelsService(horizontalLevels.GetServiceInstance(candlesHandler))
-	market.SetTrendsService(trends.GetServiceInstance())
+	for _, instance := range instances {
+		candlesHandler := &candlesHandler.Service{
+			Logger:            s.Logger,
+			MarketData:        instance.GetMarketData(),
+			IndicatorsBuilder: indicators.GetInstance(),
+		}
 
-	return market
+		// todo: maybe move the trends and horizontallevels services to the handler and get them here via s.*****
+		dependencies := interfaces.MarketInstanceDependencies{
+			APIRetryFacade:          s.APIRetryFacade,
+			API:                     s.API,
+			APIData:                 s.APIData,
+			Logger:                  s.Logger,
+			CandlesHandler:          candlesHandler,
+			TrendsService:           trends.GetServiceInstance(),
+			HorizontalLevelsService: horizontalLevels.GetServiceInstance(candlesHandler),
+		}
+
+		instance.SetDependencies(dependencies)
+	}
+
+	return instances
 }

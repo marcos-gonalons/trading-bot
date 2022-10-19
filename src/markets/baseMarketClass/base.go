@@ -36,8 +36,6 @@ type BaseMarketClass struct {
 	pendingOrder              *api.Order
 	currentOrder              *api.Order
 
-	eurExchangeRate float64
-
 	isReady           bool
 	lastCandlesAmount int
 	lastVolume        float64
@@ -47,34 +45,20 @@ type BaseMarketClass struct {
 	mutex *sync.Mutex
 }
 
-// SetCandlesHandler ...
-func (s *BaseMarketClass) SetCandlesHandler(candlesHandler candlesHandler.Interface) {
-	s.CandlesHandler = candlesHandler
+// SetDependencies ...
+func (s *BaseMarketClass) SetDependencies(d interfaces.MarketInstanceDependencies) {
+	s.APIRetryFacade = d.APIRetryFacade
+	s.API = d.API
+	s.APIData = d.APIData
+	s.Logger = d.Logger
+	s.CandlesHandler = d.CandlesHandler
+	s.HorizontalLevelsService = d.HorizontalLevelsService
+	s.TrendsService = d.TrendsService
 }
 
 // GetCandlesHandler ...
 func (s *BaseMarketClass) GetCandlesHandler() candlesHandler.Interface {
 	return s.CandlesHandler
-}
-
-// SetHorizontalLevelsService ...
-func (s *BaseMarketClass) SetHorizontalLevelsService(horizontalLevelsService horizontalLevels.Interface) {
-	s.HorizontalLevelsService = horizontalLevelsService
-}
-
-// GetHorizontalLevelsService ...
-func (s *BaseMarketClass) GetHorizontalLevelsService() horizontalLevels.Interface {
-	return s.HorizontalLevelsService
-}
-
-// SetTrendsService ...
-func (s *BaseMarketClass) SetTrendsService(trendsService trends.Interface) {
-	s.TrendsService = trendsService
-}
-
-// GetTrendsService ...
-func (s *BaseMarketClass) GetTrendsService() trends.Interface {
-	return s.TrendsService
 }
 
 // GetMarketData ...
@@ -98,7 +82,23 @@ func (s *BaseMarketClass) Initialize() {
 
 // DailyReset ...
 func (s *BaseMarketClass) DailyReset() {
+	// todo:
+	// must remove candles based on the marketdata.timeframe
+	// following code removes candles for 1h timeframe
+	// adapt it for any timeframe
 
+	minCandles := 7 * 2 * 24
+	totalCandles := len(s.CandlesHandler.GetCandles())
+
+	s.Log("Total candles is " + strconv.Itoa(totalCandles) + " - min candles is " + strconv.Itoa(minCandles))
+	if totalCandles < minCandles {
+		s.Log("Not removing any candles yet")
+		return
+	}
+
+	var candlesToRemove uint = 25
+	s.Log("Removing old candles ... " + strconv.Itoa(int(candlesToRemove)))
+	s.CandlesHandler.RemoveOldCandles(candlesToRemove)
 }
 
 // SetCurrentPositionExecutedAt ...
@@ -617,6 +617,7 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 	}
 }
 
+// todo: move away from this base class, maybe utils or maybe API static method
 func (s *BaseMarketClass) getSlAndTpOrders(
 	parentID string,
 	orders []*api.Order,
