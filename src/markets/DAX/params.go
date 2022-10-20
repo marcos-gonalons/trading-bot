@@ -5,7 +5,7 @@ import "TradingBot/src/types"
 var priceAdjustment float32 = float32(1)
 
 var EMACrossoverLongParams = types.MarketStrategyParams{
-	RiskPercentage: 1,
+	RiskPercentage: 3,
 
 	StopLossPriceOffset: float64(-75 * priceAdjustment),
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
@@ -28,7 +28,7 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 }
 
 var EMACrossoverShortParams = types.MarketStrategyParams{
-	RiskPercentage: 1,
+	RiskPercentage: 3,
 
 	StopLossPriceOffset: float64(-125 * priceAdjustment),
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
