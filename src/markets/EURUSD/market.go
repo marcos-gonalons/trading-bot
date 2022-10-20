@@ -1,42 +1,18 @@
 package EURUSD
 
 import (
-	"TradingBot/src/markets/baseMarketClass"
-	"TradingBot/src/markets/interfaces"
+	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
+	"TradingBot/src/strategies/strategies"
 	"TradingBot/src/types"
 )
 
-// Market ...
 type Market struct {
-	baseMarketClass.BaseMarketClass
+	markets.BaseMarketClass
 }
 
-func (s *Market) OnNewCandle() {
-	s.OnNewCandle()
-
-	// todo: call ema crossover strategy, longs and shorts
-	/*
-		s.Log("Calling resistanceBounce strategy")
-		strategies.ResistanceBounce(strategies.StrategyParams{
-			BaseMarketClass:       &s.BaseMarketClass,
-			MarketStrategyParams:  &ResistanceBounceParams,
-			WithPendingOrders:     false,
-			CloseOrdersOnBadTrend: false,
-		})
-
-		s.Log("Calling supportBounce strategy")
-		strategies.SupportBounce(strategies.StrategyParams{
-			BaseMarketClass:       &s.BaseMarketClass,
-			MarketStrategyParams:  &SupportBounceParams,
-			WithPendingOrders:     false,
-			CloseOrdersOnBadTrend: false,
-		})
-	*/
-}
-
-func GetMarketInstance() interfaces.MarketInterface {
+func GetMarketInstance() markets.MarketInterface {
 	market := &Market{}
 
 	market.MarketData = types.MarketData{
@@ -62,5 +38,29 @@ func GetMarketInstance() interfaces.MarketInterface {
 		EurExchangeRate:  1,
 	}
 
+	market.ToExecuteOnNewCandle = market.GetFuncToExecuteOnNewCandle()
+
 	return market
+}
+
+func (s *Market) GetFuncToExecuteOnNewCandle() func() {
+	return func() {
+		s.Log("Calling resistanceBounce strategy")
+		strategies.ResistanceBounce(strategies.StrategyParams{
+			MarketStrategyParams:    &EMACrossoverLongParams,
+			MarketData:              &s.MarketData,
+			APIData:                 s.APIData,
+			CandlesHandler:          s.CandlesHandler,
+			TrendsService:           s.TrendsService,
+			HorizontalLevelsService: s.HorizontalLevelsService,
+			API:                     s.API,
+			APIRetryFacade:          s.APIRetryFacade,
+			Market:                  s,
+		})
+
+		/*
+			s.Log("Calling supportBounce strategy")
+			strategies.SupportBounce(strategies.StrategyParams{})
+		*/
+	}
 }

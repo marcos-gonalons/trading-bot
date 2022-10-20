@@ -2,7 +2,7 @@ package main
 
 import (
 	"TradingBot/src/commands/marketReplay/brokerSim"
-	"TradingBot/src/markets/interfaces"
+	"TradingBot/src/markets"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"encoding/csv"
@@ -130,7 +130,7 @@ func getMarketInstance(
 	simulatorAPI api.Interface,
 	APIData api.DataInterface,
 	marketName string,
-) interfaces.MarketInterface {
+) markets.MarketInterface {
 	apiRetryFacade := &retryFacade.APIFacade{
 		API:    simulatorAPI,
 		Logger: logger.GetInstance(),

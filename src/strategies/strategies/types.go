@@ -1,7 +1,7 @@
 package strategies
 
 import (
-	"TradingBot/src/markets/interfaces"
+	"TradingBot/src/markets"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/candlesHandler"
@@ -22,5 +22,5 @@ type StrategyParams struct {
 	API            api.Interface
 	APIRetryFacade retryFacade.Interface
 
-	Market interfaces.MarketInterface
+	Market markets.MarketInterface
 }

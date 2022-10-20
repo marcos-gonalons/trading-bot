@@ -6,14 +6,14 @@ import (
 	"TradingBot/src/types"
 )
 
+const ForexType types.MarketType = "forex"
+const IndexType types.MarketType = "index"
+
 // TradingHours right now must be in Spanish time
 // They must be changed every summer/winter accordingly
 
 // Start hour is included, end hour is excluded
 // For example, from 7 to 22, it will execute trades from 7 to 8, but not from 22 to 23.
-
-const ForexType types.MarketType = "forex"
-const IndexType types.MarketType = "index"
 
 // todo: finish moving this data to markets folder
 

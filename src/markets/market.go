@@ -1,7 +1,6 @@
-package baseMarketClass
+package markets
 
 import (
-	"TradingBot/src/markets/interfaces"
 	"TradingBot/src/services/api"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
@@ -18,7 +17,6 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
-// BaseMarketClass ...
 type BaseMarketClass struct {
 	APIRetryFacade          retryFacade.Interface
 	API                     api.Interface
@@ -28,7 +26,8 @@ type BaseMarketClass struct {
 	HorizontalLevelsService horizontalLevels.Interface
 	TrendsService           trends.Interface
 
-	MarketData types.MarketData
+	MarketData           types.MarketData
+	ToExecuteOnNewCandle func()
 
 	currentBrokerQuote        *api.Quote
 	currentPosition           *api.Position
@@ -45,8 +44,17 @@ type BaseMarketClass struct {
 	mutex *sync.Mutex
 }
 
-// SetDependencies ...
-func (s *BaseMarketClass) SetDependencies(d interfaces.MarketInstanceDependencies) {
+type MarketInstanceDependencies struct {
+	APIRetryFacade          retryFacade.Interface
+	API                     api.Interface
+	APIData                 api.DataInterface
+	Logger                  logger.Interface
+	CandlesHandler          candlesHandler.Interface
+	HorizontalLevelsService horizontalLevels.Interface
+	TrendsService           trends.Interface
+}
+
+func (s *BaseMarketClass) SetDependencies(d MarketInstanceDependencies) {
 	s.APIRetryFacade = d.APIRetryFacade
 	s.API = d.API
 	s.APIData = d.APIData
@@ -56,22 +64,18 @@ func (s *BaseMarketClass) SetDependencies(d interfaces.MarketInstanceDependencie
 	s.TrendsService = d.TrendsService
 }
 
-// GetCandlesHandler ...
 func (s *BaseMarketClass) GetCandlesHandler() candlesHandler.Interface {
 	return s.CandlesHandler
 }
 
-// GetMarketData ...
 func (s *BaseMarketClass) GetMarketData() *types.MarketData {
 	return &s.MarketData
 }
 
-// GetAPIData ...
 func (s *BaseMarketClass) GetAPIData() api.DataInterface {
 	return s.APIData
 }
 
-// Initialize ...
 func (s *BaseMarketClass) Initialize() {
 	s.CandlesHandler.InitCandles(time.Now(), s.MarketData.CandlesFileName)
 	go s.CheckNewestOpenedPositionSLandTP()
@@ -80,7 +84,6 @@ func (s *BaseMarketClass) Initialize() {
 	s.isReady = true
 }
 
-// DailyReset ...
 func (s *BaseMarketClass) DailyReset() {
 	// todo:
 	// must remove candles based on the marketdata.timeframe
@@ -101,22 +104,18 @@ func (s *BaseMarketClass) DailyReset() {
 	s.CandlesHandler.RemoveOldCandles(candlesToRemove)
 }
 
-// SetCurrentPositionExecutedAt ...
 func (s *BaseMarketClass) SetCurrentPositionExecutedAt(timestamp int64) {
 	s.currentPositionExecutedAt = time.Unix(timestamp, 0)
 }
 
-// SetCurrentBrokerQuote ...
 func (s *BaseMarketClass) SetCurrentBrokerQuote(quote *api.Quote) {
 	s.currentBrokerQuote = quote
 }
 
-// GetCurrentBrokerQuote ...
 func (s *BaseMarketClass) GetCurrentBrokerQuote() *api.Quote {
 	return s.currentBrokerQuote
 }
 
-// OnReceiveMarketData ...
 func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData) {
 	s.Log("Received data -> " + utils.GetStringRepresentation(data))
 
@@ -154,23 +153,22 @@ func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 	}
 }
 
-// OnNewCandle ...
 func (s *BaseMarketClass) OnNewCandle() {
 	s.Log("New candle has been added. Executing strategy code ...")
+
+	s.ToExecuteOnNewCandle()
 }
 
 func (s *BaseMarketClass) Log(message string) {
-	s.Logger.Log(s.MarketData.SocketName+" - "+message, s.GetMarketData().LogType)
+	s.Logger.Log(s.MarketData.SocketName+" - "+message, s.MarketData.LogType)
 }
 
 func (s *BaseMarketClass) SetStringValues(order *api.Order) {
-	market := s.GetMarketData()
-
 	order.CurrentAsk = &s.currentBrokerQuote.Ask
 	order.CurrentBid = &s.currentBrokerQuote.Bid
 
-	currentAsk := utils.FloatToString(float64(*order.CurrentAsk), market.PriceDecimals)
-	currentBid := utils.FloatToString(float64(*order.CurrentBid), market.PriceDecimals)
+	currentAsk := utils.FloatToString(float64(*order.CurrentAsk), s.MarketData.PriceDecimals)
+	currentBid := utils.FloatToString(float64(*order.CurrentBid), s.MarketData.PriceDecimals)
 	qty := utils.IntToString(int64(order.Qty))
 	order.StringValues = &api.OrderStringValues{
 		CurrentAsk: &currentAsk,
@@ -179,18 +177,18 @@ func (s *BaseMarketClass) SetStringValues(order *api.Order) {
 	}
 
 	if s.API.IsLimitOrder(order) {
-		limitPrice := utils.FloatToString(float64(*order.LimitPrice), market.PriceDecimals)
+		limitPrice := utils.FloatToString(float64(*order.LimitPrice), s.MarketData.PriceDecimals)
 		order.StringValues.LimitPrice = &limitPrice
 	} else {
-		stopPrice := utils.FloatToString(float64(*order.StopPrice), market.PriceDecimals)
+		stopPrice := utils.FloatToString(float64(*order.StopPrice), s.MarketData.PriceDecimals)
 		order.StringValues.StopPrice = &stopPrice
 	}
 	if order.StopLoss != nil {
-		stopLossPrice := utils.FloatToString(float64(*order.StopLoss), market.PriceDecimals)
+		stopLossPrice := utils.FloatToString(float64(*order.StopLoss), s.MarketData.PriceDecimals)
 		order.StringValues.StopLoss = &stopLossPrice
 	}
 	if order.TakeProfit != nil {
-		takeProfitPrice := utils.FloatToString(float64(*order.TakeProfit), market.PriceDecimals)
+		takeProfitPrice := utils.FloatToString(float64(*order.TakeProfit), s.MarketData.PriceDecimals)
 		order.StringValues.TakeProfit = &takeProfitPrice
 	}
 }
@@ -304,7 +302,7 @@ func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP() {
 								func(price float32, order *api.Order) float32 {
 									return price
 								},
-								s.GetEurExchangeRate(),
+								s.MarketData.EurExchangeRate,
 								s.CandlesHandler.GetLastCandle(),
 								s.GetMarketData(),
 							)
@@ -346,10 +344,6 @@ func (s *BaseMarketClass) GetCurrentOrder() *api.Order {
 
 func (s *BaseMarketClass) SetCurrentOrder(order *api.Order) {
 	s.currentOrder = order
-}
-
-func (s *BaseMarketClass) GetEurExchangeRate() float64 {
-	return s.MarketData.EurExchangeRate
 }
 
 func (s *BaseMarketClass) SavePendingOrder(side string, validTimes *types.TradingTimes) {
@@ -494,7 +488,19 @@ func (s *BaseMarketClass) CreatePendingOrder(side string) {
 	s.SetPendingOrder(nil)
 }
 
-func (s *BaseMarketClass) OnValidTradeSetup(params interfaces.OnValidTradeSetupParams) {
+type OnValidTradeSetupParams struct {
+	Price              float64
+	StopLossDistance   float32
+	TakeProfitDistance float32
+	RiskPercentage     float64
+	IsValidTime        bool
+	Side               string
+	WithPendingOrders  bool
+	OrderType          string
+	MinPositionSize    int64
+}
+
+func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 	float32Price := float32(params.Price)
 
 	var stopLoss float32
@@ -513,7 +519,7 @@ func (s *BaseMarketClass) OnValidTradeSetup(params interfaces.OnValidTradeSetupP
 		params.RiskPercentage,
 		float64(params.StopLossDistance),
 		float64(params.MinPositionSize),
-		s.GetEurExchangeRate(),
+		s.MarketData.EurExchangeRate,
 	)
 
 	order := &api.Order{
@@ -608,9 +614,9 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 			func(price float32, order *api.Order) float32 {
 				return price
 			},
-			s.GetEurExchangeRate(),
+			s.MarketData.EurExchangeRate,
 			candles[len(candles)-3],
-			s.GetMarketData(),
+			&s.MarketData,
 		)
 	} else {
 		s.Log("Not closing the trade yet")

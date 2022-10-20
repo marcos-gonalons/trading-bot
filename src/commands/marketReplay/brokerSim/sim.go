@@ -1,20 +1,16 @@
 package brokerSim
 
 import (
-	"TradingBot/src/markets/interfaces"
+	"TradingBot/src/markets"
 	"TradingBot/src/services/api"
 	"TradingBot/src/types"
 )
 
-var eurExchangeRate float64
-
 func OnNewCandle(
 	APIData api.DataInterface,
 	simulatorAPI api.Interface,
-	market interfaces.MarketInterface,
+	market markets.MarketInterface,
 ) {
-	eurExchangeRate = market.GetEurExchangeRate()
-
 	orders, _ := simulatorAPI.GetOrders()
 	positions, _ := simulatorAPI.GetPositions()
 	state, _ := simulatorAPI.GetState()
@@ -65,7 +61,7 @@ func OnNewCandle(
 					func(price float32, order *api.Order) float32 {
 						return addSlippage(price, order, stopOrderSlippage)
 					},
-					eurExchangeRate,
+					market.GetMarketData().EurExchangeRate,
 					lastCandle,
 					market.GetMarketData(),
 				)

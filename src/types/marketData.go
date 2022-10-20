@@ -20,6 +20,7 @@ type MarketData struct {
 	LongSetupParams     *MarketStrategyParams
 	ShortSetupParams    *MarketStrategyParams
 }
+
 type MarketType string
 
 type TradingHours struct {

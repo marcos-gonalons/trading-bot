@@ -1,7 +1,7 @@
 package strategies
 
 import (
-	"TradingBot/src/markets/interfaces"
+	"TradingBot/src/markets"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/logger"
@@ -25,7 +25,7 @@ type Handler struct {
 	APIRetryFacade retryFacade.Interface
 	Logger         logger.Interface
 
-	markets []interfaces.MarketInterface
+	markets []markets.MarketInterface
 	socket  tradingviewsocket.SocketInterface
 
 	fetchError        error

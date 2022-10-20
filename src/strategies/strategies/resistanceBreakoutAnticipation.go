@@ -1,7 +1,7 @@
 package strategies
 
 import (
-	"TradingBot/src/markets/interfaces"
+	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/utils"
@@ -88,7 +88,7 @@ func ResistanceBreakoutAnticipation(params StrategyParams) {
 		return
 	}
 
-	onValidTradeSetupParams := interfaces.OnValidTradeSetupParams{
+	onValidTradeSetupParams := markets.OnValidTradeSetupParams{
 		Price:              price,
 		StopLossDistance:   params.MarketStrategyParams.StopLossDistance,
 		TakeProfitDistance: params.MarketStrategyParams.TakeProfitDistance,
