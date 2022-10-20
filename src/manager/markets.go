@@ -1,4 +1,4 @@
-package strategies
+package manager
 
 import (
 	"TradingBot/src/markets"
@@ -9,8 +9,7 @@ import (
 	"TradingBot/src/services/technicalAnalysis/trends"
 )
 
-// GetMarkets...
-func (s *Handler) GetMarkets() []markets.MarketInterface {
+func (s *Manager) GetMarkets() []markets.MarketInterface {
 	instances := []markets.MarketInterface{
 		EURUSD.GetMarketInstance(),
 		// GBPUSD.GetMarketInstance(),

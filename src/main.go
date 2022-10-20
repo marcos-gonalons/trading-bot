@@ -1,12 +1,12 @@
 package main
 
 import (
+	"TradingBot/src/manager"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/api/simulator"
 	"TradingBot/src/services/logger"
-	"TradingBot/src/strategies"
 	"fmt"
 	"os"
 	"os/signal"
@@ -42,14 +42,16 @@ func main() {
 		API:    brokerAPI,
 		Logger: logger.GetInstance(),
 	}
-	handler := &strategies.Handler{
+	manager := &manager.Manager{
 		Logger:         logger.GetInstance(),
 		API:            brokerAPI,
 		APIRetryFacade: apiRetryFacade,
 		APIData:        &api.Data{},
 	}
-	handler.Run()
-	waitingGroup.Wait() // Wait forever, this script should never die
+	manager.Run()
+
+	// Wait forever, this bot may never die
+	waitingGroup.Wait()
 }
 
 func panicCatcher(err interface{}, API api.Interface) {

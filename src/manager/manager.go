@@ -1,4 +1,4 @@
-package strategies
+package manager
 
 import (
 	"TradingBot/src/markets"
@@ -16,10 +16,8 @@ import (
 
 const DailyResetHour = 2
 
-// Handler ...
-// todo: change name to manager
-// todo2: all the services will be initialized here, example trends and horizontal levels service
-type Handler struct {
+// todo: all the services will be initialized here, example trends and horizontal levels service
+type Manager struct {
 	API            api.Interface
 	APIData        api.DataInterface
 	APIRetryFacade retryFacade.Interface
@@ -33,7 +31,7 @@ type Handler struct {
 }
 
 // Run ...
-func (s *Handler) Run() {
+func (s *Manager) Run() {
 	s.markets = s.GetMarkets()
 
 	s.initMarkets()
@@ -45,7 +43,7 @@ func (s *Handler) Run() {
 	go s.panicIfTooManyAPIFails()
 }
 
-func (s *Handler) initSocket() {
+func (s *Manager) initSocket() {
 	s.Logger.Log("Initializing the socket ...")
 	tradingviewsocket, err := tradingviewsocket.Connect(
 		s.OnReceiveMarketData,
@@ -66,7 +64,7 @@ func (s *Handler) initSocket() {
 	s.socket = tradingviewsocket
 }
 
-func (s *Handler) OnReceiveMarketData(marketName string, data *tradingviewsocket.QuoteData) {
+func (s *Manager) OnReceiveMarketData(marketName string, data *tradingviewsocket.QuoteData) {
 	s.Logger.Log("Received data -> " + marketName + " -> " + utils.GetStringRepresentation(data))
 
 	for _, market := range s.markets {
@@ -79,7 +77,7 @@ func (s *Handler) OnReceiveMarketData(marketName string, data *tradingviewsocket
 	}
 }
 
-func (s *Handler) onSocketError(err error, context string) {
+func (s *Manager) onSocketError(err error, context string) {
 	s.Logger.Log("Socket error -> " + err.Error())
 	s.Logger.Log("Context -> " + context)
 	err = s.socket.Close()
@@ -94,7 +92,7 @@ func (s *Handler) onSocketError(err error, context string) {
 	s.initSocket()
 }
 
-func (s *Handler) dailyReset() {
+func (s *Manager) dailyReset() {
 	for {
 		currentHour, _ := utils.GetCurrentTimeHourAndMinutes()
 
@@ -121,7 +119,7 @@ func (s *Handler) dailyReset() {
 	}
 }
 
-func (s *Handler) fetchDataLoop() {
+func (s *Manager) fetchDataLoop() {
 	for {
 		var waitingGroup sync.WaitGroup
 		var fetchFuncs []func()
@@ -211,7 +209,7 @@ func (s *Handler) fetchDataLoop() {
 	}
 }
 
-func (s *Handler) fetch(fetchFunc func() (interface{}, error)) (result interface{}) {
+func (s *Manager) fetch(fetchFunc func() (interface{}, error)) (result interface{}) {
 	result, err := fetchFunc()
 
 	if err == nil {
@@ -238,7 +236,7 @@ func (s *Handler) fetch(fetchFunc func() (interface{}, error)) (result interface
 	return
 }
 
-func (s *Handler) checkSessionDisconnectedError() {
+func (s *Manager) checkSessionDisconnectedError() {
 	for {
 		if s.API.IsSessionDisconnectedError(s.fetchError) {
 			s.Logger.Log("Session is disconnected. Loggin in again ... ")
@@ -252,7 +250,7 @@ func (s *Handler) checkSessionDisconnectedError() {
 	}
 }
 
-func (s *Handler) panicIfTooManyAPIFails() {
+func (s *Manager) panicIfTooManyAPIFails() {
 	for {
 		// todo: adjust this
 		if s.failedAPIRequests >= 500 {
@@ -263,7 +261,7 @@ func (s *Handler) panicIfTooManyAPIFails() {
 	}
 }
 
-func (s *Handler) initMarkets() {
+func (s *Manager) initMarkets() {
 	for _, market := range s.markets {
 		s.Logger.Log("Initializing market " + market.GetMarketData().BrokerAPIName)
 		go market.Initialize()

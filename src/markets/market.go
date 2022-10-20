@@ -126,9 +126,6 @@ func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 
 	s.mutex.Lock()
 	defer func() {
-		s.mutex.Unlock()
-	}()
-	defer func() {
 		if data.Volume != nil {
 			s.lastVolume = *data.Volume
 		}
@@ -141,6 +138,8 @@ func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 
 		s.lastCandlesAmount = len(s.CandlesHandler.GetCandles())
 		s.Log("Candles amount -> " + strconv.Itoa(s.lastCandlesAmount))
+
+		s.mutex.Unlock()
 	}()
 
 	s.Log("Updating candles... ")

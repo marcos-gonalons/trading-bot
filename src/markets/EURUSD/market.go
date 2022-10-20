@@ -4,7 +4,7 @@ import (
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
-	"TradingBot/src/strategies/strategies"
+	"TradingBot/src/strategies"
 	"TradingBot/src/types"
 )
 

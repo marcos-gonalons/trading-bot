@@ -17,8 +17,8 @@ import (
 
 	//logger "TradingBot/src/services/logger"
 
+	"TradingBot/src/manager"
 	logger "TradingBot/src/services/logger/nullLogger"
-	"TradingBot/src/strategies"
 )
 
 func main() {
@@ -37,13 +37,13 @@ func main() {
 	})
 
 	APIData := api.Data{}
-	strat := getMarketInstance(
+	market := getMarketInstance(
 		simulatorAPI,
 		&APIData,
 		getMarketName(),
 	)
 
-	strat.GetCandlesHandler().AddNewCandle(types.Candle{
+	market.GetCandlesHandler().AddNewCandle(types.Candle{
 		Open:      0,
 		High:      0,
 		Low:       0,
@@ -57,18 +57,18 @@ func main() {
 		}
 
 		candle := getCandleObject(line)
-		strat.GetCandlesHandler().AddNewCandle(candle)
+		market.GetCandlesHandler().AddNewCandle(candle)
 
-		strat.SetCurrentBrokerQuote(&api.Quote{
+		market.SetCurrentBrokerQuote(&api.Quote{
 			Ask:    float32(candle.Close),
 			Bid:    float32(candle.Close),
 			Price:  float32(candle.Close),
 			Volume: 0,
 		})
 
-		brokerSim.OnNewCandle(&APIData, simulatorAPI, strat)
+		brokerSim.OnNewCandle(&APIData, simulatorAPI, market)
 
-		strat.OnNewCandle()
+		market.OnNewCandle()
 
 		// fmt.Println(float64(i) * 100.0 / float64(len(csvLines)))
 	}
@@ -135,14 +135,14 @@ func getMarketInstance(
 		API:    simulatorAPI,
 		Logger: logger.GetInstance(),
 	}
-	handler := &strategies.Handler{
+	manager := &manager.Manager{
 		Logger:         logger.GetInstance(),
 		API:            simulatorAPI,
 		APIRetryFacade: apiRetryFacade,
 		APIData:        APIData,
 	}
 
-	for _, market := range handler.GetMarkets() {
+	for _, market := range manager.GetMarkets() {
 		if market.GetMarketData().BrokerAPIName == marketName {
 			return market
 		}
