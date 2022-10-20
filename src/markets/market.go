@@ -85,23 +85,34 @@ func (s *BaseMarketClass) Initialize() {
 }
 
 func (s *BaseMarketClass) DailyReset() {
-	// todo:
-	// must remove candles based on the marketdata.timeframe
-	// following code removes candles for 1h timeframe
-	// adapt it for any timeframe
+	var candlesMap = make(map[string][]int)
 
-	minCandles := 7 * 2 * 24
+	candlesMap["1m"] = []int{7200, 1441}
+	candlesMap["3m"] = []int{5000, 481}
+	candlesMap["5m"] = []int{3000, 289}
+	candlesMap["15m"] = []int{1500, 97}
+	candlesMap["30m"] = []int{1500, 49}
+	candlesMap["1h"] = []int{1000, 25}
+	candlesMap["2h"] = []int{1000, 13}
+	candlesMap["4h"] = []int{1000, 7}
+	candlesMap["8h"] = []int{500, 4}
+	candlesMap["1d"] = []int{500, 2}
+
+	key := strconv.Itoa(int(s.MarketData.Timeframe.Value)) + s.MarketData.Timeframe.Unit
+
+	maxCandles := candlesMap[key][0]
+	candlesToRemove := candlesMap[key][1]
+
 	totalCandles := len(s.CandlesHandler.GetCandles())
 
-	s.Log("Total candles is " + strconv.Itoa(totalCandles) + " - min candles is " + strconv.Itoa(minCandles))
-	if totalCandles < minCandles {
+	s.Log("Total candles is " + strconv.Itoa(totalCandles) + " - max candles is " + strconv.Itoa(maxCandles))
+	if totalCandles < maxCandles {
 		s.Log("Not removing any candles yet")
 		return
 	}
 
-	var candlesToRemove uint = 25
 	s.Log("Removing old candles ... " + strconv.Itoa(int(candlesToRemove)))
-	s.CandlesHandler.RemoveOldCandles(candlesToRemove)
+	s.CandlesHandler.RemoveOldCandles(uint(candlesToRemove))
 }
 
 func (s *BaseMarketClass) SetCurrentPositionExecutedAt(timestamp int64) {
