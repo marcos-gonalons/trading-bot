@@ -1,18 +1,19 @@
-package strategies
+package horizontalLevelBounce
 
 import (
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
+	"TradingBot/src/strategies"
 	"TradingBot/src/utils"
 	"time"
 )
 
-// todo: code is very similar between strategies, find a way to reuse code
-func ResistanceBounce(params StrategyParams) {
-	params.Market.Log("resistanceBounce started")
+// SupportBounce ...
+func SupportBounce(params strategies.Params) {
+	params.Market.Log("supportBounce started")
 	defer func() {
-		params.Market.Log("resistanceBounce ended")
+		params.Market.Log("supportBounce ended")
 	}()
 
 	validMonths := params.MarketStrategyParams.ValidTradingTimes.ValidMonths
@@ -21,7 +22,7 @@ func ResistanceBounce(params StrategyParams) {
 
 	now := time.Now()
 	if !utils.IsExecutionTimeValid(now, validMonths, []string{}, []string{}) || !utils.IsExecutionTimeValid(now, []string{}, validWeekdays, []string{}) {
-		params.Market.Log("Today it's not the day for resistance bounce for " + params.MarketData.SocketName)
+		params.Market.Log("Today it's not the day for support bounce  for " + params.MarketData.SocketName)
 		return
 	}
 
@@ -34,61 +35,59 @@ func ResistanceBounce(params StrategyParams) {
 
 	if params.MarketStrategyParams.WithPendingOrders {
 		if !isValidTimeToOpenAPosition {
-			params.Market.SavePendingOrder(ibroker.ShortSide, params.MarketStrategyParams.ValidTradingTimes)
+			params.Market.SavePendingOrder(ibroker.LongSide, params.MarketStrategyParams.ValidTradingTimes)
 		} else {
 			if params.Market.GetPendingOrder() != nil {
-				params.Market.CreatePendingOrder(ibroker.ShortSide)
+				params.Market.CreatePendingOrder(ibroker.LongSide)
 			}
 			params.Market.SetPendingOrder(nil)
 		}
 	}
 
 	p := utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName)
-	if p != nil && p.Side == ibroker.ShortSide {
+	if p != nil && p.Side == ibroker.LongSide {
 		params.Market.CheckIfSLShouldBeAdjusted(params.MarketStrategyParams, p)
 		params.Market.CheckOpenPositionTTL(params.MarketStrategyParams, p)
 	}
 
 	lastCompletedCandleIndex := len(params.CandlesHandler.GetCandles()) - 2
-	price, err := params.Container.HorizontalLevelsService.GetResistancePrice(
+	price, err := params.Container.HorizontalLevelsService.GetSupportPrice(
 		*params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
 		lastCompletedCandleIndex,
 		params.CandlesHandler.GetCandles(),
 	)
 
 	if err != nil {
-		errorMessage := "Not a good short setup yet -> " + err.Error()
+		errorMessage := "Not a good long setup yet -> " + err.Error()
 		params.Market.Log(errorMessage)
 		return
 	}
 
-	price = price - params.MarketStrategyParams.LimitAndStopOrderPriceOffset
-	if price <= float64(params.Market.GetCurrentBrokerQuote().Ask) {
-		params.Market.Log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, params.MarketData.PriceDecimals))
+	price = price + params.MarketStrategyParams.LimitAndStopOrderPriceOffset
+	if price >= float64(params.Market.GetCurrentBrokerQuote().Bid) {
+		params.Market.Log("Price is lower than the current ask, so we can't create the long order now. Price is -> " + utils.FloatToString(price, params.MarketData.PriceDecimals))
 		params.Market.Log("Quote is -> " + utils.GetStringRepresentation(params.Market.GetCurrentBrokerQuote()))
 		return
 	}
 
-	params.Market.Log("Ok, we might have a short setup at price " + utils.FloatToString(price, params.MarketData.PriceDecimals))
-	if !params.Container.TrendsService.IsBearishTrend(
+	params.Market.Log("Ok, we might have a long setup at price " + utils.FloatToString(price, params.MarketData.PriceDecimals))
+	if !params.Container.TrendsService.IsBullishTrend(
 		params.MarketStrategyParams.TrendCandles,
 		params.MarketStrategyParams.TrendDiff,
 		params.CandlesHandler.GetCandles(),
 		lastCompletedCandleIndex,
 	) {
-		params.Market.Log("At the end it wasn't a good short setup, doing nothing ...")
-
+		params.Market.Log("At the end it wasn't a good long setup")
 		if params.MarketStrategyParams.CloseOrdersOnBadTrend && utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName) == nil {
-			params.Market.Log("There isn't an open position, closing short orders ...")
+			params.Market.Log("There isn't an open position, closing long orders ...")
 			params.Container.APIRetryFacade.CloseOrders(
-				params.Container.API.GetWorkingOrderWithBracketOrders(ibroker.ShortSide, params.MarketData.BrokerAPIName, params.Container.APIData.GetOrders()),
+				params.Container.API.GetWorkingOrderWithBracketOrders(ibroker.LongSide, params.MarketData.BrokerAPIName, params.Container.APIData.GetOrders()),
 				retryFacade.RetryParams{
 					DelayBetweenRetries: 5 * time.Second,
 					MaxRetries:          30,
 				},
 			)
 		}
-
 		return
 	}
 
@@ -98,7 +97,7 @@ func ResistanceBounce(params StrategyParams) {
 		TakeProfitDistance: params.MarketStrategyParams.TakeProfitDistance,
 		RiskPercentage:     params.MarketStrategyParams.RiskPercentage,
 		IsValidTime:        isValidTimeToOpenAPosition,
-		Side:               ibroker.ShortSide,
+		Side:               ibroker.LongSide,
 		WithPendingOrders:  params.MarketStrategyParams.WithPendingOrders,
 		OrderType:          ibroker.LimitType,
 		MinPositionSize:    params.MarketStrategyParams.MinPositionSize,
@@ -120,4 +119,5 @@ func ResistanceBounce(params StrategyParams) {
 			},
 		)
 	}
+
 }

@@ -1,15 +1,16 @@
-package strategies
+package horizontalLevelBreakout
 
 import (
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
+	"TradingBot/src/strategies"
 	"TradingBot/src/utils"
 	"time"
 )
 
 // SupportBreakoutAnticipation ...
-func SupportBreakoutAnticipation(params StrategyParams) {
+func SupportBreakoutAnticipation(params strategies.Params) {
 	params.Market.Log("supportBreakoutAnticipation started")
 	defer func() {
 		params.Market.Log("supportBreakoutAnticipation ended")

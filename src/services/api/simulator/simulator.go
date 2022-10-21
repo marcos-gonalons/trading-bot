@@ -97,7 +97,6 @@ func (s *API) SetOrders(orders []*api.Order) {
 
 // ModifyOrder ...
 func (s *API) ModifyOrder(order *api.Order) (err error) {
-	// TODO: This method is not used anywhere, delete?
 	return nil
 }
 

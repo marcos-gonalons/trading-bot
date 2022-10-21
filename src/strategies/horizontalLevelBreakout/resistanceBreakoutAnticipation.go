@@ -1,18 +1,19 @@
-package strategies
+package horizontalLevelBreakout
 
 import (
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
+	"TradingBot/src/strategies"
 	"TradingBot/src/utils"
 	"time"
 )
 
-// SupportBounce ...
-func SupportBounce(params StrategyParams) {
-	params.Market.Log("supportBounce started")
+// ResistanceBreakoutAnticipation ...
+func ResistanceBreakoutAnticipation(params strategies.Params) {
+	params.Market.Log("resistanceBreakoutAnticipation started")
 	defer func() {
-		params.Market.Log("supportBounce ended")
+		params.Market.Log("resistanceBreakoutAnticipation ended")
 	}()
 
 	validMonths := params.MarketStrategyParams.ValidTradingTimes.ValidMonths
@@ -21,7 +22,7 @@ func SupportBounce(params StrategyParams) {
 
 	now := time.Now()
 	if !utils.IsExecutionTimeValid(now, validMonths, []string{}, []string{}) || !utils.IsExecutionTimeValid(now, []string{}, validWeekdays, []string{}) {
-		params.Market.Log("Today it's not the day for support bounce  for " + params.MarketData.SocketName)
+		params.Market.Log("Today it's not the day for resistance breakout anticipation for " + params.MarketData.SocketName)
 		return
 	}
 
@@ -50,7 +51,7 @@ func SupportBounce(params StrategyParams) {
 	}
 
 	lastCompletedCandleIndex := len(params.CandlesHandler.GetCandles()) - 2
-	price, err := params.Container.HorizontalLevelsService.GetSupportPrice(
+	price, err := params.Container.HorizontalLevelsService.GetResistancePrice(
 		*params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
 		lastCompletedCandleIndex,
 		params.CandlesHandler.GetCandles(),
@@ -62,8 +63,8 @@ func SupportBounce(params StrategyParams) {
 		return
 	}
 
-	price = price + params.MarketStrategyParams.LimitAndStopOrderPriceOffset
-	if price >= float64(params.Market.GetCurrentBrokerQuote().Bid) {
+	price = price - params.MarketStrategyParams.LimitAndStopOrderPriceOffset
+	if price <= float64(params.Market.GetCurrentBrokerQuote().Ask) {
 		params.Market.Log("Price is lower than the current ask, so we can't create the long order now. Price is -> " + utils.FloatToString(price, params.MarketData.PriceDecimals))
 		params.Market.Log("Quote is -> " + utils.GetStringRepresentation(params.Market.GetCurrentBrokerQuote()))
 		return
@@ -76,7 +77,8 @@ func SupportBounce(params StrategyParams) {
 		params.CandlesHandler.GetCandles(),
 		lastCompletedCandleIndex,
 	) {
-		params.Market.Log("At the end it wasn't a good long setup")
+		params.Market.Log("At the end it wasn't a good long setup, doing nothing ...")
+
 		if params.MarketStrategyParams.CloseOrdersOnBadTrend && utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName) == nil {
 			params.Market.Log("There isn't an open position, closing long orders ...")
 			params.Container.APIRetryFacade.CloseOrders(
@@ -87,6 +89,7 @@ func SupportBounce(params StrategyParams) {
 				},
 			)
 		}
+
 		return
 	}
 
@@ -98,7 +101,7 @@ func SupportBounce(params StrategyParams) {
 		IsValidTime:        isValidTimeToOpenAPosition,
 		Side:               ibroker.LongSide,
 		WithPendingOrders:  params.MarketStrategyParams.WithPendingOrders,
-		OrderType:          ibroker.LimitType,
+		OrderType:          ibroker.StopType,
 		MinPositionSize:    params.MarketStrategyParams.MinPositionSize,
 	}
 
@@ -118,5 +121,4 @@ func SupportBounce(params StrategyParams) {
 			},
 		)
 	}
-
 }

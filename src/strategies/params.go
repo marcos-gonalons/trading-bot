@@ -7,7 +7,7 @@ import (
 	"TradingBot/src/types"
 )
 
-type StrategyParams struct {
+type Params struct {
 	MarketStrategyParams *types.MarketStrategyParams
 
 	MarketData     *types.MarketData

@@ -16,7 +16,6 @@ import (
 
 const DailyResetHour = 2
 
-// todo: all the services will be initialized here, example trends and horizontal levels service
 type Manager struct {
 	ServicesContainer *services.Container
 
