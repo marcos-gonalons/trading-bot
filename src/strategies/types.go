@@ -2,25 +2,17 @@ package strategies
 
 import (
 	"TradingBot/src/markets"
-	"TradingBot/src/services/api"
-	"TradingBot/src/services/api/retryFacade"
+	"TradingBot/src/services"
 	"TradingBot/src/services/candlesHandler"
-	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
-	"TradingBot/src/services/technicalAnalysis/trends"
 	"TradingBot/src/types"
 )
 
 type StrategyParams struct {
 	MarketStrategyParams *types.MarketStrategyParams
 
-	MarketData              *types.MarketData
-	APIData                 api.DataInterface
-	CandlesHandler          candlesHandler.Interface
-	TrendsService           trends.Interface
-	HorizontalLevelsService horizontalLevels.Interface
+	MarketData     *types.MarketData
+	CandlesHandler candlesHandler.Interface
+	Market         markets.MarketInterface
 
-	API            api.Interface
-	APIRetryFacade retryFacade.Interface
-
-	Market markets.MarketInterface
+	Container *services.Container
 }

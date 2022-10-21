@@ -3,6 +3,7 @@ package main
 import (
 	"TradingBot/src/commands/marketReplay/brokerSim"
 	"TradingBot/src/markets"
+	"TradingBot/src/services"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"encoding/csv"
@@ -12,13 +13,11 @@ import (
 	"strconv"
 
 	"TradingBot/src/services/api"
-	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/api/simulator"
 
 	//logger "TradingBot/src/services/logger"
 
 	"TradingBot/src/manager"
-	logger "TradingBot/src/services/logger/nullLogger"
 )
 
 func main() {
@@ -29,17 +28,23 @@ func main() {
 		panic("Error while reading the .csv file -> " + err.Error())
 	}
 
+	container := services.GetServicesContainer()
+	container.Initialize()
+
 	simulatorAPI := simulator.CreateAPIServiceInstance()
+
+	container.SetAPI(simulatorAPI)
+
 	simulatorAPI.SetState(&api.State{
 		Balance:      5000,
 		UnrealizedPL: 0,
 		Equity:       5000,
 	})
 
-	APIData := api.Data{}
 	market := getMarketInstance(
-		simulatorAPI,
-		&APIData,
+		&manager.Manager{
+			ServicesContainer: container,
+		},
 		getMarketName(),
 	)
 
@@ -66,7 +71,11 @@ func main() {
 			Volume: 0,
 		})
 
-		brokerSim.OnNewCandle(&APIData, simulatorAPI, market)
+		brokerSim.OnNewCandle(
+			container.APIData,
+			container.API,
+			market,
+		)
 
 		market.OnNewCandle()
 
@@ -127,21 +136,9 @@ func getCandleObject(csvLine []string) (candle types.Candle) {
 }
 
 func getMarketInstance(
-	simulatorAPI api.Interface,
-	APIData api.DataInterface,
+	manager *manager.Manager,
 	marketName string,
 ) markets.MarketInterface {
-	apiRetryFacade := &retryFacade.APIFacade{
-		API:    simulatorAPI,
-		Logger: logger.GetInstance(),
-	}
-	manager := &manager.Manager{
-		Logger:         logger.GetInstance(),
-		API:            simulatorAPI,
-		APIRetryFacade: apiRetryFacade,
-		APIData:        APIData,
-	}
-
 	for _, market := range manager.GetMarkets() {
 		if market.GetMarketData().BrokerAPIName == marketName {
 			return market

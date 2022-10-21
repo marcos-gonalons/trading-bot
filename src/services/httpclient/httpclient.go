@@ -64,3 +64,9 @@ func (s *Service) getRQStringRepresentation(rq *http.Request) string {
 	str, _ := json.Marshal(idk)
 	return string(str)
 }
+
+func GetInstance(logger logger.Interface) Interface {
+	return &Service{
+		Logger: logger,
+	}
+}

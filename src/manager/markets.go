@@ -5,36 +5,21 @@ import (
 	"TradingBot/src/markets/EURUSD"
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/services/candlesHandler/indicators"
-	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
-	"TradingBot/src/services/technicalAnalysis/trends"
 )
 
 func (s *Manager) GetMarkets() []markets.MarketInterface {
 	instances := []markets.MarketInterface{
-		EURUSD.GetMarketInstance(),
-		// GBPUSD.GetMarketInstance(),
+		EURUSD.GetMarketInstance(s.ServicesContainer),
+		// GBPUSD.GetMarketInstance(s.ServicesContainer),
 		// etc etc
 	}
 
 	for _, instance := range instances {
-		candlesHandler := &candlesHandler.Service{
-			Logger:            s.Logger,
+		instance.SetCandlesHandler(&candlesHandler.Service{
+			Logger:            s.ServicesContainer.Logger,
 			MarketData:        instance.GetMarketData(),
 			IndicatorsBuilder: indicators.GetInstance(),
-		}
-
-		// todo: maybe move the trends and horizontallevels services to the handler and get them here via s.*****
-		dependencies := markets.MarketInstanceDependencies{
-			APIRetryFacade:          s.APIRetryFacade,
-			API:                     s.API,
-			APIData:                 s.APIData,
-			Logger:                  s.Logger,
-			CandlesHandler:          candlesHandler,
-			TrendsService:           trends.GetServiceInstance(),
-			HorizontalLevelsService: horizontalLevels.GetServiceInstance(candlesHandler),
-		}
-
-		instance.SetDependencies(dependencies)
+		})
 	}
 
 	return instances

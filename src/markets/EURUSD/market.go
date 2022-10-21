@@ -3,6 +3,7 @@ package EURUSD
 import (
 	"TradingBot/src/constants"
 	"TradingBot/src/markets"
+	"TradingBot/src/services"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
 	"TradingBot/src/strategies"
@@ -13,8 +14,10 @@ type Market struct {
 	markets.BaseMarketClass
 }
 
-func GetMarketInstance() markets.MarketInterface {
+func GetMarketInstance(container *services.Container) markets.MarketInterface {
 	market := &Market{}
+
+	market.Container = container
 
 	market.MarketData = types.MarketData{
 		BrokerAPIName: ibroker.EURUSDSymbolName,
@@ -48,15 +51,11 @@ func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
 		s.Log("Calling resistanceBounce strategy")
 		strategies.ResistanceBounce(strategies.StrategyParams{
-			MarketStrategyParams:    &EMACrossoverLongParams,
-			MarketData:              &s.MarketData,
-			APIData:                 s.APIData,
-			CandlesHandler:          s.CandlesHandler,
-			TrendsService:           s.TrendsService,
-			HorizontalLevelsService: s.HorizontalLevelsService,
-			API:                     s.API,
-			APIRetryFacade:          s.APIRetryFacade,
-			Market:                  s,
+			MarketStrategyParams: &EMACrossoverLongParams,
+			MarketData:           &s.MarketData,
+			Container:            s.Container,
+			CandlesHandler:       s.CandlesHandler,
+			Market:               s,
 		})
 
 		/*

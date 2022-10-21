@@ -20,7 +20,6 @@ type MarketInterface interface {
 	SetCurrentBrokerQuote(quote *api.Quote)
 	GetMarketData() *types.MarketData
 	SetCurrentPositionExecutedAt(timestamp int64)
-	GetAPIData() api.DataInterface
 
 	Log(message string)
 	SavePendingOrder(side string, validTimes *types.TradingTimes)
@@ -31,7 +30,6 @@ type MarketInterface interface {
 	CheckOpenPositionTTL(params *types.MarketStrategyParams, position *api.Position)
 	OnValidTradeSetup(params OnValidTradeSetupParams)
 
+	SetCandlesHandler(candlesHandler.Interface)
 	GetCandlesHandler() candlesHandler.Interface
-
-	SetDependencies(MarketInstanceDependencies)
 }

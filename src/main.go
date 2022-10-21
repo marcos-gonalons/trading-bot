@@ -2,9 +2,9 @@ package main
 
 import (
 	"TradingBot/src/manager"
+	"TradingBot/src/services"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
-	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/api/simulator"
 	"TradingBot/src/services/logger"
 	"fmt"
@@ -23,10 +23,15 @@ func main() {
 		panicCatcher(recover(), brokerAPI)
 	}()
 
+	container := services.GetServicesContainer()
+	container.Initialize()
+
 	brokerAPI = getAPIInstance()
 	if brokerAPI == nil {
 		panic("Failed to get the broker API instance")
 	}
+
+	container.SetAPI(brokerAPI)
 
 	_, err := brokerAPI.Login()
 	if err != nil {
@@ -38,15 +43,9 @@ func main() {
 
 	var waitingGroup sync.WaitGroup
 	waitingGroup.Add(1)
-	apiRetryFacade := &retryFacade.APIFacade{
-		API:    brokerAPI,
-		Logger: logger.GetInstance(),
-	}
+
 	manager := &manager.Manager{
-		Logger:         logger.GetInstance(),
-		API:            brokerAPI,
-		APIRetryFacade: apiRetryFacade,
-		APIData:        &api.Data{},
+		ServicesContainer: container,
 	}
 	manager.Run()
 
