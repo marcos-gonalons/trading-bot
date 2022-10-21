@@ -3,7 +3,6 @@ package EURUSD
 import (
 	"TradingBot/src/constants"
 	"TradingBot/src/markets"
-	"TradingBot/src/services"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
 	"TradingBot/src/strategies"
@@ -14,10 +13,8 @@ type Market struct {
 	markets.BaseMarketClass
 }
 
-func GetMarketInstance(container *services.Container) markets.MarketInterface {
+func GetMarketInstance() markets.MarketInterface {
 	market := &Market{}
-
-	market.Container = container
 
 	market.MarketData = types.MarketData{
 		BrokerAPIName: ibroker.EURUSDSymbolName,

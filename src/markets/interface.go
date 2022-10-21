@@ -1,6 +1,7 @@
 package markets
 
 import (
+	"TradingBot/src/services"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/types"
@@ -30,6 +31,7 @@ type MarketInterface interface {
 	CheckOpenPositionTTL(params *types.MarketStrategyParams, position *api.Position)
 	OnValidTradeSetup(params OnValidTradeSetupParams)
 
+	SetContainer(*services.Container)
 	SetCandlesHandler(candlesHandler.Interface)
 	GetCandlesHandler() candlesHandler.Interface
 }

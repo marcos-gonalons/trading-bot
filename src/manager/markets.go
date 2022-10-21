@@ -9,12 +9,13 @@ import (
 
 func (s *Manager) GetMarkets() []markets.MarketInterface {
 	instances := []markets.MarketInterface{
-		EURUSD.GetMarketInstance(s.ServicesContainer),
-		// GBPUSD.GetMarketInstance(s.ServicesContainer),
+		EURUSD.GetMarketInstance(),
+		// GBPUSD.GetMarketInstance(),
 		// etc etc
 	}
 
 	for _, instance := range instances {
+		instance.SetContainer(s.ServicesContainer)
 		instance.SetCandlesHandler(&candlesHandler.Service{
 			Logger:            s.ServicesContainer.Logger,
 			MarketData:        instance.GetMarketData(),
