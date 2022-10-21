@@ -1,6 +1,7 @@
 package simulator
 
 import (
+	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
@@ -370,9 +371,13 @@ func (s *API) GetWorkingOrderWithBracketOrders(side string, marketName string, o
 }
 
 // CreateAPIServiceInstance ...
-func CreateAPIServiceInstance() api.Interface {
+func CreateAPIServiceInstance(
+	credentials *api.Credentials,
+	httpClient httpclient.Interface,
+	logger logger.Interface,
+) api.Interface {
 	instance := &API{
-		logger: logger.GetInstance(),
+		logger: logger,
 	}
 
 	return instance

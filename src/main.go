@@ -6,6 +6,7 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker"
 	"TradingBot/src/services/api/simulator"
+	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
 	"fmt"
 	"os"
@@ -26,7 +27,7 @@ func main() {
 	container := services.GetServicesContainer()
 	container.Initialize()
 
-	brokerAPI = getAPIInstance()
+	brokerAPI = getAPIInstance(container)
 	if brokerAPI == nil {
 		panic("Failed to get the broker API instance")
 	}
@@ -80,10 +81,14 @@ func setupOSSignalsNotifications(API api.Interface) {
 	}()
 }
 
-func getAPIInstance() api.Interface {
+func getAPIInstance(container *services.Container) api.Interface {
 	user, password, accountID, apiName := getEnvVars()
 
-	apis := make(map[string]api.Interface)
+	apis := make(map[string]func(
+		credentials *api.Credentials,
+		httpClient httpclient.Interface,
+		logger logger.Interface,
+	) api.Interface)
 
 	credentials := &api.Credentials{
 		Username:  user,
@@ -91,10 +96,14 @@ func getAPIInstance() api.Interface {
 		AccountID: accountID,
 	}
 
-	apis["simulator"] = simulator.CreateAPIServiceInstance()
-	apis["ibroker"] = ibroker.CreateAPIServiceInstance(credentials)
+	apis["simulator"] = simulator.CreateAPIServiceInstance
+	apis["ibroker"] = ibroker.CreateAPIServiceInstance
 
-	return apis[apiName]
+	return apis[apiName](
+		credentials,
+		container.HttpClient,
+		container.Logger,
+	)
 }
 
 func getEnvVars() (user, password, accountID, apiName string) {
