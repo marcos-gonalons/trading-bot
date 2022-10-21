@@ -46,7 +46,15 @@ func ResistanceBreakoutAnticipation(params strategies.Params) {
 
 	p := utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName)
 	if p != nil && p.Side == ibroker.LongSide {
-		params.Market.CheckIfSLShouldBeAdjusted(params.MarketStrategyParams, p)
+		strategies.HandleTrailingSLAndTP(strategies.HandleTrailingSLAndTPParams{
+			TrailingSL: params.MarketStrategyParams.TrailingStopLoss,
+			TrailingTP: params.MarketStrategyParams.TrailingTakeProfit,
+			Position:   p,
+			LastCandle: params.CandlesHandler.GetLastCandle(),
+			MarketData: params.MarketData,
+			Container:  params.Container,
+			Log:        params.Market.Log,
+		})
 		params.Market.CheckOpenPositionTTL(params.MarketStrategyParams, p)
 	}
 

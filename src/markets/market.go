@@ -181,48 +181,6 @@ func (s *BaseMarketClass) SetStringValues(order *api.Order) {
 	}
 }
 
-func (s *BaseMarketClass) CheckIfSLShouldBeAdjusted(
-	params *types.MarketStrategyParams,
-	position *api.Position,
-) {
-	if params.TrailingStopLoss != nil && params.TrailingStopLoss.TPDistanceShortForTighterSL <= 0 {
-		return
-	}
-
-	s.Log("Checking if the position needs to have the SL adjusted with this params ... " + utils.GetStringRepresentation(params))
-	s.Log("Position is " + utils.GetStringRepresentation(position))
-
-	_, tpOrder := s.Container.API.GetBracketOrdersForOpenedPosition(position)
-
-	if tpOrder == nil {
-		s.Log("Take Profit order not found ...")
-		return
-	}
-
-	shouldBeAdjusted := false
-	if s.Container.API.IsLongPosition(position) {
-		shouldBeAdjusted = float64(*tpOrder.LimitPrice)-s.CandlesHandler.GetLastCandle().High < params.TrailingStopLoss.TPDistanceShortForTighterSL
-	} else {
-		shouldBeAdjusted = s.CandlesHandler.GetLastCandle().Low-float64(*tpOrder.LimitPrice) < params.TrailingStopLoss.TPDistanceShortForTighterSL
-	}
-
-	if shouldBeAdjusted {
-		s.Log("The price is very close to the TP. Adjusting SL...")
-
-		s.Container.APIRetryFacade.ModifyPosition(
-			s.GetMarketData().BrokerAPIName,
-			utils.FloatToString(float64(*tpOrder.LimitPrice), s.GetMarketData().PriceDecimals),
-			utils.FloatToString(float64(position.AvgPrice)+params.TrailingStopLoss.SLDistanceWhenTPIsVeryClose, s.GetMarketData().PriceDecimals),
-			retryFacade.RetryParams{
-				DelayBetweenRetries: 5 * time.Second,
-				MaxRetries:          20,
-			},
-		)
-	} else {
-		s.Log("The price is not close to the TP yet. Doing nothing ...")
-	}
-}
-
 func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP() {
 	longParams := s.MarketData.LongSetupParams
 	shortParams := s.MarketData.ShortSetupParams

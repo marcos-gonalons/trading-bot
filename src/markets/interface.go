@@ -27,7 +27,6 @@ type MarketInterface interface {
 	GetPendingOrder() *api.Order
 	CreatePendingOrder(side string)
 	SetPendingOrder(order *api.Order)
-	CheckIfSLShouldBeAdjusted(params *types.MarketStrategyParams, position *api.Position)
 	CheckOpenPositionTTL(params *types.MarketStrategyParams, position *api.Position)
 	OnValidTradeSetup(params OnValidTradeSetupParams)
 
