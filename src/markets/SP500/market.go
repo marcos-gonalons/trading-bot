@@ -1,4 +1,4 @@
-package EURUSD
+package SP500
 
 import (
 	"TradingBot/src/constants"
@@ -17,23 +17,23 @@ func GetMarketInstance() markets.MarketInterface {
 	market := &Market{}
 
 	market.MarketData = types.MarketData{
-		BrokerAPIName: ibroker.EURUSDSymbolName,
-		SocketName:    "FX:EURUSD",
-		PriceDecimals: 5,
+		BrokerAPIName: ibroker.SP500SymbolName,
+		SocketName:    "VANTAGE:SP500",
+		PriceDecimals: 1,
 		TradingHours: types.TradingHours{
 			Start: 0,
-			End:   0,
+			End:   23,
 		},
 		TradeableOnWeekends: false,
-		MaxSpread:           999999,
-		LogType:             loggerTypes.EURUSD,
-		MarketType:          constants.ForexType,
+		MaxSpread:           4,
+		LogType:             loggerTypes.SP500,
+		MarketType:          constants.IndexType,
+		Rollover:            0,
 		Timeframe: types.Timeframe{
 			Value: 4,
 			Unit:  "h",
 		},
-		CandlesFileName:  "EURUSD-4H.csv",
-		Rollover:         .7, // Only used in market replay command
+		CandlesFileName:  "SP500-4H.csv",
 		LongSetupParams:  &EMACrossoverLongParams,
 		ShortSetupParams: &EMACrossoverShortParams,
 		EurExchangeRate:  1,

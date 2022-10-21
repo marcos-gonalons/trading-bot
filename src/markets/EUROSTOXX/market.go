@@ -1,4 +1,4 @@
-package EURUSD
+package EUROSTOXX
 
 import (
 	"TradingBot/src/constants"
@@ -17,23 +17,23 @@ func GetMarketInstance() markets.MarketInterface {
 	market := &Market{}
 
 	market.MarketData = types.MarketData{
-		BrokerAPIName: ibroker.EURUSDSymbolName,
-		SocketName:    "FX:EURUSD",
-		PriceDecimals: 5,
+		BrokerAPIName: ibroker.EUROSTOXXSymbolName,
+		SocketName:    "FXOPEN:ESX50",
+		PriceDecimals: 1,
 		TradingHours: types.TradingHours{
-			Start: 0,
-			End:   0,
+			Start: 8,
+			End:   22,
 		},
 		TradeableOnWeekends: false,
-		MaxSpread:           999999,
-		LogType:             loggerTypes.EURUSD,
-		MarketType:          constants.ForexType,
+		MaxSpread:           4,
+		LogType:             loggerTypes.EUROSTOXX,
+		MarketType:          constants.IndexType,
+		Rollover:            0,
 		Timeframe: types.Timeframe{
 			Value: 4,
 			Unit:  "h",
 		},
-		CandlesFileName:  "EURUSD-4H.csv",
-		Rollover:         .7, // Only used in market replay command
+		CandlesFileName:  "EUROSTOXX-4H.csv",
 		LongSetupParams:  &EMACrossoverLongParams,
 		ShortSetupParams: &EMACrossoverShortParams,
 		EurExchangeRate:  1,

@@ -1,4 +1,4 @@
-package DAX
+package SP500
 
 import "TradingBot/src/types"
 

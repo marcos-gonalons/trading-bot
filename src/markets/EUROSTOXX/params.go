@@ -1,4 +1,4 @@
-package DAX
+package EUROSTOXX
 
 import "TradingBot/src/types"
 

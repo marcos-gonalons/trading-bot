@@ -1,4 +1,4 @@
-package EURUSD
+package USDCAD
 
 import (
 	"TradingBot/src/constants"
@@ -17,8 +17,8 @@ func GetMarketInstance() markets.MarketInterface {
 	market := &Market{}
 
 	market.MarketData = types.MarketData{
-		BrokerAPIName: ibroker.EURUSDSymbolName,
-		SocketName:    "FX:EURUSD",
+		BrokerAPIName: ibroker.USDCADSymbolName,
+		SocketName:    "FX:USDCAD",
 		PriceDecimals: 5,
 		TradingHours: types.TradingHours{
 			Start: 0,
@@ -26,14 +26,14 @@ func GetMarketInstance() markets.MarketInterface {
 		},
 		TradeableOnWeekends: false,
 		MaxSpread:           999999,
-		LogType:             loggerTypes.EURUSD,
+		LogType:             loggerTypes.USDCAD,
 		MarketType:          constants.ForexType,
+		Rollover:            .7,
 		Timeframe: types.Timeframe{
 			Value: 4,
 			Unit:  "h",
 		},
-		CandlesFileName:  "EURUSD-4H.csv",
-		Rollover:         .7, // Only used in market replay command
+		CandlesFileName:  "USDCAD-4H.csv",
 		LongSetupParams:  &EMACrossoverLongParams,
 		ShortSetupParams: &EMACrossoverShortParams,
 		EurExchangeRate:  1,
