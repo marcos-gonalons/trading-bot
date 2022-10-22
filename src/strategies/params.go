@@ -8,6 +8,7 @@ import (
 )
 
 type Params struct {
+	Type                 string // long or short
 	MarketStrategyParams *types.MarketStrategyParams
 
 	MarketData     *types.MarketData

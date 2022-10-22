@@ -31,7 +31,11 @@ func main() {
 	container := services.GetServicesContainer()
 	container.Initialize()
 
-	simulatorAPI := simulator.CreateAPIServiceInstance()
+	simulatorAPI := simulator.CreateAPIServiceInstance(
+		&api.Credentials{},
+		container.HttpClient,
+		container.Logger,
+	)
 
 	container.SetAPI(simulatorAPI)
 

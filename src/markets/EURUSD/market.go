@@ -48,6 +48,7 @@ func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 		/*
 			s.Log("Calling resistanceBounce strategy")
 			strategies.ResistanceBounce(strategies.StrategyParams{
+				Type: ibroker.LongSide or ibroker.ShortSide
 				MarketStrategyParams: &EMACrossoverLongParams,
 				MarketData:           &s.MarketData,
 				Container:            s.Container,

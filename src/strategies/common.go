@@ -6,8 +6,55 @@ import (
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
+	"errors"
 	"time"
 )
+
+func OnBegin(params Params) (err error) {
+	validMonths := params.MarketStrategyParams.ValidTradingTimes.ValidMonths
+	validWeekdays := params.MarketStrategyParams.ValidTradingTimes.ValidWeekdays
+	validHalfHours := params.MarketStrategyParams.ValidTradingTimes.ValidHalfHours
+
+	now := time.Now()
+	if !utils.IsExecutionTimeValid(now, validMonths, []string{}, []string{}) || !utils.IsExecutionTimeValid(now, []string{}, validWeekdays, []string{}) {
+		err = errors.New("not a valid month nor weekday to execute this strategy")
+		return
+	}
+
+	isValidTimeToOpenAPosition := utils.IsExecutionTimeValid(
+		now,
+		validMonths,
+		validWeekdays,
+		validHalfHours,
+	)
+
+	if params.MarketStrategyParams.WithPendingOrders {
+		if !isValidTimeToOpenAPosition {
+			params.Market.SavePendingOrder(params.Type, params.MarketStrategyParams.ValidTradingTimes)
+		} else {
+			if params.Market.GetPendingOrder() != nil {
+				params.Market.CreatePendingOrder(params.Type)
+			}
+			params.Market.SetPendingOrder(nil)
+		}
+	}
+
+	p := utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName)
+	if p != nil && p.Side == params.Type {
+		HandleTrailingSLAndTP(HandleTrailingSLAndTPParams{
+			TrailingSL: params.MarketStrategyParams.TrailingStopLoss,
+			TrailingTP: params.MarketStrategyParams.TrailingTakeProfit,
+			Position:   p,
+			LastCandle: params.CandlesHandler.GetLastCandle(),
+			MarketData: params.MarketData,
+			Container:  params.Container,
+			Log:        params.Market.Log,
+		})
+		params.Market.CheckOpenPositionTTL(params.MarketStrategyParams, p)
+	}
+
+	return
+}
 
 type HandleTrailingSLAndTPParams struct {
 	TrailingSL *types.TrailingStopLoss

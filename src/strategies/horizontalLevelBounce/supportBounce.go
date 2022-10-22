@@ -9,53 +9,16 @@ import (
 	"time"
 )
 
-// SupportBounce ...
 func SupportBounce(params strategies.Params) {
 	params.Market.Log("supportBounce started")
 	defer func() {
 		params.Market.Log("supportBounce ended")
 	}()
 
-	validMonths := params.MarketStrategyParams.ValidTradingTimes.ValidMonths
-	validWeekdays := params.MarketStrategyParams.ValidTradingTimes.ValidWeekdays
-	validHalfHours := params.MarketStrategyParams.ValidTradingTimes.ValidHalfHours
-
-	now := time.Now()
-	if !utils.IsExecutionTimeValid(now, validMonths, []string{}, []string{}) || !utils.IsExecutionTimeValid(now, []string{}, validWeekdays, []string{}) {
-		params.Market.Log("Today it's not the day for support bounce  for " + params.MarketData.SocketName)
+	err := strategies.OnBegin(params)
+	if err != nil {
+		params.Market.Log(err.Error() + utils.GetStringRepresentation(params.MarketStrategyParams))
 		return
-	}
-
-	isValidTimeToOpenAPosition := utils.IsExecutionTimeValid(
-		now,
-		validMonths,
-		validWeekdays,
-		validHalfHours,
-	)
-
-	if params.MarketStrategyParams.WithPendingOrders {
-		if !isValidTimeToOpenAPosition {
-			params.Market.SavePendingOrder(ibroker.LongSide, params.MarketStrategyParams.ValidTradingTimes)
-		} else {
-			if params.Market.GetPendingOrder() != nil {
-				params.Market.CreatePendingOrder(ibroker.LongSide)
-			}
-			params.Market.SetPendingOrder(nil)
-		}
-	}
-
-	p := utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName)
-	if p != nil && p.Side == ibroker.LongSide {
-		strategies.HandleTrailingSLAndTP(strategies.HandleTrailingSLAndTPParams{
-			TrailingSL: params.MarketStrategyParams.TrailingStopLoss,
-			TrailingTP: params.MarketStrategyParams.TrailingTakeProfit,
-			Position:   p,
-			LastCandle: params.CandlesHandler.GetLastCandle(),
-			MarketData: params.MarketData,
-			Container:  params.Container,
-			Log:        params.Market.Log,
-		})
-		params.Market.CheckOpenPositionTTL(params.MarketStrategyParams, p)
 	}
 
 	lastCompletedCandleIndex := len(params.CandlesHandler.GetCandles()) - 2
@@ -104,11 +67,16 @@ func SupportBounce(params strategies.Params) {
 		StopLossDistance:   params.MarketStrategyParams.StopLossDistance,
 		TakeProfitDistance: params.MarketStrategyParams.TakeProfitDistance,
 		RiskPercentage:     params.MarketStrategyParams.RiskPercentage,
-		IsValidTime:        isValidTimeToOpenAPosition,
-		Side:               ibroker.LongSide,
-		WithPendingOrders:  params.MarketStrategyParams.WithPendingOrders,
-		OrderType:          ibroker.LimitType,
-		MinPositionSize:    params.MarketStrategyParams.MinPositionSize,
+		IsValidTime: utils.IsExecutionTimeValid(
+			time.Now(),
+			params.MarketStrategyParams.ValidTradingTimes.ValidMonths,
+			params.MarketStrategyParams.ValidTradingTimes.ValidWeekdays,
+			params.MarketStrategyParams.ValidTradingTimes.ValidHalfHours,
+		),
+		Side:              ibroker.LongSide,
+		WithPendingOrders: params.MarketStrategyParams.WithPendingOrders,
+		OrderType:         ibroker.LimitType,
+		MinPositionSize:   params.MarketStrategyParams.MinPositionSize,
 	}
 
 	if utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName) != nil {
