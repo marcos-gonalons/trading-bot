@@ -10,14 +10,18 @@ import (
 )
 
 func EmaCrossoverLongs(params strategies.Params) {
-	params.Market.Log("EmaCrossoverLongs started")
+	var log = func(m string) {
+		params.Market.Log("EmaCrossoverLongs | " + m)
+	}
+
+	log("EmaCrossoverLongs started")
 	defer func() {
-		params.Market.Log("EmaCrossoverLongs ended")
+		log("EmaCrossoverLongs ended")
 	}()
 
 	err := strategies.OnBegin(params)
 	if err != nil {
-		params.Market.Log(err.Error() + utils.GetStringRepresentation(params.MarketStrategyParams))
+		log(err.Error() + utils.GetStringRepresentation(params.MarketStrategyParams))
 		return
 	}
 
@@ -34,16 +38,16 @@ func EmaCrossoverLongs(params strategies.Params) {
 			params.Container.API,
 		)
 
-		params.Market.Log("There is an open position - doing nothing ...")
+		log("There is an open position - doing nothing ...")
 		return
 	}
 
 	if lastCompletedCandle.Close <= getEma(lastCompletedCandle, BASE_EMA).Value {
-		params.Market.Log("Price is below huge EMA, not opening any longs just yet ...")
+		log("Price is below huge EMA, not opening any longs just yet ...")
 		return
 	}
 
-	params.Market.Log("Price is above huge EMA, only longs allowed...")
+	log("Price is above huge EMA, only longs allowed...")
 
 	for i := lastCompletedCandleIndex - params.MarketStrategyParams.CandlesAmountWithoutEMAsCrossing - 1; i < lastCompletedCandleIndex; i++ {
 		if i <= 0 {
@@ -51,13 +55,13 @@ func EmaCrossoverLongs(params strategies.Params) {
 		}
 
 		if getEma(candles[i], SMALL_EMA).Value >= getEma(candles[i], BIG_EMA).Value {
-			params.Market.Log("Small EMA was above the big EMA very recently - doing nothing - " + utils.GetStringRepresentation(lastCompletedCandle))
+			log("Small EMA was above the big EMA very recently - doing nothing - " + utils.GetStringRepresentation(lastCompletedCandle))
 			return
 		}
 	}
 
 	if getEma(candles[lastCompletedCandleIndex], SMALL_EMA).Value < getEma(candles[lastCompletedCandleIndex], BIG_EMA).Value {
-		params.Market.Log("Small EMA is still below the big EMA - doing nothing - " + utils.GetStringRepresentation(lastCompletedCandle))
+		log("Small EMA is still below the big EMA - doing nothing - " + utils.GetStringRepresentation(lastCompletedCandle))
 		return
 	}
 
