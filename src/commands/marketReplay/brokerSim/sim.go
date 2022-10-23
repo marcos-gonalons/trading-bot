@@ -25,6 +25,18 @@ func OnNewCandle(
 	for _, order := range orders {
 		lastCandle := candles[len(candles)-2]
 
+		if simulatorAPI.IsMarketOrder(order) {
+			position := findPosition(positions, order.Instrument)
+			if position != nil {
+				panic("the strategies must never create a market order if there is already an open position")
+			}
+			positions = append(positions, createNewPosition(float32(lastCandle.Open), order, order.Qty, stopOrderSlippage, lastCandle))
+			simulatorAPI.SetPositions(positions)
+
+			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
+			continue
+		}
+
 		orderExecutionPrice := getOrderExecutionPrice(simulatorAPI, order, spread)
 		positionPrice := float32(0)
 

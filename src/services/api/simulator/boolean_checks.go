@@ -65,6 +65,11 @@ func (s *API) IsStopOrder(order *api.Order) bool {
 	return order.Type == constants.StopType
 }
 
+// IsMarketOrder ...
+func (s *API) IsMarketOrder(order *api.Order) bool {
+	return order.Type == constants.MarketType
+}
+
 // IsLongOrder ...
 func (s *API) IsLongOrder(order *api.Order) bool {
 	return order.Side == constants.LongSide

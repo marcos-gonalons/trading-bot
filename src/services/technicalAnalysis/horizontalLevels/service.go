@@ -38,66 +38,71 @@ func (s *Service) getPrice(
 	lastCompletedCandleIndex int,
 	supportOrResistance string,
 	candles []*types.Candle,
-) (price float64, err error) {
-	horizontalLevelCandleIndex := lastCompletedCandleIndex - candlesAmount.Future
-	if horizontalLevelCandleIndex < 0 || lastCompletedCandleIndex < candlesAmount.Future+candlesAmount.Past {
-		err = errors.New(NotEnoughCandlesError)
-		return
-	}
-
-	futureCandlesOvercomePrice := false
-	for j := horizontalLevelCandleIndex + 1; j < lastCompletedCandleIndex; j++ {
-		if supportOrResistance == ResistanceName {
-			if candles[j].High >= candles[horizontalLevelCandleIndex].High {
-				futureCandlesOvercomePrice = true
-				break
-			}
+) (float64, error) {
+	candlesToCheck := 300
+	for x := lastCompletedCandleIndex; x > lastCompletedCandleIndex-candlesToCheck; x-- {
+		if x < 0 {
+			break
 		}
-		if supportOrResistance == SupportName {
-			if candles[j].Low <= candles[horizontalLevelCandleIndex].Low {
-				futureCandlesOvercomePrice = true
-				break
-			}
-		}
-	}
 
-	if futureCandlesOvercomePrice {
-		err = errors.New(FutureCandlesOvercamePriceError)
-		return
-	}
-
-	pastCandlesOvercomePrice := false
-	for j := horizontalLevelCandleIndex - candlesAmount.Past; j < horizontalLevelCandleIndex; j++ {
-		if j < 1 || j > lastCompletedCandleIndex {
+		horizontalLevelCandleIndex := x - candlesAmount.Future
+		if horizontalLevelCandleIndex < 0 || x < candlesAmount.Future+candlesAmount.Past {
 			continue
 		}
-		if supportOrResistance == ResistanceName {
-			if candles[j].High >= candles[horizontalLevelCandleIndex].High {
-				pastCandlesOvercomePrice = true
-				break
+
+		futureCandlesOvercomePrice := false
+		for j := horizontalLevelCandleIndex + 1; j < x; j++ {
+			if supportOrResistance == ResistanceName {
+				if candles[j].High >= candles[horizontalLevelCandleIndex].High {
+					futureCandlesOvercomePrice = true
+					break
+				}
 			}
+			if supportOrResistance == SupportName {
+				if candles[j].Low <= candles[horizontalLevelCandleIndex].Low {
+					futureCandlesOvercomePrice = true
+					break
+				}
+			}
+		}
+
+		if futureCandlesOvercomePrice {
+			continue
+		}
+
+		pastCandlesOvercomePrice := false
+		for j := horizontalLevelCandleIndex - candlesAmount.Past; j < horizontalLevelCandleIndex; j++ {
+			if j < 1 || j > lastCompletedCandleIndex {
+				continue
+			}
+			if supportOrResistance == ResistanceName {
+				if candles[j].High >= candles[horizontalLevelCandleIndex].High {
+					pastCandlesOvercomePrice = true
+					break
+				}
+			}
+			if supportOrResistance == SupportName {
+				if candles[j].Low <= candles[horizontalLevelCandleIndex].Low {
+					pastCandlesOvercomePrice = true
+					break
+				}
+			}
+		}
+
+		if pastCandlesOvercomePrice {
+			continue
+		}
+
+		if supportOrResistance == ResistanceName {
+			return candles[horizontalLevelCandleIndex].High, nil
 		}
 		if supportOrResistance == SupportName {
-			if candles[j].Low <= candles[horizontalLevelCandleIndex].Low {
-				pastCandlesOvercomePrice = true
-				break
-			}
+			return candles[horizontalLevelCandleIndex].Low, nil
 		}
+
 	}
 
-	if pastCandlesOvercomePrice {
-		err = errors.New(PastCandlesOvercamePriceError)
-		return
-	}
-
-	if supportOrResistance == ResistanceName {
-		price = candles[horizontalLevelCandleIndex].High
-	}
-	if supportOrResistance == SupportName {
-		price = candles[horizontalLevelCandleIndex].Low
-	}
-
-	return
+	return 0, errors.New("unable to find the horizontal level")
 }
 
 func GetServiceInstance() Interface {

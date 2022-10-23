@@ -50,6 +50,7 @@ type Interface interface {
 	IsWorkingOrder(order *Order) bool
 	IsLimitOrder(order *Order) bool
 	IsStopOrder(order *Order) bool
+	IsMarketOrder(order *Order) bool
 	IsLongOrder(order *Order) bool
 	IsShortOrder(order *Order) bool
 	IsLongPosition(position *Position) bool
