@@ -167,7 +167,8 @@ func (s *BaseMarketClass) SetStringValues(order *api.Order) {
 	if s.Container.API.IsLimitOrder(order) {
 		limitPrice := utils.FloatToString(float64(*order.LimitPrice), s.MarketData.PriceDecimals)
 		order.StringValues.LimitPrice = &limitPrice
-	} else {
+	}
+	if s.Container.API.IsStopOrder(order) {
 		stopPrice := utils.FloatToString(float64(*order.StopPrice), s.MarketData.PriceDecimals)
 		order.StringValues.StopPrice = &stopPrice
 	}

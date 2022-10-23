@@ -122,11 +122,6 @@ func (s *Service) UpdateCandles(data *tradingviewsocket.QuoteData, lastVolume fl
 func (s *Service) AddNewCandle(candle types.Candle) {
 	if len(s.candles) == 0 {
 		s.candles = append(s.candles, &candle)
-		return
-	}
-
-	if len(s.candles) == 1 {
-		s.candles = append(s.candles, &candle)
 
 		s.candles = append(s.candles, &types.Candle{
 			Open:      candle.Close,
@@ -137,9 +132,7 @@ func (s *Service) AddNewCandle(candle types.Candle) {
 			Timestamp: candle.Timestamp,
 		})
 		return
-	}
-
-	if len(s.candles) > 1 {
+	} else {
 		s.candles[len(s.candles)-1] = &candle
 
 		s.candles = append(s.candles, &types.Candle{

@@ -11,9 +11,13 @@ import (
 )
 
 func OnBegin(params Params) (err error) {
-	validMonths := params.MarketStrategyParams.ValidTradingTimes.ValidMonths
-	validWeekdays := params.MarketStrategyParams.ValidTradingTimes.ValidWeekdays
-	validHalfHours := params.MarketStrategyParams.ValidTradingTimes.ValidHalfHours
+	var validMonths, validWeekdays, validHalfHours []string
+
+	if params.MarketStrategyParams.ValidTradingTimes != nil {
+		validMonths = params.MarketStrategyParams.ValidTradingTimes.ValidMonths
+		validWeekdays = params.MarketStrategyParams.ValidTradingTimes.ValidWeekdays
+		validHalfHours = params.MarketStrategyParams.ValidTradingTimes.ValidHalfHours
+	}
 
 	now := time.Now()
 	if !utils.IsExecutionTimeValid(now, validMonths, []string{}, []string{}) || !utils.IsExecutionTimeValid(now, []string{}, validWeekdays, []string{}) {
@@ -129,14 +133,14 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 		shouldBeAdjusted := false
 		var newTP float64
 		if params.Container.API.IsLongPosition(params.Position) {
-			shouldBeAdjusted = params.LastCandle.Low-float64(*slOrder.LimitPrice) < params.TrailingTP.SLDistanceShortForTighterTP
+			shouldBeAdjusted = params.LastCandle.Low-float64(*slOrder.StopPrice) < params.TrailingTP.SLDistanceShortForTighterTP
 			newTP = float64(params.Position.AvgPrice) - params.TrailingTP.TPDistanceWhenSLIsVeryClose
 			if shouldBeAdjusted && newTP <= params.LastCandle.Close {
 				params.Log("Can't adjust the TP for the long position since the new TP is lower than the current price")
 				return
 			}
 		} else {
-			shouldBeAdjusted = float64(*slOrder.LimitPrice)-params.LastCandle.High < params.TrailingTP.SLDistanceShortForTighterTP
+			shouldBeAdjusted = float64(*slOrder.StopPrice)-params.LastCandle.High < params.TrailingTP.SLDistanceShortForTighterTP
 			newTP = float64(params.Position.AvgPrice) + params.TrailingTP.TPDistanceWhenSLIsVeryClose
 
 			if shouldBeAdjusted && newTP >= params.LastCandle.Close {
@@ -154,7 +158,7 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 		params.Container.APIRetryFacade.ModifyPosition(
 			params.MarketData.BrokerAPIName,
 			utils.FloatToString(newTP, params.MarketData.PriceDecimals),
-			utils.FloatToString(float64(*slOrder.LimitPrice), params.MarketData.PriceDecimals),
+			utils.FloatToString(float64(*slOrder.StopPrice), params.MarketData.PriceDecimals),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          20,

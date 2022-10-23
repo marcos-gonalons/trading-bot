@@ -95,8 +95,8 @@ func getStopLoss(params GetStopLossParams) float64 {
 	return 0.
 }
 
-func getEma(candle *types.Candle, candlesAmount int64) *types.MovingAverage {
+func getEma(candle *types.Candle, candlesAmount int64) types.MovingAverage {
 	return funk.Find(candle.Indicators.MovingAverages, func(ma types.MovingAverage) bool {
 		return ma.CandlesAmount == candlesAmount
-	}).(*types.MovingAverage)
+	}).(types.MovingAverage)
 }

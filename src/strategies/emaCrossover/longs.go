@@ -80,6 +80,13 @@ func EmaCrossoverLongs(params strategies.Params) {
 		GetSupportPrice:                 params.Container.HorizontalLevelsService.GetSupportPrice,
 	})
 
+	var validMonths, validWeekdays, validHalfHours []string
+	if params.MarketStrategyParams.ValidTradingTimes != nil {
+		validMonths = params.MarketStrategyParams.ValidTradingTimes.ValidMonths
+		validWeekdays = params.MarketStrategyParams.ValidTradingTimes.ValidWeekdays
+		validHalfHours = params.MarketStrategyParams.ValidTradingTimes.ValidHalfHours
+	}
+
 	params.Market.OnValidTradeSetup(markets.OnValidTradeSetupParams{
 		Price:              float64(price),
 		StopLossDistance:   float32(float64(price) - stopLoss),
@@ -87,9 +94,9 @@ func EmaCrossoverLongs(params strategies.Params) {
 		RiskPercentage:     params.MarketStrategyParams.RiskPercentage,
 		IsValidTime: utils.IsExecutionTimeValid(
 			time.Now(),
-			params.MarketStrategyParams.ValidTradingTimes.ValidMonths,
-			params.MarketStrategyParams.ValidTradingTimes.ValidWeekdays,
-			params.MarketStrategyParams.ValidTradingTimes.ValidHalfHours,
+			validMonths,
+			validWeekdays,
+			validHalfHours,
 		),
 		Side:              ibroker.LongSide,
 		WithPendingOrders: false,

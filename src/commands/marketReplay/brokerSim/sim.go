@@ -34,6 +34,7 @@ func OnNewCandle(
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
+			simulatorAPI.CloseOrder(order.ID)
 			continue
 		}
 

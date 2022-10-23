@@ -52,14 +52,6 @@ func main() {
 		getMarketName(),
 	)
 
-	market.GetCandlesHandler().AddNewCandle(types.Candle{
-		Open:      0,
-		High:      0,
-		Low:       0,
-		Close:     0,
-		Volume:    0,
-		Timestamp: 0,
-	})
 	for i, line := range csvLines {
 		if i == 0 {
 			continue
@@ -67,6 +59,9 @@ func main() {
 
 		candle := getCandleObject(line)
 		market.GetCandlesHandler().AddNewCandle(candle)
+
+		// todo: just calculate the indicators data for the newest candle, check todo in candleshandler too
+		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCandles())
 
 		market.SetCurrentBrokerQuote(&api.Quote{
 			Ask:    float32(candle.Close),
@@ -153,6 +148,8 @@ func getMarketInstance(
 }
 
 func getMarketName() string {
+	return "EUR/USD"
+
 	if len(os.Args) != 2 {
 		panic("market not specified")
 	}

@@ -16,6 +16,10 @@ up-debug: down
 	docker-compose up -d
 	docker-compose exec trading-bot dlv debug ./src --headless --listen=:2345 --api-version=2 --log
 
+debug-command: down
+	docker-compose up -d
+	docker-compose exec trading-bot dlv debug ./src/commands/${command} --headless --listen=:2345 --api-version=2 --log
+
 down:
 	docker-compose down
 	

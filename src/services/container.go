@@ -3,6 +3,7 @@ package services
 import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
+	"TradingBot/src/services/candlesHandler/indicators"
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
@@ -18,6 +19,7 @@ type Container struct {
 	HttpClient              httpclient.Interface
 	TrendsService           trends.Interface
 	HorizontalLevelsService horizontalLevels.Interface
+	IndicatorsService       indicators.MainInterface
 }
 
 var container Container
@@ -27,6 +29,7 @@ func (c *Container) Initialize() {
 
 	c.TrendsService = trends.GetServiceInstance()
 	c.HorizontalLevelsService = horizontalLevels.GetServiceInstance()
+	c.IndicatorsService = indicators.GetInstance()
 
 	c.HttpClient = httpclient.GetInstance(c.Logger)
 }
