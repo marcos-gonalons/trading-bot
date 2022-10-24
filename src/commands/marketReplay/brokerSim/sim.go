@@ -32,7 +32,7 @@ func OnNewCandle(
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
-			simulatorAPI.CloseOrder(order.ID)
+			orderIDsToRemove = append(orderIDsToRemove, order.ID)
 			continue
 		}
 

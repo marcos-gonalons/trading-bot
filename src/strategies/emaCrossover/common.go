@@ -16,12 +16,26 @@ func closePositionOnReversal(
 	lastCandle *types.Candle,
 	minProfit float32,
 	API api.Interface,
+	marketData *types.MarketData,
+	log func(m string),
 ) {
+	log("Checking if the position must be closed on trend reversal ...")
 	if API.IsLongPosition(position) &&
 		lastCandle.Close-float64(position.AvgPrice) > float64(minProfit) &&
 		getEma(lastCandle, SMALL_EMA).Value < getEma(lastCandle, BIG_EMA).Value {
 
+		log("Small EMA crossed below the big EMA, and the price is above the min profit. Closing the long position ...")
 		API.ClosePosition(position.Instrument)
+		API.AddTrade(
+			nil,
+			position,
+			func(price float32, order *api.Order) float32 {
+				return price
+			},
+			marketData.EurExchangeRate,
+			lastCandle,
+			marketData,
+		)
 		return
 	}
 
@@ -29,7 +43,18 @@ func closePositionOnReversal(
 		float64(position.AvgPrice)-lastCandle.Close > float64(minProfit) &&
 		getEma(lastCandle, SMALL_EMA).Value > getEma(lastCandle, BIG_EMA).Value {
 
+		log("Small EMA crossed above the big EMA, and the price is above the min profit. Closing the short position ...")
 		API.ClosePosition(position.Instrument)
+		API.AddTrade(
+			nil,
+			position,
+			func(price float32, order *api.Order) float32 {
+				return price
+			},
+			marketData.EurExchangeRate,
+			lastCandle,
+			marketData,
+		)
 		return
 	}
 }

@@ -36,6 +36,8 @@ func EmaCrossoverLongs(params strategies.Params) {
 			lastCompletedCandle,
 			params.MarketStrategyParams.MinProfit,
 			params.Container.API,
+			params.MarketData,
+			params.Market.Log,
 		)
 
 		log("There is an open position - doing nothing ...")
