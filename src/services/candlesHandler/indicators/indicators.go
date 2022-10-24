@@ -9,9 +9,9 @@ type Indicators struct {
 	IndicatorsServices []IndicatorsInterface
 }
 
-func (s *Indicators) AddIndicators(candles []*types.Candle) {
+func (s *Indicators) AddIndicators(candles []*types.Candle, lastCandleOnly bool) {
 	for _, i := range s.IndicatorsServices {
-		i.AddData(candles)
+		i.AddData(candles, lastCandleOnly)
 	}
 }
 

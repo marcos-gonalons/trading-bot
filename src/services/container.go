@@ -6,6 +6,7 @@ import (
 	"TradingBot/src/services/candlesHandler/indicators"
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
+	"TradingBot/src/services/logger/nullLogger"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/services/technicalAnalysis/trends"
 )
@@ -25,7 +26,7 @@ type Container struct {
 var container Container
 
 func (c *Container) Initialize() {
-	c.Logger = logger.GetInstance()
+	c.Logger = nullLogger.GetInstance()
 
 	c.TrendsService = trends.GetServiceInstance()
 	c.HorizontalLevelsService = horizontalLevels.GetServiceInstance()

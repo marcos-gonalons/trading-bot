@@ -10,10 +10,15 @@ type MovingAverage struct{}
 
 const EMA_SMOOTHING_FACTOR = 2
 
-func (s *MovingAverage) AddData(candles []*types.Candle) {
+func (s *MovingAverage) AddData(candles []*types.Candle, lastCandleOnly bool) {
 	emaLengths := []int64{9, 21, 200}
 
-	for i, candle := range candles {
+	start := 0
+	if lastCandleOnly {
+		start = len(candles) - 2
+	}
+
+	for i := start; i < len(candles); i++ {
 		movingAverages := []types.MovingAverage{}
 		for _, emaLength := range emaLengths {
 			movingAverages = append(movingAverages, types.MovingAverage{
@@ -23,7 +28,7 @@ func (s *MovingAverage) AddData(candles []*types.Candle) {
 				CandlesAmount: emaLength,
 			})
 
-			candle.Indicators.MovingAverages = movingAverages
+			candles[i].Indicators.MovingAverages = movingAverages
 		}
 	}
 }

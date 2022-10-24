@@ -1,4 +1,4 @@
-package logger
+package nullLogger
 
 import (
 	"TradingBot/src/services/logger/types"

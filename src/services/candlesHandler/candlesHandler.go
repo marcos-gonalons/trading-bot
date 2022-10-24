@@ -50,7 +50,7 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 		s.createCSVFile(s.csvFileName)
 	}
 
-	s.IndicatorsBuilder.AddIndicators(s.candles)
+	s.IndicatorsBuilder.AddIndicators(s.candles, false)
 }
 
 // UpdateCandles ...
@@ -87,8 +87,7 @@ func (s *Service) UpdateCandles(data *tradingviewsocket.QuoteData, lastVolume fl
 			Timestamp: utils.GetTimestamp(now, s.getTimeLayout()),
 		})
 
-		// todo: no need to do it again for all candles, it's just enough to add it to the last one.
-		s.IndicatorsBuilder.AddIndicators(s.candles)
+		s.IndicatorsBuilder.AddIndicators(s.candles, true)
 	} else {
 		index := len(s.candles) - 1
 		if data.Price != nil {

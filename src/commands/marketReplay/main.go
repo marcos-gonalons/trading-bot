@@ -15,8 +15,6 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/simulator"
 
-	//logger "TradingBot/src/services/logger"
-
 	"TradingBot/src/manager"
 )
 
@@ -52,16 +50,11 @@ func main() {
 		getMarketName(),
 	)
 
-	for i, line := range csvLines {
-		if i == 0 {
-			continue
-		}
-
+	for _, line := range csvLines {
 		candle := getCandleObject(line)
 		market.GetCandlesHandler().AddNewCandle(candle)
 
-		// todo: just calculate the indicators data for the newest candle, check todo in candleshandler too
-		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCandles())
+		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCandles(), true)
 
 		market.SetCurrentBrokerQuote(&api.Quote{
 			Ask:    float32(candle.Close),
