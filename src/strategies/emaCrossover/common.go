@@ -55,6 +55,7 @@ func getStopLoss(params GetStopLossParams) float64 {
 				params.CandleIndex,
 				params.Candles,
 			)
+			sl = sl + float64(params.PriceOffset)
 			if err != nil || sl >= float64(params.PositionPrice) {
 				return float64(params.PositionPrice) - float64(params.MaxStopLossDistance)
 			}
@@ -64,7 +65,7 @@ func getStopLoss(params GetStopLossParams) float64 {
 			if float64(params.PositionPrice)-sl <= float64(params.MinStopLossDistance) {
 				return float64(params.PositionPrice) - float64(params.MinStopLossDistance)
 			}
-			return sl + float64(params.PriceOffset)
+			return sl
 		}
 		if params.LongOrShort == "short" {
 			sl, err := params.GetResistancePrice(
@@ -72,6 +73,7 @@ func getStopLoss(params GetStopLossParams) float64 {
 				params.CandleIndex,
 				params.Candles,
 			)
+			sl = sl - float64(params.PriceOffset)
 			if err != nil || sl <= float64(params.PositionPrice) {
 				return float64(params.PositionPrice) + float64(params.MaxStopLossDistance)
 			}
@@ -81,7 +83,7 @@ func getStopLoss(params GetStopLossParams) float64 {
 			if sl-float64(params.PositionPrice) <= float64(params.MinStopLossDistance) {
 				return float64(params.PositionPrice) + float64(params.MinStopLossDistance)
 			}
-			return sl - float64(params.PriceOffset)
+			return sl
 		}
 	} else {
 		if params.LongOrShort == "long" {

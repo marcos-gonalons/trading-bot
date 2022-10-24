@@ -27,6 +27,7 @@ var container Container
 
 func (c *Container) Initialize() {
 	c.Logger = nullLogger.GetInstance()
+	//c.Logger = logger.GetInstance()
 
 	c.TrendsService = trends.GetServiceInstance()
 	c.HorizontalLevelsService = horizontalLevels.GetServiceInstance()

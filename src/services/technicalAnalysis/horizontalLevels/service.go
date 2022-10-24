@@ -40,6 +40,7 @@ func (s *Service) getPrice(
 	candles []*types.Candle,
 ) (float64, error) {
 	candlesToCheck := 300
+	lastCompletedCandleIndex++
 	for x := lastCompletedCandleIndex; x > lastCompletedCandleIndex-candlesToCheck; x-- {
 		if x < 0 {
 			break
@@ -53,13 +54,13 @@ func (s *Service) getPrice(
 		futureCandlesOvercomePrice := false
 		for j := horizontalLevelCandleIndex + 1; j < x; j++ {
 			if supportOrResistance == ResistanceName {
-				if candles[j].High >= candles[horizontalLevelCandleIndex].High {
+				if candles[j].High > candles[horizontalLevelCandleIndex].High {
 					futureCandlesOvercomePrice = true
 					break
 				}
 			}
 			if supportOrResistance == SupportName {
-				if candles[j].Low <= candles[horizontalLevelCandleIndex].Low {
+				if candles[j].Low < candles[horizontalLevelCandleIndex].Low {
 					futureCandlesOvercomePrice = true
 					break
 				}
@@ -76,13 +77,13 @@ func (s *Service) getPrice(
 				continue
 			}
 			if supportOrResistance == ResistanceName {
-				if candles[j].High >= candles[horizontalLevelCandleIndex].High {
+				if candles[j].High > candles[horizontalLevelCandleIndex].High {
 					pastCandlesOvercomePrice = true
 					break
 				}
 			}
 			if supportOrResistance == SupportName {
-				if candles[j].Low <= candles[horizontalLevelCandleIndex].Low {
+				if candles[j].Low < candles[horizontalLevelCandleIndex].Low {
 					pastCandlesOvercomePrice = true
 					break
 				}

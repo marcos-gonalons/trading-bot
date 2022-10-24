@@ -6,6 +6,9 @@ import (
 	"TradingBot/src/types"
 )
 
+const SPREAD = float32(.00012)
+const stopOrderSlippage = float32(.00012)
+
 func OnNewCandle(
 	APIData api.DataInterface,
 	simulatorAPI api.Interface,
@@ -14,11 +17,6 @@ func OnNewCandle(
 	orders, _ := simulatorAPI.GetOrders()
 	positions, _ := simulatorAPI.GetPositions()
 	state, _ := simulatorAPI.GetState()
-
-	///////////////////////
-	spread := float32(.0)
-	stopOrderSlippage := float32(.0)
-	///////////////////////
 
 	candles := market.GetCandlesHandler().GetCandles()
 	orderIDsToRemove := []string{}
@@ -30,7 +28,7 @@ func OnNewCandle(
 			if position != nil {
 				panic("the strategies must never create a market order if there is already an open position")
 			}
-			positions = append(positions, createNewPosition(float32(lastCandle.Open), order, order.Qty, stopOrderSlippage, lastCandle))
+			positions = append(positions, createNewPosition(float32(lastCandle.Open), order, order.Qty, SPREAD/2, lastCandle))
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
@@ -38,7 +36,7 @@ func OnNewCandle(
 			continue
 		}
 
-		orderExecutionPrice := getOrderExecutionPrice(simulatorAPI, order, spread)
+		orderExecutionPrice := getOrderExecutionPrice(simulatorAPI, order, SPREAD)
 		positionPrice := float32(0)
 
 		if isPriceWithinCandle(float64(orderExecutionPrice), lastCandle) {
@@ -57,7 +55,7 @@ func OnNewCandle(
 			if order.ParentID != nil {
 				continue
 			}
-			positions = append(positions, createNewPosition(positionPrice, order, order.Qty, stopOrderSlippage, lastCandle))
+			positions = append(positions, createNewPosition(positionPrice, order, order.Qty, SPREAD/2, lastCandle))
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
@@ -166,10 +164,10 @@ func createNewPosition(
 	positionPrice float32,
 	order *api.Order,
 	size float32,
-	stopOrderSlippage float32,
+	slippage float32,
 	lastCandle *types.Candle,
 ) *api.Position {
-	price := addSlippage(positionPrice, order, stopOrderSlippage)
+	price := addSlippage(positionPrice, order, slippage)
 
 	return &api.Position{
 		Instrument:   order.Instrument,
@@ -182,7 +180,7 @@ func createNewPosition(
 }
 
 func addSlippage(price float32, order *api.Order, slippage float32) float32 {
-	if order.Type != "stop" {
+	if order.Type == "limit" {
 		return price
 	}
 

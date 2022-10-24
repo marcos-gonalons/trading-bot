@@ -142,7 +142,9 @@ func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 }
 
 func (s *BaseMarketClass) OnNewCandle() {
-	s.Log("New candle has been added. Executing strategy code ...")
+	s.Log("\n\n")
+	s.Log("New candle has been added " + time.Unix(s.CandlesHandler.GetLastCandle().Timestamp, 0).Format("02/01/2006 15:04:05"))
+	s.Log("\n\n")
 
 	s.ToExecuteOnNewCandle()
 }
@@ -183,6 +185,8 @@ func (s *BaseMarketClass) SetStringValues(order *api.Order) {
 }
 
 func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP() {
+	// TODO: Review this
+
 	longParams := s.MarketData.LongSetupParams
 	shortParams := s.MarketData.ShortSetupParams
 
@@ -209,6 +213,7 @@ func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP() {
 					if s.Container.API.IsStopOrder(s.currentOrder) && float64(*s.currentOrder.StopPrice-s.currentPosition.AvgPrice) > shortParams.MaxTradeExecutionPriceDifference {
 						closePosition = true
 					}
+					// todo: emacrossover doesn't use stoplossdistance, this won't work
 					tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-shortParams.TakeProfitDistance), s.GetMarketData().PriceDecimals)
 					sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+shortParams.StopLossDistance), s.GetMarketData().PriceDecimals)
 				} else {

@@ -34,7 +34,7 @@ func GetMarketInstance() markets.MarketInterface {
 			Unit:  "h",
 		},
 		CandlesFileName:  "EURUSD-4H.csv",
-		Rollover:         .7, // Only used in market replay command
+		Rollover:         .7,
 		LongSetupParams:  &EMACrossoverLongParams,
 		ShortSetupParams: &EMACrossoverShortParams,
 		EurExchangeRate:  1,

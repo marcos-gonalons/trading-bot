@@ -1,6 +1,7 @@
 package simulator
 
 import (
+	"TradingBot/src/commands/marketReplay/brokerSim"
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
@@ -68,6 +69,16 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 		takeProfit.ParentID = &order.ID
 		takeProfit.Instrument = order.Instrument
 		takeProfit.Side = bracketOrdersSide
+
+		if s.IsMarketOrder(order) {
+			if s.IsLongOrder(order) {
+				*takeProfit.LimitPrice += brokerSim.SPREAD / 2
+			}
+			if s.IsShortOrder(order) {
+				*takeProfit.LimitPrice -= brokerSim.SPREAD / 2
+			}
+		}
+
 		s.orders = append(s.orders, &takeProfit)
 	}
 
@@ -80,6 +91,16 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 		stopLoss.ParentID = &order.ID
 		stopLoss.Instrument = order.Instrument
 		stopLoss.Side = bracketOrdersSide
+
+		if s.IsMarketOrder(order) {
+			if s.IsLongOrder(order) {
+				*stopLoss.StopPrice += brokerSim.SPREAD / 2
+			}
+			if s.IsShortOrder(order) {
+				*stopLoss.StopPrice -= brokerSim.SPREAD / 2
+			}
+		}
+
 		s.orders = append(s.orders, &stopLoss)
 	}
 
@@ -175,13 +196,31 @@ func (s *API) AddTrade(
 		tradeResult = -tradeResult
 	}
 
-	tradeResult = adjustResultWithRollover(tradeResult, position, lastCandle, marketData) * eurExchangeRate
+	tradeResult = adjustResultWithRollover(tradeResult, position, lastCandle, marketData)
+	tradeResult = adjustResultWithCommissions(tradeResult, float32(35/100/10000), position.AvgPrice, finalPrice, position.Qty)
+
+	tradeResult = tradeResult * eurExchangeRate
 
 	s.state.Balance = s.state.Balance + float64(tradeResult)
-
-	fmt.Println(utils.GetStringRepresentation(position), "| Trade result ->", utils.GetStringRepresentation(tradeResult))
 	s.state.Equity = s.state.Balance
 	s.trades++
+
+	fmt.Println(
+		" | ",
+		utils.FloatToString(float64(position.Qty), 0),
+		" | ",
+		utils.FloatToString(float64(position.AvgPrice), 5),
+		" | ",
+		utils.FloatToString(float64(finalPrice), 5),
+		" | ",
+		utils.FloatToString(tradeResult, 2),
+		" | ",
+		utils.FloatToString(s.state.Equity, 2),
+		" | ",
+		time.Unix(*position.CreatedAt, 0).Format("02/01/2006 15:04:05"),
+		" | ",
+		time.Unix(lastCandle.Timestamp, 0).Format("02/01/2006 15:04:05"),
+	)
 }
 
 func (s *API) GetTrades() int64 {
@@ -392,4 +431,8 @@ func adjustResultWithRollover(
 	days := int64((lastCandle.Timestamp - *position.CreatedAt) / 60 / 60 / 24)
 	rollover := float64((marketData.Rollover * float64(position.Qty)) / math.Pow(10, float64(marketData.PriceDecimals)-1))
 	return tradeResult - float64(days)*rollover
+}
+
+func adjustResultWithCommissions(tradeResult float64, commissions, startPrice, finalPrice, size float32) float64 {
+	return tradeResult - float64(commissions*startPrice*size+commissions*finalPrice*size)
 }

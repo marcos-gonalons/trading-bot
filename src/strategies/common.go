@@ -49,7 +49,7 @@ func OnBegin(params Params) (err error) {
 			TrailingSL: params.MarketStrategyParams.TrailingStopLoss,
 			TrailingTP: params.MarketStrategyParams.TrailingTakeProfit,
 			Position:   p,
-			LastCandle: params.CandlesHandler.GetLastCandle(),
+			LastCandle: params.CandlesHandler.GetCandles()[len(params.CandlesHandler.GetCandles())-2],
 			MarketData: params.MarketData,
 			Container:  params.Container,
 			Log:        params.Market.Log,
@@ -73,7 +73,6 @@ type HandleTrailingSLAndTPParams struct {
 func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 	handleTrailingSL := func() {
 		params.Log("Checking if the position needs to have the SL adjusted with this params ... " + utils.GetStringRepresentation(params))
-		params.Log("Position is " + utils.GetStringRepresentation(params.Position))
 
 		_, tpOrder := params.Container.API.GetBracketOrdersForOpenedPosition(params.Position)
 
@@ -90,6 +89,7 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 
 			if shouldBeAdjusted && newSL >= params.LastCandle.Close {
 				params.Log("Can't adjust the SL for the long position since the new SL is higher than the current price")
+				params.Log("New SL that will not be applied -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
 				return
 			}
 		} else {
@@ -98,6 +98,7 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 
 			if shouldBeAdjusted && newSL <= params.LastCandle.Close {
 				params.Log("Can't adjust the SL for the short position since the new SL is lower than the current price")
+				params.Log("New SL that will not be applied -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
 				return
 			}
 		}
@@ -108,6 +109,7 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 		}
 
 		params.Log("The price is very close to the TP. Adjusting SL...")
+		params.Log("New SL -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
 		params.Container.APIRetryFacade.ModifyPosition(
 			params.MarketData.BrokerAPIName,
 			utils.FloatToString(float64(*tpOrder.LimitPrice), params.MarketData.PriceDecimals),
@@ -121,12 +123,11 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 
 	handleTrailingTP := func() {
 		params.Log("Checking if the position needs to have the TP adjusted with this params ... " + utils.GetStringRepresentation(params))
-		params.Log("Position is " + utils.GetStringRepresentation(params.Position))
 
 		slOrder, _ := params.Container.API.GetBracketOrdersForOpenedPosition(params.Position)
 
 		if slOrder == nil {
-			params.Log("Take Profit order not found ...")
+			params.Log("Stop Loss order not found ...")
 			return
 		}
 
@@ -137,6 +138,7 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 			newTP = float64(params.Position.AvgPrice) - params.TrailingTP.TPDistanceWhenSLIsVeryClose
 			if shouldBeAdjusted && newTP <= params.LastCandle.Close {
 				params.Log("Can't adjust the TP for the long position since the new TP is lower than the current price")
+				params.Log("New TP that will not be applied -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
 				return
 			}
 		} else {
@@ -145,6 +147,7 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 
 			if shouldBeAdjusted && newTP >= params.LastCandle.Close {
 				params.Log("Can't adjust the TP for the short position since the new TP is higher than the current price")
+				params.Log("New TP that will not be applied -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
 				return
 			}
 		}
@@ -154,7 +157,8 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 			return
 		}
 
-		params.Log("The price is very close to the SL. Adjusting SL...")
+		params.Log("The price is very close to the SL. Adjusting TP...")
+		params.Log("New TP -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
 		params.Container.APIRetryFacade.ModifyPosition(
 			params.MarketData.BrokerAPIName,
 			utils.FloatToString(newTP, params.MarketData.PriceDecimals),
@@ -165,6 +169,9 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 			},
 		)
 	}
+
+	params.Log("Position is " + utils.GetStringRepresentation(params.Position))
+	params.Log("LastCandle is " + utils.GetStringRepresentation(params.LastCandle))
 
 	if params.TrailingSL != nil && params.TrailingSL.TPDistanceShortForTighterSL > 0 {
 		handleTrailingSL()
