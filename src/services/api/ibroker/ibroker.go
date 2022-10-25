@@ -157,6 +157,9 @@ func (s *API) ModifyOrder(order *api.Order) (err error) {
 
 // ClosePosition ...
 func (s *API) ClosePosition(marketName string) (err error) {
+	// TODO: MUST CLOSE SL AND TP ORDERS FIRST
+	// Create a 'positionCloser' service or something, or implement it here, idgaf
+
 	_, err = s.apiCall(
 		loggerTypes.ClosePositionRequest,
 		func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (r interface{}, e error) {

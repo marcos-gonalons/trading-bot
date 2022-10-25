@@ -6,6 +6,7 @@ import (
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/candlesHandler"
+	"TradingBot/src/services/positionSize"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"strconv"
@@ -185,101 +186,8 @@ func (s *BaseMarketClass) SetStringValues(order *api.Order) {
 }
 
 func (s *BaseMarketClass) CheckNewestOpenedPositionSLandTP() {
-	// TODO: Review this
-
-	longParams := s.MarketData.LongSetupParams
-	shortParams := s.MarketData.ShortSetupParams
-
-	for {
-		positions := s.Container.APIData.GetPositions()
-		marketName := s.GetMarketData().BrokerAPIName
-		s.Log("Checking newest open position")
-		s.Log("Positions is -> " + utils.GetStringRepresentation(positions))
-		s.Log("Market name is -> " + marketName)
-		position := utils.FindPositionByMarket(positions, marketName)
-		s.Log("Position ->" + utils.GetStringRepresentation(position))
-		s.Log("Current position ->" + utils.GetStringRepresentation(s.currentPosition))
-
-		if position != nil && s.currentPosition == nil {
-			s.currentPosition = position
-			s.currentPositionExecutedAt = time.Now()
-
-			var tp string
-			var sl string
-			var closePosition bool = false
-
-			if s.currentOrder != nil {
-				if s.Container.API.IsShortPosition(s.currentPosition) {
-					if s.Container.API.IsStopOrder(s.currentOrder) && float64(*s.currentOrder.StopPrice-s.currentPosition.AvgPrice) > shortParams.MaxTradeExecutionPriceDifference {
-						closePosition = true
-					}
-					// todo: emacrossover doesn't use stoplossdistance, this won't work
-					tp = utils.FloatToString(float64(s.currentPosition.AvgPrice-shortParams.TakeProfitDistance), s.GetMarketData().PriceDecimals)
-					sl = utils.FloatToString(float64(s.currentPosition.AvgPrice+shortParams.StopLossDistance), s.GetMarketData().PriceDecimals)
-				} else {
-					if s.Container.API.IsStopOrder(s.currentOrder) && float64(s.currentPosition.AvgPrice-*s.currentOrder.StopPrice) > longParams.MaxTradeExecutionPriceDifference {
-						closePosition = true
-					}
-					tp = utils.FloatToString(float64(s.currentPosition.AvgPrice+longParams.TakeProfitDistance), s.GetMarketData().PriceDecimals)
-					sl = utils.FloatToString(float64(s.currentPosition.AvgPrice-longParams.StopLossDistance), s.GetMarketData().PriceDecimals)
-				}
-			} else {
-				s.Log("current order is nil (because the order was created manually on the broker)")
-			}
-
-			if closePosition {
-				s.Log("Will immediately close the position since it was executed very far away from the stop price")
-				s.Log("Order is " + utils.GetStringRepresentation(s.currentOrder))
-				s.Log("Position is " + utils.GetStringRepresentation(s.currentPosition))
-
-				workingOrders := s.Container.API.GetWorkingOrders(utils.FilterOrdersByMarket(s.Container.APIData.GetOrders(), s.GetMarketData().BrokerAPIName))
-				s.Log("Closing working orders first ... " + utils.GetStringRepresentation(workingOrders))
-
-				s.Container.APIRetryFacade.CloseOrders(
-					workingOrders,
-					retryFacade.RetryParams{
-						DelayBetweenRetries: 5 * time.Second,
-						MaxRetries:          30,
-						SuccessCallback: func() {
-							s.SetPendingOrder(nil)
-
-							s.Log("Closed all orders. Closing the position now ... ")
-							s.Container.APIRetryFacade.ClosePosition(s.currentPosition.Instrument, retryFacade.RetryParams{
-								DelayBetweenRetries: 5 * time.Second,
-								MaxRetries:          20,
-							})
-							s.Container.API.AddTrade(
-								nil,
-								s.currentPosition,
-								func(price float32, order *api.Order) float32 {
-									return price
-								},
-								s.MarketData.EurExchangeRate,
-								s.CandlesHandler.GetLastCandle(),
-								s.GetMarketData(),
-							)
-						},
-					})
-			} else {
-				if s.currentOrder != nil {
-					// TODO: investigate why this executed at 23:00, causing an error saying
-					// that it can't be traded at 23:00 (since it's not market hours),
-					// causing the app to panic after reaching lot's of unsuccessful tries
-					s.Log("Modifying the SL and TP of the recently opened position ... ")
-					s.Container.APIRetryFacade.ModifyPosition(s.GetMarketData().BrokerAPIName, tp, sl, retryFacade.RetryParams{
-						DelayBetweenRetries: 5 * time.Second,
-						MaxRetries:          20,
-					})
-				}
-			}
-		}
-
-		if position == nil {
-			s.currentPosition = nil
-		}
-
-		time.Sleep(5 * time.Second)
-	}
+	// TODO: MaxTradeExecutionPriceDifference.
+	// TODO2: TakeProfit and StopLoss distance should be the correct ones.
 }
 
 func (s *BaseMarketClass) GetPendingOrder() *api.Order {
@@ -466,12 +374,15 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		takeProfit = float32Price - float32(params.TakeProfitDistance)
 	}
 
-	size := utils.GetPositionSize(
-		s.Container.APIData.GetState().Equity,
-		params.RiskPercentage,
-		float64(params.StopLossDistance),
-		float64(params.MinPositionSize),
-		s.MarketData.EurExchangeRate,
+	size := s.Container.PositionSizeService.GetPositionSize(
+		positionSize.GetPositionSizeParams{
+			CurrentBalance:   s.Container.APIData.GetState().Equity,
+			RiskPercentage:   params.RiskPercentage,
+			StopLossDistance: float64(params.StopLossDistance),
+			MinPositionSize:  float64(params.MinPositionSize),
+			EurExchangeRate:  s.MarketData.EurExchangeRate,
+			Multiplier:       s.MarketData.PositionSizeMultiplier,
+		},
 	)
 
 	order := &api.Order{

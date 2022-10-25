@@ -33,11 +33,12 @@ func GetMarketInstance() markets.MarketInterface {
 			Value: 4,
 			Unit:  "h",
 		},
-		CandlesFileName:  "EURUSD-4H.csv",
-		Rollover:         .7,
-		LongSetupParams:  &EMACrossoverLongParams,
-		ShortSetupParams: &EMACrossoverShortParams,
-		EurExchangeRate:  1,
+		CandlesFileName:        "EURUSD-4H.csv",
+		Rollover:               .7,
+		LongSetupParams:        &EMACrossoverLongParams,
+		ShortSetupParams:       &EMACrossoverShortParams,
+		EurExchangeRate:        1,
+		PositionSizeMultiplier: 1,
 	}
 
 	market.ToExecuteOnNewCandle = market.GetFuncToExecuteOnNewCandle()
@@ -47,17 +48,15 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		/*
-			s.Log("Calling EmaCrossoverLongs strategy")
-			emaCrossover.EmaCrossoverLongs(strategies.Params{
-				Type:                 ibroker.LongSide,
-				MarketStrategyParams: &EMACrossoverLongParams,
-				MarketData:           &s.MarketData,
-				CandlesHandler:       s.CandlesHandler,
-				Market:               s,
-				Container:            s.Container,
-			})
-		*/
+		s.Log("Calling EmaCrossoverLongs strategy")
+		emaCrossover.EmaCrossoverLongs(strategies.Params{
+			Type:                 ibroker.LongSide,
+			MarketStrategyParams: &EMACrossoverLongParams,
+			MarketData:           &s.MarketData,
+			CandlesHandler:       s.CandlesHandler,
+			Market:               s,
+			Container:            s.Container,
+		})
 
 		s.Log("Calling EmaCrossoverShorts strategy")
 		emaCrossover.EmaCrossoverShorts(strategies.Params{

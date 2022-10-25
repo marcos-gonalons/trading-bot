@@ -2,7 +2,9 @@ package emaCrossover
 
 import (
 	"TradingBot/src/services/api"
+	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/types"
+	"time"
 
 	"github.com/thoas/go-funk"
 )
@@ -16,16 +18,21 @@ func closePositionOnReversal(
 	lastCandle *types.Candle,
 	minProfit float32,
 	API api.Interface,
+	APIRetryFacade retryFacade.Interface,
 	marketData *types.MarketData,
 	log func(m string),
 ) {
+
 	log("Checking if the position must be closed on trend reversal ...")
 	if API.IsLongPosition(position) &&
 		lastCandle.Close-float64(position.AvgPrice) > float64(minProfit) &&
 		getEma(lastCandle, SMALL_EMA).Value < getEma(lastCandle, BIG_EMA).Value {
 
 		log("Small EMA crossed below the big EMA, and the price is above the min profit. Closing the long position ...")
-		API.ClosePosition(position.Instrument)
+		APIRetryFacade.ClosePosition(position.Instrument, retryFacade.RetryParams{
+			DelayBetweenRetries: 5 * time.Second,
+			MaxRetries:          20,
+		})
 		API.AddTrade(
 			nil,
 			position,
@@ -44,7 +51,10 @@ func closePositionOnReversal(
 		getEma(lastCandle, SMALL_EMA).Value > getEma(lastCandle, BIG_EMA).Value {
 
 		log("Small EMA crossed above the big EMA, and the price is above the min profit. Closing the short position ...")
-		API.ClosePosition(position.Instrument)
+		APIRetryFacade.ClosePosition(position.Instrument, retryFacade.RetryParams{
+			DelayBetweenRetries: 5 * time.Second,
+			MaxRetries:          20,
+		})
 		API.AddTrade(
 			nil,
 			position,

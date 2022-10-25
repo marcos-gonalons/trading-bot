@@ -274,17 +274,3 @@ func IsOutsideForexHours(t time.Time) bool {
 
 	return false
 }
-
-func GetPositionSize(
-	currentBalance float64,
-	riskPercentage float64,
-	stopLossDistance float64,
-	minPositionSize float64,
-	eurExchangeRate float64,
-) float32 {
-	size := math.Floor((currentBalance*(riskPercentage/100))/(stopLossDistance*minPositionSize*eurExchangeRate)) * minPositionSize
-	if size == 0 {
-		size = minPositionSize
-	}
-	return float32(size)
-}

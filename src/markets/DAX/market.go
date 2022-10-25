@@ -32,10 +32,11 @@ func GetMarketInstance() markets.MarketInterface {
 			Value: 4,
 			Unit:  "h",
 		},
-		CandlesFileName:  "DAX-4H.csv",
-		LongSetupParams:  &EMACrossoverLongParams,
-		ShortSetupParams: &EMACrossoverShortParams,
-		EurExchangeRate:  1,
+		CandlesFileName:        "DAX-4H.csv",
+		LongSetupParams:        &EMACrossoverLongParams,
+		ShortSetupParams:       &EMACrossoverShortParams,
+		EurExchangeRate:        1,
+		PositionSizeMultiplier: .5,
 	}
 
 	market.ToExecuteOnNewCandle = market.GetFuncToExecuteOnNewCandle()

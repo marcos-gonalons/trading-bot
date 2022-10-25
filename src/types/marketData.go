@@ -5,20 +5,21 @@ import (
 )
 
 type MarketData struct {
-	BrokerAPIName       string
-	SocketName          string
-	PriceDecimals       int64
-	TradingHours        TradingHours
-	TradeableOnWeekends bool
-	MaxSpread           float64
-	LogType             logger.LogType
-	MarketType          MarketType
-	Rollover            float64
-	Timeframe           Timeframe
-	CandlesFileName     string
-	EurExchangeRate     float64
-	LongSetupParams     *MarketStrategyParams
-	ShortSetupParams    *MarketStrategyParams
+	BrokerAPIName          string
+	SocketName             string
+	PriceDecimals          int64
+	TradingHours           TradingHours
+	TradeableOnWeekends    bool
+	MaxSpread              float64
+	LogType                logger.LogType
+	MarketType             MarketType
+	Rollover               float64
+	Timeframe              Timeframe
+	CandlesFileName        string
+	EurExchangeRate        float64
+	LongSetupParams        *MarketStrategyParams
+	ShortSetupParams       *MarketStrategyParams
+	PositionSizeMultiplier float32
 }
 
 type MarketType string

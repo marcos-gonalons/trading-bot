@@ -36,6 +36,7 @@ func EmaCrossoverShorts(params strategies.Params) {
 			lastCompletedCandle,
 			params.MarketStrategyParams.MinProfit,
 			params.Container.API,
+			params.Container.APIRetryFacade,
 			params.MarketData,
 			params.Market.Log,
 		)
