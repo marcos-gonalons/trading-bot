@@ -124,6 +124,10 @@ func (s *API) ModifyOrder(order *api.Order) (err error) {
 
 // ClosePosition ...
 func (s *API) ClosePosition(marketName string) (err error) {
+	if len(s.positions) == 0 {
+		return
+	}
+
 	positionIndex := 0
 	for index, position := range s.positions {
 		if position.Instrument == marketName {
@@ -205,7 +209,12 @@ func (s *API) AddTrade(
 	s.state.Equity = s.state.Balance
 	s.trades++
 
+	var side string = "long"
+	if s.IsShortPosition(position) {
+		side = "short"
+	}
 	fmt.Println(
+		side,
 		" | ",
 		utils.FloatToString(float64(position.Qty), 0),
 		" | ",

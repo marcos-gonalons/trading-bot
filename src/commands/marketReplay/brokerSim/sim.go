@@ -79,12 +79,14 @@ func OnNewCandle(
 
 				if order.Qty == position.Qty {
 					simulatorAPI.ClosePosition(position.Instrument)
+					break
 				} else {
 					if order.Qty > position.Qty {
 						simulatorAPI.ClosePosition(position.Instrument)
 						p, _ := simulatorAPI.GetPositions()
 						positions = append(p, createNewPosition(positionPrice, order, order.Qty-position.Qty, stopOrderSlippage, lastCandle))
 						simulatorAPI.SetPositions(positions)
+						break
 					} else {
 						position.Qty -= order.Qty
 					}

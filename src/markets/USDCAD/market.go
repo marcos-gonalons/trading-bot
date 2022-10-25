@@ -5,6 +5,8 @@ import (
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
+	"TradingBot/src/strategies"
+	"TradingBot/src/strategies/emaCrossover"
 	"TradingBot/src/types"
 )
 
@@ -35,7 +37,7 @@ func GetMarketInstance() markets.MarketInterface {
 		CandlesFileName:        "USDCAD-4H.csv",
 		LongSetupParams:        &EMACrossoverLongParams,
 		ShortSetupParams:       &EMACrossoverShortParams,
-		EurExchangeRate:        1,
+		EurExchangeRate:        .78,
 		PositionSizeMultiplier: 1,
 	}
 
@@ -46,9 +48,23 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		/*
-			s.Log("Calling supportBounce strategy")
-			strategies.SupportBounce(strategies.StrategyParams{})
-		*/
+		s.Log("Calling EmaCrossoverLongs strategy")
+		emaCrossover.EmaCrossoverLongs(strategies.Params{
+			Type:                 ibroker.LongSide,
+			MarketStrategyParams: &EMACrossoverLongParams,
+			MarketData:           &s.MarketData,
+			CandlesHandler:       s.CandlesHandler,
+			Market:               s,
+			Container:            s.Container,
+		})
+		s.Log("Calling EmaCrossoverShorts strategy")
+		emaCrossover.EmaCrossoverShorts(strategies.Params{
+			Type:                 ibroker.ShortSide,
+			MarketStrategyParams: &EMACrossoverShortParams,
+			MarketData:           &s.MarketData,
+			CandlesHandler:       s.CandlesHandler,
+			Market:               s,
+			Container:            s.Container,
+		})
 	}
 }

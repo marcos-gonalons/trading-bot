@@ -159,10 +159,13 @@ func (s *API) ModifyOrder(order *api.Order) (err error) {
 func (s *API) ClosePosition(marketName string) (err error) {
 	slOrder, tpOrder := s.GetBracketOrders(marketName)
 	if slOrder != nil {
-		s.CloseOrder(slOrder.ID)
+		err = s.CloseOrder(slOrder.ID)
 	}
 	if tpOrder != nil {
-		s.CloseOrder(tpOrder.ID)
+		err = s.CloseOrder(tpOrder.ID)
+	}
+	if err != nil {
+		return
 	}
 
 	_, err = s.apiCall(
