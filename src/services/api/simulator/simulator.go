@@ -367,12 +367,12 @@ func (s *API) GetTimeout() time.Duration {
 	return 1
 }
 
-func (s *API) GetBracketOrdersForOpenedPosition(position *api.Position) (
+func (s *API) GetBracketOrders(marketName string) (
 	slOrder *api.Order,
 	tpOrder *api.Order,
 ) {
 	for _, order := range s.orders {
-		if order.Instrument != position.Instrument {
+		if order.Instrument != marketName {
 			continue
 		}
 		if s.IsLimitOrder(order) {

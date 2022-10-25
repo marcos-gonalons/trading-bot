@@ -157,8 +157,13 @@ func (s *API) ModifyOrder(order *api.Order) (err error) {
 
 // ClosePosition ...
 func (s *API) ClosePosition(marketName string) (err error) {
-	// TODO: MUST CLOSE SL AND TP ORDERS FIRST
-	// Create a 'positionCloser' service or something, or implement it here, idgaf
+	slOrder, tpOrder := s.GetBracketOrders(marketName)
+	if slOrder != nil {
+		s.CloseOrder(slOrder.ID)
+	}
+	if tpOrder != nil {
+		s.CloseOrder(tpOrder.ID)
+	}
 
 	_, err = s.apiCall(
 		loggerTypes.ClosePositionRequest,
@@ -376,12 +381,12 @@ func (s *API) GetTimeout() time.Duration {
 	return s.timeout
 }
 
-func (s *API) GetBracketOrdersForOpenedPosition(position *api.Position) (
+func (s *API) GetBracketOrders(marketName string) (
 	slOrder *api.Order,
 	tpOrder *api.Order,
 ) {
 	for _, order := range s.orders {
-		if order.Status != "working" || order.Instrument != position.Instrument {
+		if order.Status != "working" || order.Instrument != marketName {
 			continue
 		}
 		if s.IsLimitOrder(order) {

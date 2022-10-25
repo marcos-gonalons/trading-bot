@@ -74,7 +74,7 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 	handleTrailingSL := func() {
 		params.Log("Checking if the position needs to have the SL adjusted with this params ... " + utils.GetStringRepresentation(params))
 
-		_, tpOrder := params.Container.API.GetBracketOrdersForOpenedPosition(params.Position)
+		_, tpOrder := params.Container.API.GetBracketOrders(params.Position.Instrument)
 
 		if tpOrder == nil {
 			params.Log("Take Profit order not found ...")
@@ -124,7 +124,7 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 	handleTrailingTP := func() {
 		params.Log("Checking if the position needs to have the TP adjusted with this params ... " + utils.GetStringRepresentation(params))
 
-		slOrder, _ := params.Container.API.GetBracketOrdersForOpenedPosition(params.Position)
+		slOrder, _ := params.Container.API.GetBracketOrders(params.Position.Instrument)
 
 		if slOrder == nil {
 			params.Log("Stop Loss order not found ...")
