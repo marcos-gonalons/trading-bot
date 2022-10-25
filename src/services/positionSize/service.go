@@ -20,7 +20,11 @@ func (s *Service) GetPositionSize(p GetPositionSizeParams) float32 {
 	case BASED_ON_MULTIPLIER:
 		var equityThresold = float64(3000)
 
-		return float32(math.Ceil(p.MinPositionSize * math.Floor(p.CurrentBalance/equityThresold) * float64(p.Multiplier)))
+		size := float32(math.Ceil(p.MinPositionSize * math.Floor(p.CurrentBalance/equityThresold) * float64(p.Multiplier)))
+		if size == 0 {
+			return float32(p.MinPositionSize)
+		}
+		return size
 	default:
 		panic("Invalid position size strategy")
 	}
