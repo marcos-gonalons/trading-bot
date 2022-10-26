@@ -141,8 +141,6 @@ func getMarketInstance(
 }
 
 func getMarketName() string {
-	return "USD/CHF"
-
 	if len(os.Args) != 2 {
 		panic("market not specified")
 	}
