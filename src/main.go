@@ -25,7 +25,7 @@ func main() {
 	}()
 
 	container := services.GetServicesContainer()
-	container.Initialize()
+	container.Initialize(true)
 
 	brokerAPI = getAPIInstance(container)
 	if brokerAPI == nil {

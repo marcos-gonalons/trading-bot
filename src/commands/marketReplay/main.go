@@ -27,7 +27,7 @@ func main() {
 	}
 
 	container := services.GetServicesContainer()
-	container.Initialize()
+	container.Initialize(false)
 
 	simulatorAPI := simulator.CreateAPIServiceInstance(
 		&api.Credentials{},
