@@ -9,9 +9,6 @@ import (
 	tradingviewsocket "github.com/marcos-gonalons/tradingview-scraper/v2"
 )
 
-// MarketInterface ...
-// todo: sort the methods and add a description
-// and maybe divide the interface into smaller ones.
 type MarketInterface interface {
 	Initialize()
 	DailyReset()
@@ -29,6 +26,8 @@ type MarketInterface interface {
 	SetPendingOrder(order *api.Order)
 	CheckOpenPositionTTL(params *types.MarketStrategyParams, position *api.Position)
 	OnValidTradeSetup(params OnValidTradeSetupParams)
+
+	SetStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams)
 
 	SetContainer(*services.Container)
 	SetCandlesHandler(candlesHandler.Interface)

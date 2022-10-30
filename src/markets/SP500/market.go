@@ -23,7 +23,7 @@ func GetMarketInstance() markets.MarketInterface {
 		PriceDecimals: 1,
 		TradingHours: types.TradingHours{
 			Start: 0,
-			End:   23,
+			End:   0,
 		},
 		TradeableOnWeekends: false,
 		MaxSpread:           4,

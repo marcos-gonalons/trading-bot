@@ -22,8 +22,8 @@ func GetMarketInstance() markets.MarketInterface {
 		SocketName:    "FXOPEN:ESX50",
 		PriceDecimals: 1,
 		TradingHours: types.TradingHours{
-			Start: 8,
-			End:   22,
+			Start: 0,
+			End:   0,
 		},
 		TradeableOnWeekends: false,
 		MaxSpread:           4,
