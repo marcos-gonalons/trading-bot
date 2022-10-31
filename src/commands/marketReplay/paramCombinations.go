@@ -61,10 +61,10 @@ func GetCombinations() *ParamCombinations {
 	c.LimitAndStopOrderPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.MinStopLossDistance = funk.Map([]float64{50}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxStopLossDistance = funk.Map([]float64{600}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{580}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.StopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{100, 150, 200, 210, 220, 230, 240, 250, 260}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{230, 240, 250, 260, 270, 280}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.MinProfit = funk.Map([]float64{999999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.TPDistanceShortForTighterSL = funk.Map([]float64{30}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
@@ -188,4 +188,6 @@ func candlesLoopWithCombinations(
 			}
 		}
 	}
+
+	fmt.Println("Done! Best combination -> ", bestProfits, utils.GetStringRepresentation(bestCombination))
 }
