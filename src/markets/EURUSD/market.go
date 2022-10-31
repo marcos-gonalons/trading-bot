@@ -41,8 +41,6 @@ func GetMarketInstance() markets.MarketInterface {
 		PositionSizeMultiplier: 1,
 	}
 
-	market.LongParams = &EMACrossoverLongParams
-	market.ShortParams = &EMACrossoverShortParams
 	market.ToExecuteOnNewCandle = market.GetFuncToExecuteOnNewCandle()
 
 	return market
@@ -53,7 +51,7 @@ func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 		s.Log("Calling EmaCrossoverLongs strategy")
 		emaCrossover.EmaCrossoverLongs(strategies.Params{
 			Type:                 ibroker.LongSide,
-			MarketStrategyParams: s.LongParams,
+			MarketStrategyParams: s.MarketData.LongSetupParams,
 			MarketData:           &s.MarketData,
 			CandlesHandler:       s.CandlesHandler,
 			Market:               s,
@@ -63,7 +61,7 @@ func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 		s.Log("Calling EmaCrossoverShorts strategy")
 		emaCrossover.EmaCrossoverShorts(strategies.Params{
 			Type:                 ibroker.ShortSide,
-			MarketStrategyParams: s.ShortParams,
+			MarketStrategyParams: s.MarketData.ShortSetupParams,
 			MarketData:           &s.MarketData,
 			CandlesHandler:       s.CandlesHandler,
 			Market:               s,

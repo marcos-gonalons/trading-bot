@@ -24,9 +24,6 @@ type BaseMarketClass struct {
 	MarketData           types.MarketData
 	ToExecuteOnNewCandle func()
 
-	LongParams  *types.MarketStrategyParams
-	ShortParams *types.MarketStrategyParams
-
 	currentBrokerQuote        *api.Quote
 	currentPosition           *api.Position
 	currentPositionExecutedAt time.Time
@@ -490,8 +487,8 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 }
 
 func (s *BaseMarketClass) SetStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams) {
-	s.LongParams = longs
-	s.ShortParams = shorts
+	s.MarketData.LongSetupParams = longs
+	s.MarketData.ShortSetupParams = shorts
 }
 
 // todo: move away from this base class, maybe utils or maybe API static method

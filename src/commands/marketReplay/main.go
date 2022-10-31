@@ -5,7 +5,6 @@ import (
 	"TradingBot/src/markets"
 	"TradingBot/src/services"
 	"TradingBot/src/types"
-	"TradingBot/src/utils"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -50,32 +49,13 @@ func main() {
 		getMarketName(),
 	)
 
-	for _, line := range csvLines {
-		candle := getCandleObject(line)
-		market.GetCandlesHandler().AddNewCandle(candle)
-
-		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCandles(), true)
-
-		market.SetCurrentBrokerQuote(&api.Quote{
-			Ask:    float32(candle.Close),
-			Bid:    float32(candle.Close),
-			Price:  float32(candle.Close),
-			Volume: 0,
-		})
-
-		brokerSim.OnNewCandle(
-			container.APIData,
-			container.API,
-			market,
-		)
-
-		market.OnNewCandle()
-
-		// fmt.Println(float64(i) * 100.0 / float64(len(csvLines)))
+	combinations := GetCombinations()
+	if combinations == nil {
+		candlesLoop(csvLines, market, container, simulatorAPI)
+	} else {
+		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations)
 	}
-	s, _ := simulatorAPI.GetState()
-	fmt.Println("balance ", utils.GetStringRepresentation(s))
-	fmt.Println("total trades ", simulatorAPI.GetTrades())
+
 }
 
 func getCSVFile() *os.File {
@@ -146,4 +126,36 @@ func getMarketName() string {
 	}
 
 	return os.Args[1]
+}
+
+func candlesLoop(
+	csvLines [][]string,
+	market markets.MarketInterface,
+	container *services.Container,
+	simulatorAPI api.Interface,
+) {
+	for _, line := range csvLines {
+		candle := getCandleObject(line)
+		market.GetCandlesHandler().AddNewCandle(candle)
+
+		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCandles(), true)
+
+		market.SetCurrentBrokerQuote(&api.Quote{
+			Ask:    float32(candle.Close),
+			Bid:    float32(candle.Close),
+			Price:  float32(candle.Close),
+			Volume: 0,
+		})
+
+		brokerSim.OnNewCandle(
+			container.APIData,
+			container.API,
+			market,
+		)
+
+		market.OnNewCandle()
+
+		// fmt.Println(float64(i) * 100.0 / float64(len(csvLines)))
+	}
+	fmt.Println("Total trades -> ", simulatorAPI.GetTrades())
 }
