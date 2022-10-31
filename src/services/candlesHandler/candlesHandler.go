@@ -156,6 +156,10 @@ func (s *Service) GetLastCandle() *types.Candle {
 	return s.candles[len(s.candles)-1]
 }
 
+func (s *Service) SetCandles(c []*types.Candle) {
+	s.candles = c
+}
+
 // RemoveOldCandles
 func (s *Service) RemoveOldCandles(amount uint) {
 	s.candles = s.candles[amount:]
