@@ -40,7 +40,7 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 		Past:   15,
 	},
 	MinStopLossDistance: 20 * priceAdjustment,
-	MaxStopLossDistance: 1000 * priceAdjustment,
+	MaxStopLossDistance: 600 * priceAdjustment,
 	TakeProfitDistance:  350 * priceAdjustment,
 	MinProfit:           120 * priceAdjustment,
 	TrailingTakeProfit: &types.TrailingTakeProfit{
