@@ -20,12 +20,13 @@ debug-command: down
 	docker-compose up -d
 	docker-compose exec trading-bot dlv debug ./src/commands/${command} --headless --listen=:2345 --api-version=2 --log -- ${args}
 
+run-command: down
+	docker-compose up -d
+	docker-compose exec trading-bot go run ./src/commands/${command}/. ${args}
+
 down:
 	docker-compose down
 	
-sanitize-csv:
-	docker-compose exec trading-bot go run ./src/commands/csvSanitizer/main.go ./.candles-csv/
-
 ssh:
 	docker-compose exec trading-bot bash
 
