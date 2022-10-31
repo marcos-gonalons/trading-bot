@@ -5,6 +5,8 @@ import (
 	"TradingBot/src/services"
 	"TradingBot/src/services/api"
 	"TradingBot/src/types"
+	"TradingBot/src/utils"
+	"fmt"
 
 	"github.com/thoas/go-funk"
 )
@@ -62,7 +64,7 @@ func GetCombinations() *ParamCombinations {
 	c.MaxStopLossDistance = funk.Map([]float64{600}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.StopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{200}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{100, 150, 200, 210, 220, 230, 240, 250, 260}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.MinProfit = funk.Map([]float64{999999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.TPDistanceShortForTighterSL = funk.Map([]float64{30}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
@@ -88,6 +90,12 @@ func candlesLoopWithCombinations(
 	c *ParamCombinations,
 ) {
 	// todo: refactor
+	state, _ := simulatorAPI.GetState()
+
+	var initialBalance = state.Balance
+	var bestProfits float64 = -999999
+	var bestCombination *types.MarketStrategyParams
+
 	for _, RiskPercentage := range c.RiskPercentage {
 		for _, MinStopLossDistance := range c.MinStopLossDistance {
 			for _, MaxStopLossDistance := range c.MaxStopLossDistance {
@@ -109,7 +117,6 @@ func candlesLoopWithCombinations(
 																			for _, MaxSecondsOpenTrade := range c.MaxSecondsOpenTrade {
 																				for _, MinPositionSize := range c.MinPositionSize {
 																					var longParams types.MarketStrategyParams
-																					var shortParams types.MarketStrategyParams
 
 																					longParams.RiskPercentage = RiskPercentage
 																					longParams.MinStopLossDistance = float32(MinStopLossDistance)
@@ -138,11 +145,29 @@ func candlesLoopWithCombinations(
 																					longParams.MaxSecondsOpenTrade = MaxSecondsOpenTrade
 																					longParams.MinPositionSize = MinPositionSize
 
-																					market.SetStrategyParams(&longParams, &shortParams)
+																					market.SetStrategyParams(&longParams, nil)
+
+																					simulatorAPI.SetState(&api.State{
+																						Balance:      initialBalance,
+																						UnrealizedPL: 0,
+																						Equity:       initialBalance,
+																					})
+																					simulatorAPI.SetTrades(0)
+																					simulatorAPI.CloseAllOrders()
+																					simulatorAPI.CloseAllPositions()
 
 																					candlesLoop(csvLines, market, container, simulatorAPI)
 
-																					// todo: print best
+																					state, _ := simulatorAPI.GetState()
+																					profits := state.Balance - initialBalance
+
+																					if profits > bestProfits {
+																						bestProfits = profits
+																						bestCombination = &longParams
+
+																						fmt.Println("New best combination", profits, utils.GetStringRepresentation(bestCombination))
+																						fmt.Println("\n\n")
+																					}
 																				}
 																			}
 																		}

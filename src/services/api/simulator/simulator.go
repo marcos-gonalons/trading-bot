@@ -7,7 +7,6 @@ import (
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"errors"
-	"fmt"
 	"math"
 	"time"
 
@@ -209,31 +208,35 @@ func (s *API) AddTrade(
 	s.state.Equity = s.state.Balance
 	s.trades++
 
-	var side string = "long"
-	if s.IsShortPosition(position) {
-		side = "short"
-	}
-	fmt.Println(
-		side,
-		" | ",
-		utils.FloatToString(float64(position.Qty), 0),
-		" | ",
-		utils.FloatToString(float64(position.AvgPrice), 5),
-		" | ",
-		utils.FloatToString(float64(finalPrice), 5),
-		" | ",
-		utils.FloatToString(tradeResult, 2),
-		" | ",
-		utils.FloatToString(s.state.Equity, 2),
-		" | ",
-		time.Unix(*position.CreatedAt, 0).Format("02/01/2006 15:04:05"),
-		" | ",
-		time.Unix(lastCandle.Timestamp, 0).Format("02/01/2006 15:04:05"),
-	)
+	/*
+		var side string = "long"
+		if s.IsShortPosition(position) {
+			side = "short"
+		}
+		fmt.Println(
+			side,
+			" | ",
+			utils.FloatToString(float64(position.Qty), 0),
+			" | ",
+			utils.FloatToString(float64(position.AvgPrice), 5),
+			" | ",
+			utils.FloatToString(float64(finalPrice), 5),
+			" | ",
+			utils.FloatToString(tradeResult, 2),
+			" | ",
+			utils.FloatToString(s.state.Equity, 2),
+			" | ",
+			time.Unix(*position.CreatedAt, 0).Format("02/01/2006 15:04:05"),
+			" | ",
+			time.Unix(lastCandle.Timestamp, 0).Format("02/01/2006 15:04:05"),
+		)*/
 }
 
 func (s *API) GetTrades() int64 {
 	return s.trades
+}
+func (s *API) SetTrades(t int64) {
+	s.trades = t
 }
 
 // CloseOrder ...

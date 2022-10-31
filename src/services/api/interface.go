@@ -27,6 +27,7 @@ type Interface interface {
 		marketData *types.MarketData,
 	)
 	GetTrades() int64
+	SetTrades(int64) // todo: in simulator API create the Trade object and save them properly
 	CloseAllOrders() error
 	CloseAllPositions() error
 	GetState() (*State, error)

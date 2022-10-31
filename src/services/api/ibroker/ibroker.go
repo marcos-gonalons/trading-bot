@@ -204,6 +204,10 @@ func (s *API) GetTrades() int64 {
 	return 0
 }
 
+// SetTrades ...
+func (s *API) SetTrades(t int64) {
+}
+
 // CloseOrder ...
 func (s *API) CloseOrder(orderID string) (err error) {
 	_, err = s.apiCall(
