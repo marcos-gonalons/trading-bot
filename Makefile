@@ -18,7 +18,7 @@ up-debug: down
 
 debug-command: down
 	docker-compose up -d
-	docker-compose exec trading-bot dlv debug ./src/commands/${command} --headless --listen=:2345 --api-version=2 --log
+	docker-compose exec trading-bot dlv debug ./src/commands/${command} --headless --listen=:2345 --api-version=2 --log -- ${args}
 
 down:
 	docker-compose down
