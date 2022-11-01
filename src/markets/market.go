@@ -30,11 +30,8 @@ type BaseMarketClass struct {
 	pendingOrder              *api.Order
 	currentOrder              *api.Order
 
-	isReady           bool
-	lastCandlesAmount int
-	lastVolume        float64
-	lastBid           *float64
-	lastAsk           *float64
+	isReady    bool
+	lastVolume float64
 
 	mutex *sync.Mutex
 }
@@ -119,16 +116,8 @@ func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 		if data.Volume != nil {
 			s.lastVolume = *data.Volume
 		}
-		if data.Bid != nil {
-			s.lastBid = data.Bid
-		}
-		if data.Ask != nil {
-			s.lastAsk = data.Ask
-		}
 
-		s.lastCandlesAmount = len(s.CandlesHandler.GetCandles())
-		s.Log("Candles amount -> " + strconv.Itoa(s.lastCandlesAmount))
-
+		s.Log("Candles amount -> " + strconv.Itoa(len(s.CandlesHandler.GetCandles())))
 		s.mutex.Unlock()
 	}()
 
