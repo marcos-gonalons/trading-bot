@@ -135,6 +135,9 @@ func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 	s.Log("Updating candles... ")
 	s.CandlesHandler.UpdateCandles(data, s.lastVolume)
 
+	// todo: only execyte onNewCandle when a new candle has been added
+	// DailyReset method removes old candles, so this condition will be true but we don't want
+	// to execute onNewCandle when old candles have been removed
 	if s.lastCandlesAmount != len(s.CandlesHandler.GetCandles()) {
 		s.OnNewCandle()
 	} else {
