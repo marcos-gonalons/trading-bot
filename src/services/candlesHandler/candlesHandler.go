@@ -217,10 +217,10 @@ func (s *Service) writeRowIntoCSVFile(row []byte, fileName string) (err error) {
 func (s *Service) getRowForCSV(candle *types.Candle) []byte {
 	return []byte("" +
 		strconv.FormatInt(candle.Timestamp, 10) + "," +
-		utils.FloatToString(float64(candle.Open), s.MarketData.PriceDecimals) + "," +
-		utils.FloatToString(float64(candle.High), s.MarketData.PriceDecimals) + "," +
-		utils.FloatToString(float64(candle.Low), s.MarketData.PriceDecimals) + "," +
-		utils.FloatToString(float64(candle.Close), s.MarketData.PriceDecimals) + "," +
+		utils.FloatToString(candle.Open, s.MarketData.PriceDecimals) + "," +
+		utils.FloatToString(candle.High, s.MarketData.PriceDecimals) + "," +
+		utils.FloatToString(candle.Low, s.MarketData.PriceDecimals) + "," +
+		utils.FloatToString(candle.Close, s.MarketData.PriceDecimals) + "," +
 		utils.FloatToString(candle.Volume, s.MarketData.PriceDecimals) + "\n")
 }
 

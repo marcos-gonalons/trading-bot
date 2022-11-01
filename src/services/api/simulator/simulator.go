@@ -193,7 +193,7 @@ func (s *API) AddTrade(
 	}
 
 	finalPrice = slippageFunc(finalPrice, order)
-	tradeResult := (float64(position.AvgPrice) - float64(finalPrice)) * float64(position.Qty)
+	tradeResult := (position.AvgPrice - finalPrice) * position.Qty
 
 	if s.IsLongPosition(position) {
 		tradeResult = -tradeResult
@@ -204,7 +204,7 @@ func (s *API) AddTrade(
 
 	tradeResult = tradeResult * eurExchangeRate
 
-	s.state.Balance = s.state.Balance + float64(tradeResult)
+	s.state.Balance = s.state.Balance + tradeResult
 	s.state.Equity = s.state.Balance
 	s.trades++
 
@@ -216,11 +216,11 @@ func (s *API) AddTrade(
 		fmt.Println(
 			side,
 			" | ",
-			utils.FloatToString(float64(position.Qty), 0),
+			utils.FloatToString(position.Qty, 0),
 			" | ",
-			utils.FloatToString(float64(position.AvgPrice), 5),
+			utils.FloatToString(position.AvgPrice, 5),
 			" | ",
-			utils.FloatToString(float64(finalPrice), 5),
+			utils.FloatToString(finalPrice, 5),
 			" | ",
 			utils.FloatToString(tradeResult, 2),
 			" | ",
@@ -441,10 +441,10 @@ func adjustResultWithRollover(
 	marketData *types.MarketData,
 ) float64 {
 	days := int64((lastCandle.Timestamp - *position.CreatedAt) / 60 / 60 / 24)
-	rollover := float64((marketData.Rollover * float64(position.Qty)) / math.Pow(10, float64(marketData.PriceDecimals)-1))
+	rollover := (marketData.Rollover * position.Qty) / math.Pow(10, float64(marketData.PriceDecimals)-1)
 	return tradeResult - float64(days)*rollover
 }
 
 func adjustResultWithCommissions(tradeResult float64, commissions, startPrice, finalPrice, size float64) float64 {
-	return tradeResult - float64(commissions*startPrice*size+commissions*finalPrice*size)
+	return tradeResult - commissions*startPrice*size + commissions*finalPrice*size
 }

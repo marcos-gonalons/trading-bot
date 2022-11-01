@@ -25,7 +25,7 @@ func closePositionOnReversal(
 
 	log("Checking if the position must be closed on trend reversal ...")
 	if API.IsLongPosition(position) &&
-		lastCandle.Close-float64(position.AvgPrice) > float64(minProfit) &&
+		lastCandle.Close-position.AvgPrice > minProfit &&
 		getEma(lastCandle, SMALL_EMA).Value < getEma(lastCandle, BIG_EMA).Value {
 
 		log("Small EMA crossed below the big EMA, and the price is above the min profit. Closing the long position ...")
@@ -47,7 +47,7 @@ func closePositionOnReversal(
 	}
 
 	if API.IsShortPosition(position) &&
-		float64(position.AvgPrice)-lastCandle.Close > float64(minProfit) &&
+		position.AvgPrice-lastCandle.Close > minProfit &&
 		getEma(lastCandle, SMALL_EMA).Value > getEma(lastCandle, BIG_EMA).Value {
 
 		log("Small EMA crossed above the big EMA, and the price is above the min profit. Closing the short position ...")
@@ -90,15 +90,15 @@ func getStopLoss(params GetStopLossParams) float64 {
 				params.CandleIndex,
 				params.Candles,
 			)
-			sl = sl + float64(params.PriceOffset)
-			if err != nil || sl >= float64(params.PositionPrice) {
-				return float64(params.PositionPrice) - float64(params.MaxStopLossDistance)
+			sl = sl + params.PriceOffset
+			if err != nil || sl >= params.PositionPrice {
+				return params.PositionPrice - params.MaxStopLossDistance
 			}
-			if float64(params.PositionPrice)-sl >= float64(params.MaxStopLossDistance) {
-				return float64(params.PositionPrice) - float64(params.MaxStopLossDistance)
+			if params.PositionPrice-sl >= params.MaxStopLossDistance {
+				return params.PositionPrice - params.MaxStopLossDistance
 			}
-			if float64(params.PositionPrice)-sl <= float64(params.MinStopLossDistance) {
-				return float64(params.PositionPrice) - float64(params.MinStopLossDistance)
+			if params.PositionPrice-sl <= params.MinStopLossDistance {
+				return params.PositionPrice - params.MinStopLossDistance
 			}
 			return sl
 		}
@@ -108,24 +108,24 @@ func getStopLoss(params GetStopLossParams) float64 {
 				params.CandleIndex,
 				params.Candles,
 			)
-			sl = sl - float64(params.PriceOffset)
-			if err != nil || sl <= float64(params.PositionPrice) {
-				return float64(params.PositionPrice) + float64(params.MaxStopLossDistance)
+			sl = sl - params.PriceOffset
+			if err != nil || sl <= params.PositionPrice {
+				return params.PositionPrice + params.MaxStopLossDistance
 			}
-			if sl-float64(params.PositionPrice) >= float64(params.MaxStopLossDistance) {
-				return float64(params.PositionPrice) + float64(params.MaxStopLossDistance)
+			if sl-params.PositionPrice >= params.MaxStopLossDistance {
+				return params.PositionPrice + params.MaxStopLossDistance
 			}
-			if sl-float64(params.PositionPrice) <= float64(params.MinStopLossDistance) {
-				return float64(params.PositionPrice) + float64(params.MinStopLossDistance)
+			if sl-params.PositionPrice <= params.MinStopLossDistance {
+				return params.PositionPrice + params.MinStopLossDistance
 			}
 			return sl
 		}
 	} else {
 		if params.LongOrShort == "long" {
-			return float64(params.PositionPrice) - float64(params.MaxStopLossDistance)
+			return params.PositionPrice - params.MaxStopLossDistance
 		}
 		if params.LongOrShort == "short" {
-			return float64(params.PositionPrice) + float64(params.MaxStopLossDistance)
+			return params.PositionPrice + params.MaxStopLossDistance
 		}
 	}
 

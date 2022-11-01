@@ -39,10 +39,10 @@ func OnNewCandle(
 		orderExecutionPrice := getOrderExecutionPrice(simulatorAPI, order, SPREAD)
 		positionPrice := float64(0)
 
-		if isPriceWithinCandle(float64(orderExecutionPrice), lastCandle) {
+		if isPriceWithinCandle(orderExecutionPrice, lastCandle) {
 			positionPrice = orderExecutionPrice
 		}
-		if hasCandleGapOvercameExecutionPrice(float64(orderExecutionPrice), lastCandle, candles[len(candles)-3]) {
+		if hasCandleGapOvercameExecutionPrice(orderExecutionPrice, lastCandle, candles[len(candles)-3]) {
 			positionPrice = lastCandle.Open
 		}
 

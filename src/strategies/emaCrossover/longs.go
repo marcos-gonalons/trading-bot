@@ -91,8 +91,8 @@ func EmaCrossoverLongs(params strategies.Params) {
 	}
 
 	params.Market.OnValidTradeSetup(markets.OnValidTradeSetupParams{
-		Price:              float64(price),
-		StopLossDistance:   float64(price) - stopLoss,
+		Price:              price,
+		StopLossDistance:   price - stopLoss,
 		TakeProfitDistance: params.MarketStrategyParams.TakeProfitDistance,
 		RiskPercentage:     params.MarketStrategyParams.RiskPercentage,
 		IsValidTime: utils.IsExecutionTimeValid(

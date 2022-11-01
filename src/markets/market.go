@@ -161,8 +161,8 @@ func (s *BaseMarketClass) SetStringValues(order *api.Order) {
 	order.CurrentAsk = &s.currentBrokerQuote.Ask
 	order.CurrentBid = &s.currentBrokerQuote.Bid
 
-	currentAsk := utils.FloatToString(float64(*order.CurrentAsk), s.MarketData.PriceDecimals)
-	currentBid := utils.FloatToString(float64(*order.CurrentBid), s.MarketData.PriceDecimals)
+	currentAsk := utils.FloatToString(*order.CurrentAsk, s.MarketData.PriceDecimals)
+	currentBid := utils.FloatToString(*order.CurrentBid, s.MarketData.PriceDecimals)
 	qty := utils.IntToString(int64(order.Qty))
 	order.StringValues = &api.OrderStringValues{
 		CurrentAsk: &currentAsk,
@@ -171,19 +171,19 @@ func (s *BaseMarketClass) SetStringValues(order *api.Order) {
 	}
 
 	if s.Container.API.IsLimitOrder(order) {
-		limitPrice := utils.FloatToString(float64(*order.LimitPrice), s.MarketData.PriceDecimals)
+		limitPrice := utils.FloatToString(*order.LimitPrice, s.MarketData.PriceDecimals)
 		order.StringValues.LimitPrice = &limitPrice
 	}
 	if s.Container.API.IsStopOrder(order) {
-		stopPrice := utils.FloatToString(float64(*order.StopPrice), s.MarketData.PriceDecimals)
+		stopPrice := utils.FloatToString(*order.StopPrice, s.MarketData.PriceDecimals)
 		order.StringValues.StopPrice = &stopPrice
 	}
 	if order.StopLoss != nil {
-		stopLossPrice := utils.FloatToString(float64(*order.StopLoss), s.MarketData.PriceDecimals)
+		stopLossPrice := utils.FloatToString(*order.StopLoss, s.MarketData.PriceDecimals)
 		order.StringValues.StopLoss = &stopLossPrice
 	}
 	if order.TakeProfit != nil {
-		takeProfitPrice := utils.FloatToString(float64(*order.TakeProfit), s.MarketData.PriceDecimals)
+		takeProfitPrice := utils.FloatToString(*order.TakeProfit, s.MarketData.PriceDecimals)
 		order.StringValues.TakeProfit = &takeProfitPrice
 	}
 }
@@ -380,7 +380,7 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		positionSize.GetPositionSizeParams{
 			CurrentBalance:   s.Container.APIData.GetState().Equity,
 			RiskPercentage:   params.RiskPercentage,
-			StopLossDistance: float64(params.StopLossDistance),
+			StopLossDistance: params.StopLossDistance,
 			MinPositionSize:  float64(params.MinPositionSize),
 			EurExchangeRate:  s.MarketData.EurExchangeRate,
 			Multiplier:       s.MarketData.PositionSizeMultiplier,

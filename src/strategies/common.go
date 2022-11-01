@@ -84,8 +84,8 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 		shouldBeAdjusted := false
 		var newSL float64
 		if params.Container.API.IsLongPosition(params.Position) {
-			shouldBeAdjusted = float64(*tpOrder.LimitPrice)-params.LastCandle.High < params.TrailingSL.TPDistanceShortForTighterSL
-			newSL = float64(params.Position.AvgPrice) + params.TrailingSL.SLDistanceWhenTPIsVeryClose
+			shouldBeAdjusted = *tpOrder.LimitPrice-params.LastCandle.High < params.TrailingSL.TPDistanceShortForTighterSL
+			newSL = params.Position.AvgPrice + params.TrailingSL.SLDistanceWhenTPIsVeryClose
 
 			if shouldBeAdjusted && newSL >= params.LastCandle.Close {
 				params.Log("Can't adjust the SL for the long position since the new SL is higher than the current price")
@@ -93,8 +93,8 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 				return
 			}
 		} else {
-			shouldBeAdjusted = params.LastCandle.Low-float64(*tpOrder.LimitPrice) < params.TrailingSL.TPDistanceShortForTighterSL
-			newSL = float64(params.Position.AvgPrice) - params.TrailingSL.SLDistanceWhenTPIsVeryClose
+			shouldBeAdjusted = params.LastCandle.Low-*tpOrder.LimitPrice < params.TrailingSL.TPDistanceShortForTighterSL
+			newSL = params.Position.AvgPrice - params.TrailingSL.SLDistanceWhenTPIsVeryClose
 
 			if shouldBeAdjusted && newSL <= params.LastCandle.Close {
 				params.Log("Can't adjust the SL for the short position since the new SL is lower than the current price")
@@ -112,7 +112,7 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 		params.Log("New SL -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
 		params.Container.APIRetryFacade.ModifyPosition(
 			params.MarketData.BrokerAPIName,
-			utils.FloatToString(float64(*tpOrder.LimitPrice), params.MarketData.PriceDecimals),
+			utils.FloatToString(*tpOrder.LimitPrice, params.MarketData.PriceDecimals),
 			utils.FloatToString(newSL, params.MarketData.PriceDecimals),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
@@ -134,16 +134,16 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 		shouldBeAdjusted := false
 		var newTP float64
 		if params.Container.API.IsLongPosition(params.Position) {
-			shouldBeAdjusted = params.LastCandle.Low-float64(*slOrder.StopPrice) < params.TrailingTP.SLDistanceShortForTighterTP
-			newTP = float64(params.Position.AvgPrice) - params.TrailingTP.TPDistanceWhenSLIsVeryClose
+			shouldBeAdjusted = params.LastCandle.Low-*slOrder.StopPrice < params.TrailingTP.SLDistanceShortForTighterTP
+			newTP = params.Position.AvgPrice - params.TrailingTP.TPDistanceWhenSLIsVeryClose
 			if shouldBeAdjusted && newTP <= params.LastCandle.Close {
 				params.Log("Can't adjust the TP for the long position since the new TP is lower than the current price")
 				params.Log("New TP that will not be applied -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
 				return
 			}
 		} else {
-			shouldBeAdjusted = float64(*slOrder.StopPrice)-params.LastCandle.High < params.TrailingTP.SLDistanceShortForTighterTP
-			newTP = float64(params.Position.AvgPrice) + params.TrailingTP.TPDistanceWhenSLIsVeryClose
+			shouldBeAdjusted = *slOrder.StopPrice-params.LastCandle.High < params.TrailingTP.SLDistanceShortForTighterTP
+			newTP = params.Position.AvgPrice + params.TrailingTP.TPDistanceWhenSLIsVeryClose
 
 			if shouldBeAdjusted && newTP >= params.LastCandle.Close {
 				params.Log("Can't adjust the TP for the short position since the new TP is higher than the current price")
@@ -162,7 +162,7 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 		params.Container.APIRetryFacade.ModifyPosition(
 			params.MarketData.BrokerAPIName,
 			utils.FloatToString(newTP, params.MarketData.PriceDecimals),
-			utils.FloatToString(float64(*slOrder.StopPrice), params.MarketData.PriceDecimals),
+			utils.FloatToString(*slOrder.StopPrice, params.MarketData.PriceDecimals),
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 5 * time.Second,
 				MaxRetries:          20,
