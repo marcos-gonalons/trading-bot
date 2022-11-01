@@ -53,7 +53,7 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 }
 
 // UpdateCandles ...
-func (s *Service) UpdateCandles(data *tradingviewsocket.QuoteData, lastVolume float64) {
+func (s *Service) UpdateCandles(data *tradingviewsocket.QuoteData, lastVolume float64, onNewCandleCallback func()) {
 
 	var currentPrice float64
 	if data.Price != nil {
@@ -87,6 +87,8 @@ func (s *Service) UpdateCandles(data *tradingviewsocket.QuoteData, lastVolume fl
 		})
 
 		s.IndicatorsBuilder.AddIndicators(s.candles, true)
+
+		onNewCandleCallback()
 	} else {
 		index := len(s.candles) - 1
 		if data.Price != nil {
