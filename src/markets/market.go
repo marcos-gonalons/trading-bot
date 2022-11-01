@@ -296,7 +296,7 @@ func (s *BaseMarketClass) CreatePendingOrder(side string) {
 	}
 
 	go func(pendingOrder *api.Order) {
-		var price float32
+		var price float64
 		if s.Container.API.IsStopOrder(pendingOrder) {
 			price = *pendingOrder.StopPrice
 		} else {
@@ -308,20 +308,20 @@ func (s *BaseMarketClass) CreatePendingOrder(side string) {
 		s.Log("Last completed candle -> " + utils.GetStringRepresentation(lastCompletedCandle))
 
 		if side == ibroker.LongSide {
-			if s.Container.API.IsStopOrder(pendingOrder) && price <= float32(lastCompletedCandle.Close) {
+			if s.Container.API.IsStopOrder(pendingOrder) && price <= lastCompletedCandle.Close {
 				s.Log("STOP ORDER -> Price is lower than last completed candle.close - Can't create the pending order")
 				return
 			}
-			if s.Container.API.IsLimitOrder(pendingOrder) && price >= float32(lastCompletedCandle.Close) {
+			if s.Container.API.IsLimitOrder(pendingOrder) && price >= lastCompletedCandle.Close {
 				s.Log("LIMIT ORDER -> Price is higher than last completed candle.close - Can't create the pending order")
 				return
 			}
 		} else {
-			if s.Container.API.IsStopOrder(pendingOrder) && price >= float32(lastCompletedCandle.Close) {
+			if s.Container.API.IsStopOrder(pendingOrder) && price >= lastCompletedCandle.Close {
 				s.Log("STOP ORDER -> Price is greater than last completed candle.close - Can't create the pending order")
 				return
 			}
-			if s.Container.API.IsLimitOrder(pendingOrder) && price <= float32(lastCompletedCandle.Close) {
+			if s.Container.API.IsLimitOrder(pendingOrder) && price <= lastCompletedCandle.Close {
 				s.Log("LIMIT ORDER -> Price is lower than last completed candle.close - Can't create the pending order")
 				return
 			}
@@ -353,8 +353,8 @@ func (s *BaseMarketClass) CreatePendingOrder(side string) {
 
 type OnValidTradeSetupParams struct {
 	Price              float64
-	StopLossDistance   float32
-	TakeProfitDistance float32
+	StopLossDistance   float64
+	TakeProfitDistance float64
 	RiskPercentage     float64
 	IsValidTime        bool
 	Side               string
@@ -364,17 +364,16 @@ type OnValidTradeSetupParams struct {
 }
 
 func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
-	float32Price := float32(params.Price)
 
-	var stopLoss float32
-	var takeProfit float32
+	var stopLoss float64
+	var takeProfit float64
 
 	if params.Side == ibroker.LongSide {
-		stopLoss = float32Price - float32(params.StopLossDistance)
-		takeProfit = float32Price + float32(params.TakeProfitDistance)
+		stopLoss = params.Price - params.StopLossDistance
+		takeProfit = params.Price + params.TakeProfitDistance
 	} else {
-		stopLoss = float32Price + float32(params.StopLossDistance)
-		takeProfit = float32Price - float32(params.TakeProfitDistance)
+		stopLoss = params.Price + params.StopLossDistance
+		takeProfit = params.Price - params.TakeProfitDistance
 	}
 
 	size := s.Container.PositionSizeService.GetPositionSize(
@@ -398,11 +397,13 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		TakeProfit: &takeProfit,
 		Type:       params.OrderType,
 	}
+
+	price := params.Price
 	if s.Container.API.IsStopOrder(order) {
-		order.StopPrice = &float32Price
+		order.StopPrice = &price
 	}
 	if s.Container.API.IsLimitOrder(order) {
-		order.LimitPrice = &float32Price
+		order.LimitPrice = &price
 	}
 
 	s.Log(params.Side + " order to be created -> " + utils.GetStringRepresentation(order))
@@ -477,7 +478,7 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 		s.Container.API.AddTrade(
 			nil,
 			position,
-			func(price float32, order *api.Order) float32 {
+			func(price float64, order *api.Order) float64 {
 				return price
 			},
 			s.MarketData.EurExchangeRate,

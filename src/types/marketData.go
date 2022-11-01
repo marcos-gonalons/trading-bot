@@ -19,7 +19,7 @@ type MarketData struct {
 	EurExchangeRate        float64
 	LongSetupParams        *MarketStrategyParams
 	ShortSetupParams       *MarketStrategyParams
-	PositionSizeMultiplier float32
+	PositionSizeMultiplier float64
 }
 
 type MarketType string

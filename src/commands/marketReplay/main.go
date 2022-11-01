@@ -141,9 +141,9 @@ func candlesLoop(
 		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCandles(), true)
 
 		market.SetCurrentBrokerQuote(&api.Quote{
-			Ask:    float32(candle.Close),
-			Bid:    float32(candle.Close),
-			Price:  float32(candle.Close),
+			Ask:    candle.Close,
+			Bid:    candle.Close,
+			Price:  candle.Close,
 			Volume: 0,
 		})
 

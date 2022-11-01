@@ -2,12 +2,12 @@ package DAX
 
 import "TradingBot/src/types"
 
-var priceAdjustment float32 = float32(1)
+var priceAdjustment float64 = float64(1)
 
 var EMACrossoverLongParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: float64(-75 * priceAdjustment),
+	StopLossPriceOffset: -75 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 23,
 		Past:   30,
@@ -17,8 +17,8 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 	TakeProfitDistance:  450 * priceAdjustment,
 	MinProfit:           250 * priceAdjustment,
 	TrailingStopLoss: &types.TrailingStopLoss{
-		TPDistanceShortForTighterSL: float64(120 * priceAdjustment),
-		SLDistanceWhenTPIsVeryClose: float64(-75 * priceAdjustment),
+		TPDistanceShortForTighterSL: 120 * priceAdjustment,
+		SLDistanceWhenTPIsVeryClose: -75 * priceAdjustment,
 	},
 	CandlesAmountWithoutEMAsCrossing: 3,
 	MaxSecondsOpenTrade:              0,
@@ -30,7 +30,7 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 var EMACrossoverShortParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: float64(-125 * priceAdjustment),
+	StopLossPriceOffset: -125 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 30,
 		Past:   20,
@@ -40,8 +40,8 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	TakeProfitDistance:  450 * priceAdjustment,
 	MinProfit:           50 * priceAdjustment,
 	TrailingStopLoss: &types.TrailingStopLoss{
-		TPDistanceShortForTighterSL: float64(220 * priceAdjustment),
-		SLDistanceWhenTPIsVeryClose: float64(-60 * priceAdjustment),
+		TPDistanceShortForTighterSL: 220 * priceAdjustment,
+		SLDistanceWhenTPIsVeryClose: -60 * priceAdjustment,
 	},
 	CandlesAmountWithoutEMAsCrossing: 6,
 	MaxSecondsOpenTrade:              0,

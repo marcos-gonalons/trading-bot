@@ -21,7 +21,7 @@ type Interface interface {
 	AddTrade(
 		order *Order,
 		position *Position,
-		slippageFunc func(price float32, order *Order) float32,
+		slippageFunc func(price float64, order *Order) float64,
 		eurExchangeRate float64,
 		lastCandle *types.Candle,
 		marketData *types.MarketData,

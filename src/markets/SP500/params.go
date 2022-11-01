@@ -2,12 +2,12 @@ package SP500
 
 import "TradingBot/src/types"
 
-var priceAdjustment float32 = float32(1)
+var priceAdjustment float64 = float64(1)
 
 var EMACrossoverLongParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: float64(20 * priceAdjustment),
+	StopLossPriceOffset: 20 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 0,
 		Past:   0,
@@ -26,7 +26,7 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 var EMACrossoverShortParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: float64(10 * priceAdjustment),
+	StopLossPriceOffset: 10 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 20,
 		Past:   5,
@@ -36,8 +36,8 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	TakeProfitDistance:  290 * priceAdjustment,
 	MinProfit:           -40 * priceAdjustment,
 	TrailingStopLoss: &types.TrailingStopLoss{
-		TPDistanceShortForTighterSL: float64(240 * priceAdjustment),
-		SLDistanceWhenTPIsVeryClose: float64(-10 * priceAdjustment),
+		TPDistanceShortForTighterSL: 240 * priceAdjustment,
+		SLDistanceWhenTPIsVeryClose: -10 * priceAdjustment,
 	},
 	CandlesAmountWithoutEMAsCrossing: 3,
 	MaxSecondsOpenTrade:              0,

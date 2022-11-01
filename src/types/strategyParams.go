@@ -6,12 +6,12 @@ package types
 type MarketStrategyParams struct {
 	RiskPercentage float64
 
-	MinStopLossDistance float32
-	MaxStopLossDistance float32
-	StopLossDistance    float32
+	MinStopLossDistance float64
+	MaxStopLossDistance float64
+	StopLossDistance    float64
 
-	TakeProfitDistance float32
-	MinProfit          float32
+	TakeProfitDistance float64
+	MinProfit          float64
 
 	TrailingStopLoss   *TrailingStopLoss
 	TrailingTakeProfit *TrailingTakeProfit

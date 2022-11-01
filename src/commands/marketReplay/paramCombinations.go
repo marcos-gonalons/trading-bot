@@ -119,11 +119,11 @@ func candlesLoopWithCombinations(
 																					var params types.MarketStrategyParams
 
 																					params.RiskPercentage = RiskPercentage
-																					params.MinStopLossDistance = float32(MinStopLossDistance)
-																					params.MaxStopLossDistance = float32(MaxStopLossDistance)
-																					params.StopLossDistance = float32(StopLossDistance)
-																					params.TakeProfitDistance = float32(TakeProfitDistance)
-																					params.MinProfit = float32(MinProfit)
+																					params.MinStopLossDistance = MinStopLossDistance
+																					params.MaxStopLossDistance = MaxStopLossDistance
+																					params.StopLossDistance = StopLossDistance
+																					params.TakeProfitDistance = TakeProfitDistance
+																					params.MinProfit = MinProfit
 																					params.TrailingStopLoss = &types.TrailingStopLoss{
 																						TPDistanceShortForTighterSL: TPDistanceShortForTighterSL,
 																						SLDistanceWhenTPIsVeryClose: SLDistanceWhenTPIsVeryClose,

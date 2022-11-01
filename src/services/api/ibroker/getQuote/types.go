@@ -13,14 +13,14 @@ type APIResponse struct {
 
 // QuoteValue ...
 type QuoteValue struct {
-	Ch                 float32 `json:"ch"`
+	Ch                 float64 `json:"ch"`
 	Chp                float64 `json:"chp"`
-	CurrentPrice       float32 `json:"lp"`
-	Ask                float32 `json:"ask"`
-	Bid                float32 `json:"bid"`
-	OpenPrice          float32 `json:"open_price"`
-	HighPrice          float32 `json:"high_price"`
-	LowPrice           float32 `json:"low_price"`
-	PreviousClosePrice float32 `json:"prev_close_price"`
+	CurrentPrice       float64 `json:"lp"`
+	Ask                float64 `json:"ask"`
+	Bid                float64 `json:"bid"`
+	OpenPrice          float64 `json:"open_price"`
+	HighPrice          float64 `json:"high_price"`
+	LowPrice           float64 `json:"low_price"`
+	PreviousClosePrice float64 `json:"prev_close_price"`
 	Volume             float64 `json:"volume"`
 }

@@ -2,12 +2,12 @@ package EURUSD
 
 import "TradingBot/src/types"
 
-var priceAdjustment float32 = float32(1) / float32(10000)
+var priceAdjustment float64 = float64(1) / float64(10000)
 
 var EMACrossoverLongParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: float64(75 * priceAdjustment),
+	StopLossPriceOffset: 75 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 30,
 		Past:   40,
@@ -17,12 +17,12 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 	TakeProfitDistance:  230 * priceAdjustment,
 	MinProfit:           99999 * priceAdjustment,
 	TrailingStopLoss: &types.TrailingStopLoss{
-		TPDistanceShortForTighterSL: float64(30 * priceAdjustment),
-		SLDistanceWhenTPIsVeryClose: float64(-90 * priceAdjustment),
+		TPDistanceShortForTighterSL: 30 * priceAdjustment,
+		SLDistanceWhenTPIsVeryClose: -90 * priceAdjustment,
 	},
 	TrailingTakeProfit: &types.TrailingTakeProfit{
-		SLDistanceShortForTighterTP: float64(100 * priceAdjustment),
-		TPDistanceWhenSLIsVeryClose: float64(-20 * priceAdjustment),
+		SLDistanceShortForTighterTP: 100 * priceAdjustment,
+		TPDistanceWhenSLIsVeryClose: -20 * priceAdjustment,
 	},
 	CandlesAmountWithoutEMAsCrossing: 12,
 	MaxSecondsOpenTrade:              0,
@@ -34,7 +34,7 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 var EMACrossoverShortParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: float64(150 * priceAdjustment),
+	StopLossPriceOffset: 150 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 50,
 		Past:   15,
@@ -44,8 +44,8 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	TakeProfitDistance:  350 * priceAdjustment,
 	MinProfit:           120 * priceAdjustment,
 	TrailingTakeProfit: &types.TrailingTakeProfit{
-		SLDistanceShortForTighterTP: float64(40 * priceAdjustment),
-		TPDistanceWhenSLIsVeryClose: float64(-100 * priceAdjustment),
+		SLDistanceShortForTighterTP: 40 * priceAdjustment,
+		TPDistanceWhenSLIsVeryClose: -100 * priceAdjustment,
 	},
 	CandlesAmountWithoutEMAsCrossing: 0,
 	MaxSecondsOpenTrade:              0,

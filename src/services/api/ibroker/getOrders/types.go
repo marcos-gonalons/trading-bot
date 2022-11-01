@@ -7,13 +7,13 @@ type APIResponse struct {
 	Data     []struct {
 		ID         string  `json:"id"`
 		Instrument string  `json:"instrument"`
-		Qty        float32 `json:"qty"`
+		Qty        float64 `json:"qty"`
 		Side       string  `json:"side"`
 		Type       string  `json:"type"`
-		FilledQty  float32 `json:"filledQty"`
-		AvgPrice   float32 `json:"avgPrice"`
-		LimitPrice float32 `json:"limitPrice"`
-		StopPrice  float32 `json:"stopPrice"`
+		FilledQty  float64 `json:"filledQty"`
+		AvgPrice   float64 `json:"avgPrice"`
+		LimitPrice float64 `json:"limitPrice"`
+		StopPrice  float64 `json:"stopPrice"`
 		Duration   struct {
 			Type     string  `json:"type"`
 			Datetime float64 `json:"datetime"`

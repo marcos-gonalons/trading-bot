@@ -2,12 +2,12 @@ package USDCAD
 
 import "TradingBot/src/types"
 
-var priceAdjustment float32 = float32(1) / float32(10000)
+var priceAdjustment float64 = float64(1) / float64(10000)
 
 var EMACrossoverLongParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: float64(-280 * priceAdjustment),
+	StopLossPriceOffset: -280 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 35,
 		Past:   20,
@@ -17,8 +17,8 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 	TakeProfitDistance:  575 * priceAdjustment,
 	MinProfit:           250 * priceAdjustment,
 	TrailingStopLoss: &types.TrailingStopLoss{
-		TPDistanceShortForTighterSL: float64(225 * priceAdjustment),
-		SLDistanceWhenTPIsVeryClose: float64(75 * priceAdjustment),
+		TPDistanceShortForTighterSL: 225 * priceAdjustment,
+		SLDistanceWhenTPIsVeryClose: 75 * priceAdjustment,
 	},
 	CandlesAmountWithoutEMAsCrossing: 21,
 	MaxSecondsOpenTrade:              0,
@@ -30,7 +30,7 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 var EMACrossoverShortParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: float64(25 * priceAdjustment),
+	StopLossPriceOffset: 25 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 25,
 		Past:   45,
@@ -40,8 +40,8 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	TakeProfitDistance:  330 * priceAdjustment,
 	MinProfit:           220 * priceAdjustment,
 	TrailingTakeProfit: &types.TrailingTakeProfit{
-		SLDistanceShortForTighterTP: float64(40 * priceAdjustment),
-		TPDistanceWhenSLIsVeryClose: float64(-180 * priceAdjustment),
+		SLDistanceShortForTighterTP: 40 * priceAdjustment,
+		TPDistanceWhenSLIsVeryClose: -180 * priceAdjustment,
 	},
 	CandlesAmountWithoutEMAsCrossing: 21,
 	MaxSecondsOpenTrade:              0,

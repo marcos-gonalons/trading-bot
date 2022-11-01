@@ -16,7 +16,7 @@ const BIG_EMA = 21
 func closePositionOnReversal(
 	position *api.Position,
 	lastCandle *types.Candle,
-	minProfit float32,
+	minProfit float64,
 	API api.Interface,
 	APIRetryFacade retryFacade.Interface,
 	marketData *types.MarketData,
@@ -36,7 +36,7 @@ func closePositionOnReversal(
 		API.AddTrade(
 			nil,
 			position,
-			func(price float32, order *api.Order) float32 {
+			func(price float64, order *api.Order) float64 {
 				return price
 			},
 			marketData.EurExchangeRate,
@@ -58,7 +58,7 @@ func closePositionOnReversal(
 		API.AddTrade(
 			nil,
 			position,
-			func(price float32, order *api.Order) float32 {
+			func(price float64, order *api.Order) float64 {
 				return price
 			},
 			marketData.EurExchangeRate,
@@ -71,11 +71,11 @@ func closePositionOnReversal(
 
 type GetStopLossParams struct {
 	LongOrShort                     string
-	PositionPrice                   float32
-	MinStopLossDistance             float32
-	MaxStopLossDistance             float32
+	PositionPrice                   float64
+	MinStopLossDistance             float64
+	MaxStopLossDistance             float64
 	CandleIndex                     int
-	PriceOffset                     float32
+	PriceOffset                     float64
 	CandlesAmountForHorizontalLevel *types.CandlesAmountForHorizontalLevel
 	Candles                         []*types.Candle
 	GetResistancePrice              func(types.CandlesAmountForHorizontalLevel, int, []*types.Candle) (float64, error)

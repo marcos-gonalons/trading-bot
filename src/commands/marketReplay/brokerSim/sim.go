@@ -6,8 +6,8 @@ import (
 	"TradingBot/src/types"
 )
 
-const SPREAD = float32(.00012)
-const stopOrderSlippage = float32(.00012)
+const SPREAD = float64(.00012)
+const stopOrderSlippage = float64(.00012)
 
 func OnNewCandle(
 	APIData api.DataInterface,
@@ -28,7 +28,7 @@ func OnNewCandle(
 			if position != nil {
 				panic("the strategies must never create a market order if there is already an open position")
 			}
-			positions = append(positions, createNewPosition(float32(lastCandle.Open), order, order.Qty, SPREAD/2, lastCandle))
+			positions = append(positions, createNewPosition(lastCandle.Open, order, order.Qty, SPREAD/2, lastCandle))
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
@@ -37,13 +37,13 @@ func OnNewCandle(
 		}
 
 		orderExecutionPrice := getOrderExecutionPrice(simulatorAPI, order, SPREAD)
-		positionPrice := float32(0)
+		positionPrice := float64(0)
 
 		if isPriceWithinCandle(float64(orderExecutionPrice), lastCandle) {
 			positionPrice = orderExecutionPrice
 		}
 		if hasCandleGapOvercameExecutionPrice(float64(orderExecutionPrice), lastCandle, candles[len(candles)-3]) {
-			positionPrice = float32(lastCandle.Open)
+			positionPrice = lastCandle.Open
 		}
 
 		if positionPrice == 0 {
@@ -69,7 +69,7 @@ func OnNewCandle(
 				simulatorAPI.AddTrade(
 					order,
 					position,
-					func(price float32, order *api.Order) float32 {
+					func(price float64, order *api.Order) float64 {
 						return addSlippage(price, order, stopOrderSlippage)
 					},
 					market.GetMarketData().EurExchangeRate,
@@ -119,8 +119,8 @@ func isPriceWithinCandle(price float64, candle *types.Candle) bool {
 func getOrderExecutionPrice(
 	simulatorAPI api.Interface,
 	order *api.Order,
-	spread float32,
-) float32 {
+	spread float64,
+) float64 {
 	if simulatorAPI.IsLimitOrder(order) {
 		if simulatorAPI.IsLongOrder(order) {
 			return *order.LimitPrice - spread/2
@@ -163,10 +163,10 @@ func findPosition(positions []*api.Position, instrument string) *api.Position {
 }
 
 func createNewPosition(
-	positionPrice float32,
+	positionPrice float64,
 	order *api.Order,
-	size float32,
-	slippage float32,
+	size float64,
+	slippage float64,
 	lastCandle *types.Candle,
 ) *api.Position {
 	price := addSlippage(positionPrice, order, slippage)
@@ -181,7 +181,7 @@ func createNewPosition(
 	}
 }
 
-func addSlippage(price float32, order *api.Order, slippage float32) float32 {
+func addSlippage(price float64, order *api.Order, slippage float64) float64 {
 	if order.Type == "limit" {
 		return price
 	}

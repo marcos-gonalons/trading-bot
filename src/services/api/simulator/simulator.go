@@ -174,12 +174,12 @@ func (s *API) ClosePosition(marketName string) (err error) {
 func (s *API) AddTrade(
 	order *api.Order,
 	position *api.Position,
-	slippageFunc func(price float32, order *api.Order) float32,
+	slippageFunc func(price float64, order *api.Order) float64,
 	eurExchangeRate float64,
 	lastCandle *types.Candle,
 	marketData *types.MarketData,
 ) {
-	finalPrice := float32(.0)
+	finalPrice := float64(.0)
 
 	if order != nil {
 		if s.IsStopOrder(order) {
@@ -189,7 +189,7 @@ func (s *API) AddTrade(
 			finalPrice = *order.LimitPrice
 		}
 	} else {
-		finalPrice = float32(lastCandle.Close)
+		finalPrice = lastCandle.Close
 	}
 
 	finalPrice = slippageFunc(finalPrice, order)
@@ -200,7 +200,7 @@ func (s *API) AddTrade(
 	}
 
 	tradeResult = adjustResultWithRollover(tradeResult, position, lastCandle, marketData)
-	tradeResult = adjustResultWithCommissions(tradeResult, float32(35/100/10000), position.AvgPrice, finalPrice, position.Qty)
+	tradeResult = adjustResultWithCommissions(tradeResult, float64(35/100/10000), position.AvgPrice, finalPrice, position.Qty)
 
 	tradeResult = tradeResult * eurExchangeRate
 
@@ -299,21 +299,21 @@ func (s *API) ModifyPosition(marketName string, takeProfit *string, stopLoss *st
 		}
 
 		if s.IsLimitOrder(o) {
-			var aux float32
-			var v *float32
+			var aux float64
+			var v *float64
 			hasTP = true
 			if *takeProfit != "" {
-				aux = float32(utils.StringToFloat(*takeProfit))
+				aux = utils.StringToFloat(*takeProfit)
 			}
 			v = &aux
 			o.LimitPrice = v
 		}
 		if s.IsStopOrder(o) {
-			var aux float32
-			var v *float32
+			var aux float64
+			var v *float64
 			hasSL = true
 			if *stopLoss != "" {
-				aux = float32(utils.StringToFloat(*stopLoss))
+				aux = utils.StringToFloat(*stopLoss)
 			}
 			v = &aux
 			o.StopPrice = v
@@ -331,7 +331,7 @@ func (s *API) ModifyPosition(marketName string, takeProfit *string, stopLoss *st
 		tpOrder.Qty = position.Qty
 		tpOrder.ID = utils.GetRandomString(6)
 		tpOrder.Type = apiConstants.LimitType
-		tp := float32(utils.StringToFloat(*takeProfit))
+		tp := utils.StringToFloat(*takeProfit)
 		tpOrder.LimitPrice = &tp
 		tpOrder.Instrument = position.Instrument
 		tpOrder.Side = side
@@ -343,7 +343,7 @@ func (s *API) ModifyPosition(marketName string, takeProfit *string, stopLoss *st
 		slOrder.Qty = position.Qty
 		slOrder.ID = utils.GetRandomString(7)
 		slOrder.Type = apiConstants.StopType
-		tp := float32(utils.StringToFloat(*stopLoss))
+		tp := utils.StringToFloat(*stopLoss)
 		slOrder.StopPrice = &tp
 		slOrder.Instrument = position.Instrument
 		slOrder.Side = side
@@ -445,6 +445,6 @@ func adjustResultWithRollover(
 	return tradeResult - float64(days)*rollover
 }
 
-func adjustResultWithCommissions(tradeResult float64, commissions, startPrice, finalPrice, size float32) float64 {
+func adjustResultWithCommissions(tradeResult float64, commissions, startPrice, finalPrice, size float64) float64 {
 	return tradeResult - float64(commissions*startPrice*size+commissions*finalPrice*size)
 }

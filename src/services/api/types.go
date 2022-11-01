@@ -17,26 +17,26 @@ type AccessToken struct {
 
 // Quote ...
 type Quote struct {
-	Ask    float32
-	Bid    float32
-	Price  float32
+	Ask    float64
+	Bid    float64
+	Price  float64
 	Volume float64
 }
 
 // Order ...
 type Order struct {
 	ID           string
-	CurrentAsk   *float32
-	CurrentBid   *float32
+	CurrentAsk   *float64
+	CurrentBid   *float64
 	DurationType string
 	Instrument   string
-	Qty          float32
+	Qty          float64
 	Side         string
-	StopLoss     *float32
-	TakeProfit   *float32
+	StopLoss     *float64
+	TakeProfit   *float64
 	Type         string
-	LimitPrice   *float32
-	StopPrice    *float32
+	LimitPrice   *float64
+	StopPrice    *float64
 	Status       string
 	ParentID     *string
 	StringValues *OrderStringValues
@@ -56,9 +56,9 @@ type OrderStringValues struct {
 // Position ...
 type Position struct {
 	Instrument   string
-	Qty          float32
+	Qty          float64
 	Side         string
-	AvgPrice     float32
+	AvgPrice     float64
 	UnrealizedPl float64
 	CreatedAt    *int64
 }

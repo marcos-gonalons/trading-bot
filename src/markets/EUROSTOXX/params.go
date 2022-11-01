@@ -2,12 +2,12 @@ package EUROSTOXX
 
 import "TradingBot/src/types"
 
-var priceAdjustment float32 = float32(1)
+var priceAdjustment float64 = float64(1)
 
 var EMACrossoverLongParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: float64(90 * priceAdjustment),
+	StopLossPriceOffset: 90 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 12,
 		Past:   0,
@@ -26,7 +26,7 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 var EMACrossoverShortParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: float64(125 * priceAdjustment),
+	StopLossPriceOffset: 125 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 30,
 		Past:   0,
@@ -36,8 +36,8 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	TakeProfitDistance:  40 * priceAdjustment,
 	MinProfit:           99999 * priceAdjustment,
 	TrailingTakeProfit: &types.TrailingTakeProfit{
-		SLDistanceShortForTighterTP: float64(20 * priceAdjustment),
-		TPDistanceWhenSLIsVeryClose: float64(-30 * priceAdjustment),
+		SLDistanceShortForTighterTP: 20 * priceAdjustment,
+		TPDistanceWhenSLIsVeryClose: -30 * priceAdjustment,
 	},
 	CandlesAmountWithoutEMAsCrossing: 3,
 	MaxSecondsOpenTrade:              0,

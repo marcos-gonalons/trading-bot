@@ -6,9 +6,9 @@ type GetPositionSizeParams struct {
 	StopLossDistance float64
 	MinPositionSize  float64
 	EurExchangeRate  float64
-	Multiplier       float32
+	Multiplier       float64
 }
 type Interface interface {
-	GetPositionSize(GetPositionSizeParams) float32
+	GetPositionSize(GetPositionSizeParams) float64
 	SetStrategy(uint)
 }

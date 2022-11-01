@@ -190,7 +190,7 @@ func (s *API) ClosePosition(marketName string) (err error) {
 func (s *API) AddTrade(
 	order *api.Order,
 	position *api.Position,
-	slippageFunc func(price float32, order *api.Order) float32,
+	slippageFunc func(price float64, order *api.Order) float64,
 	eurExchangeRate float64,
 	lastCandle *types.Candle,
 	marketData *types.MarketData,

@@ -11,8 +11,8 @@ type APIResponse struct {
 type ResponsePosition struct {
 	ID           string  `json:"id"` // The ID of a position is the symbol's name, for example "GER30"
 	Instrument   string  `json:"instrument"`
-	Qty          float32 `json:"qty"`
+	Qty          float64 `json:"qty"`
 	Side         string  `json:"side"`
-	AvgPrice     float32 `json:"avgPrice"`
+	AvgPrice     float64 `json:"avgPrice"`
 	UnrealizedPL float64 `json:"unrealizedPl"`
 }
