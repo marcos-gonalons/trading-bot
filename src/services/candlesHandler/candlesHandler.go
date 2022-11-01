@@ -226,9 +226,9 @@ func (s *Service) getRowForCSV(candle *types.Candle) []byte {
 }
 
 func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
-	var multiplier uint
+	var multiplier int64
 	var currentTimestamp int64
-	var candleDurationInSeconds uint
+	var candleDurationInSeconds int64
 
 	if s.MarketData.Timeframe.Unit == "m" {
 		multiplier = 60
@@ -240,7 +240,7 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 		multiplier = 60 * 60 * 24
 	}
 
-	candleDurationInSeconds = s.MarketData.Timeframe.Value * multiplier
+	candleDurationInSeconds = int64(s.MarketData.Timeframe.Value) * multiplier
 	currentTimestamp = utils.GetTimestamp(currentExecutionTime, s.getTimeLayout())
 
 	cond1 := currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
