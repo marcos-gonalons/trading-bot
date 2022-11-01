@@ -128,6 +128,12 @@ func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 func (s *BaseMarketClass) OnNewCandle() {
 	s.Log("\n\n")
 	s.Log("New candle has been added " + time.Unix(s.CandlesHandler.GetLastCandle().Timestamp, 0).Format("02/01/2006 15:04:05"))
+
+	s.Log("Last candles")
+	candles := s.CandlesHandler.GetCandles()
+	for i := len(candles) - 5; i < len(candles)-1; i++ {
+		s.Log(utils.GetStringRepresentation(candles[i]))
+	}
 	s.Log("\n\n")
 
 	s.ToExecuteOnNewCandle()
