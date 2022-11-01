@@ -1,7 +1,6 @@
 package candlesHandler
 
 import (
-	"TradingBot/src/constants"
 	"TradingBot/src/services/candlesHandler/indicators"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
@@ -243,13 +242,7 @@ func (s *Service) shouldAddNewCandle(currentExecutionTime time.Time) bool {
 	currentTimestamp = utils.GetTimestamp(currentExecutionTime, s.getTimeLayout())
 
 	cond1 := currentTimestamp-s.GetLastCandle().Timestamp >= int64(candleDurationInSeconds)
-
-	cond2 := true
-	if s.MarketData.MarketType == constants.ForexType {
-		if utils.IsOutsideForexHours(currentExecutionTime) {
-			cond2 = false
-		}
-	}
+	cond2 := utils.IsWithinTradingHours(currentExecutionTime, s.MarketData.TradingHours)
 
 	s.Logger.Log("Should add new candle for " + s.MarketData.BrokerAPIName)
 	s.Logger.Log("condition 1 is -> " + strconv.FormatBool(cond1))

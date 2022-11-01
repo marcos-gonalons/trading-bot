@@ -495,6 +495,7 @@ func (s *BaseMarketClass) SetStrategyParams(longs *types.MarketStrategyParams, s
 	s.MarketData.ShortSetupParams = shorts
 }
 
+
 // todo: move away from this base class, maybe utils or maybe API static method
 func (s *BaseMarketClass) getSlAndTpOrders(
 	parentID string,

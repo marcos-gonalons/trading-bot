@@ -1,13 +1,13 @@
 package GBPUSD
 
 import (
-	"TradingBot/src/constants"
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
 	"TradingBot/src/strategies"
 	"TradingBot/src/strategies/emaCrossover"
 	"TradingBot/src/types"
+	"TradingBot/src/utils"
 )
 
 type Market struct {
@@ -21,15 +21,10 @@ func GetMarketInstance() markets.MarketInterface {
 		BrokerAPIName: ibroker.GBPUSDSymbolName,
 		SocketName:    "FX:GBPUSD",
 		PriceDecimals: 5,
-		TradingHours: types.TradingHours{
-			Start: 0,
-			End:   0,
-		},
-		TradeableOnWeekends: false,
-		MaxSpread:           999999,
-		LogType:             loggerTypes.GBPUSD,
-		MarketType:          constants.ForexType,
-		Rollover:            .7,
+		TradingHours:  utils.GetForexUTCTradingHours(),
+		MaxSpread:     999999,
+		LogType:       loggerTypes.GBPUSD,
+		Rollover:      .7,
 		Timeframe: types.Timeframe{
 			Value: 4,
 			Unit:  "h",

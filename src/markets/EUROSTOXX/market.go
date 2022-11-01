@@ -1,7 +1,6 @@
 package EUROSTOXX
 
 import (
-	"TradingBot/src/constants"
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
@@ -17,19 +16,31 @@ type Market struct {
 func GetMarketInstance() markets.MarketInterface {
 	market := &Market{}
 
+	tradingHoursUTC := make(map[int][]int)
+
+	// Monday
+	tradingHoursUTC[1] = []int{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+	// Tuesday
+	tradingHoursUTC[2] = tradingHoursUTC[1]
+	// Wednesday
+	tradingHoursUTC[3] = tradingHoursUTC[1]
+	// Thursday
+	tradingHoursUTC[4] = tradingHoursUTC[1]
+	// Friday
+	tradingHoursUTC[5] = tradingHoursUTC[1]
+	// Saturday
+	tradingHoursUTC[6] = []int{}
+	// Sunday
+	tradingHoursUTC[0] = []int{}
+
 	market.MarketData = types.MarketData{
 		BrokerAPIName: ibroker.EUROSTOXXSymbolName,
 		SocketName:    "FXOPEN:ESX50",
 		PriceDecimals: 1,
-		TradingHours: types.TradingHours{
-			Start: 0,
-			End:   0,
-		},
-		TradeableOnWeekends: false,
-		MaxSpread:           4,
-		LogType:             loggerTypes.EUROSTOXX,
-		MarketType:          constants.IndexType,
-		Rollover:            0,
+		TradingHours:  tradingHoursUTC,
+		MaxSpread:     4,
+		LogType:       loggerTypes.EUROSTOXX,
+		Rollover:      0,
 		Timeframe: types.Timeframe{
 			Value: 4,
 			Unit:  "h",

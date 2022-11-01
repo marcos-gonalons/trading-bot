@@ -121,7 +121,7 @@ func (s *Manager) fetchDataLoop() {
 		var fetchFuncs []func()
 
 		for _, market := range s.markets {
-			if !utils.IsNowWithinTradingHours(market.GetMarketData()) {
+			if !utils.IsWithinTradingHours(time.Now(), market.GetMarketData().TradingHours) {
 				continue
 			}
 

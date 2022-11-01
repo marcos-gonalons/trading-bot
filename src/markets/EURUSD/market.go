@@ -1,13 +1,13 @@
 package EURUSD
 
 import (
-	"TradingBot/src/constants"
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
 	"TradingBot/src/strategies"
 	"TradingBot/src/strategies/emaCrossover"
 	"TradingBot/src/types"
+	"TradingBot/src/utils"
 )
 
 type Market struct {
@@ -21,14 +21,9 @@ func GetMarketInstance() markets.MarketInterface {
 		BrokerAPIName: ibroker.EURUSDSymbolName,
 		SocketName:    "FX:EURUSD",
 		PriceDecimals: 5,
-		TradingHours: types.TradingHours{
-			Start: 0,
-			End:   0,
-		},
-		TradeableOnWeekends: false,
-		MaxSpread:           999999,
-		LogType:             loggerTypes.EURUSD,
-		MarketType:          constants.ForexType,
+		TradingHours:  utils.GetForexUTCTradingHours(),
+		MaxSpread:     999999,
+		LogType:       loggerTypes.EURUSD,
 		Timeframe: types.Timeframe{
 			Value: 4,
 			Unit:  "h",

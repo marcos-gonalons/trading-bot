@@ -8,8 +8,7 @@ type MarketData struct {
 	BrokerAPIName          string
 	SocketName             string
 	PriceDecimals          int64
-	TradingHours           TradingHours
-	TradeableOnWeekends    bool
+	TradingHours           map[int][]int // Weekday => array of hours
 	MaxSpread              float64
 	LogType                logger.LogType
 	MarketType             MarketType
@@ -23,8 +22,3 @@ type MarketData struct {
 }
 
 type MarketType string
-
-type TradingHours struct {
-	Start uint
-	End   uint
-}

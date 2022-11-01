@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"TradingBot/src/constants"
 	"TradingBot/src/services/api"
-	"TradingBot/src/types"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -16,7 +14,6 @@ import (
 	funk "github.com/thoas/go-funk"
 )
 
-// FloatToString ...
 func FloatToString(v float64, decimals int64) string {
 	m := math.Pow(10, float64(decimals))
 	v = math.Round(v*m) / m
@@ -24,7 +21,6 @@ func FloatToString(v float64, decimals int64) string {
 	return fmt.Sprintf("%."+decimalsAsString+"f", v)
 }
 
-// StringToFloat ...
 func StringToFloat(v string) float64 {
 	n, err := strconv.ParseFloat(v, 64)
 	if err == nil {
@@ -33,12 +29,10 @@ func StringToFloat(v string) float64 {
 	return 0.0
 }
 
-// IntToString ...
 func IntToString(v int64) string {
 	return strconv.FormatInt(v, 10)
 }
 
-// GetRandomString ...
 func GetRandomString(length int) string {
 	var src = rand.NewSource(time.Now().UnixNano())
 	var characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -62,13 +56,11 @@ func GetRandomString(length int) string {
 	return string(requestID)
 }
 
-// GetStringRepresentation ...
 func GetStringRepresentation(data interface{}) string {
 	str, _ := json.Marshal(data)
 	return string(str)
 }
 
-// RepeatUntilSuccess ...
 func RepeatUntilSuccess(
 	processName string,
 	process func() error,
@@ -103,14 +95,12 @@ func RepeatUntilSuccess(
 	}
 }
 
-// GetTimestamp ...
 func GetTimestamp(t time.Time, timeLayout string) int64 {
 	dateString := t.Format("2006-01-02 " + timeLayout)
 	date, _ := time.Parse("2006-01-02 15:04:05", dateString)
 	return date.Unix()
 }
 
-// IsInArray ...
 func IsInArray(element string, arr []string) bool {
 	for _, el := range arr {
 		if element == el {
@@ -120,12 +110,10 @@ func IsInArray(element string, arr []string) bool {
 	return false
 }
 
-// GetBodyForHTTPRequest ...
 func GetBodyForHTTPRequest(body string) io.Reader {
 	return bytes.NewBuffer([]byte(body))
 }
 
-// GetCurrentTimeHourAndMinutes ...
 func GetCurrentTimeHourAndMinutes() (int, int) {
 	n := time.Now()
 	t := n.Add(time.Minute * -1)
@@ -136,51 +124,19 @@ func GetCurrentTimeHourAndMinutes() (int, int) {
 	return currentHour, currentMinutes
 }
 
-// IsNowWithinTradingHours ...
-func IsNowWithinTradingHours(marketData *types.MarketData) bool {
-	if marketData.MarketType == constants.ForexType {
-		if IsOutsideForexHours(time.Now()) {
-			return false
-		}
-	} else {
-		if IsNowWeekend() && !marketData.TradeableOnWeekends {
-			return false
+func IsWithinTradingHours(utcTime time.Time, tradingHours map[int][]int) bool {
+	weekday := int(utcTime.Weekday())
+	hour, _ := strconv.Atoi(utcTime.Format("15"))
+
+	for _, h := range tradingHours[weekday] {
+		if h == hour {
+			return true
 		}
 	}
 
-	if marketData.TradingHours.Start == marketData.TradingHours.End {
-		return true
-	}
-
-	var currentHourTime, timeStartingHour, timeEndingHour time.Time
-
-	currentHour, _ := GetCurrentTimeHourAndMinutes()
-	currentHourTime, _ = time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02 15:00:00"))
-
-	timeStartingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(marketData.TradingHours.Start), 0, 0, 0, currentHourTime.Location())
-	timeEndingHour = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), int(marketData.TradingHours.End), 0, 0, 0, currentHourTime.Location())
-
-	if marketData.TradingHours.End < marketData.TradingHours.Start {
-		if currentHour < int(marketData.TradingHours.End) {
-			timeStartingHour = timeStartingHour.Add(-24 * time.Hour)
-		} else if currentHour >= int(marketData.TradingHours.Start) {
-			timeEndingHour = timeEndingHour.Add(24 * time.Hour)
-		}
-	}
-
-	timeEndingHour = timeEndingHour.Add(-3 * time.Minute)
-	currentHourTime = time.Date(currentHourTime.Year(), currentHourTime.Month(), currentHourTime.Day(), currentHourTime.Hour(), time.Now().Minute(), 0, 0, currentHourTime.Location())
-
-	return currentHourTime.Unix() >= timeStartingHour.Unix() && currentHourTime.Unix() < timeEndingHour.Unix()
+	return false
 }
 
-// IsNowWeekend ...
-func IsNowWeekend() bool {
-	weekDay := time.Now().Weekday()
-	return weekDay == 0 || weekDay == 6
-}
-
-// FilterOrdersByMarket ...
 func FilterOrdersByMarket(orders []*api.Order, marketName string) []*api.Order {
 	filteredOrders := funk.Filter(orders, func(o *api.Order) bool {
 		return o.Instrument == marketName
@@ -189,7 +145,6 @@ func FilterOrdersByMarket(orders []*api.Order, marketName string) []*api.Order {
 	return filteredOrders.([]*api.Order)
 }
 
-// FilterOrdersBySide ...
 func FilterOrdersBySide(orders []*api.Order, side string) []*api.Order {
 	filteredOrders := funk.Filter(orders, func(o *api.Order) bool {
 		return o.Side == side
@@ -198,7 +153,6 @@ func FilterOrdersBySide(orders []*api.Order, side string) []*api.Order {
 	return filteredOrders.([]*api.Order)
 }
 
-// FindPositionByMarket ...
 func FindPositionByMarket(positions []*api.Position, marketName string) *api.Position {
 	p := funk.Find(positions, func(p *api.Position) bool {
 		return p.Instrument == marketName
@@ -211,7 +165,6 @@ func FindPositionByMarket(positions []*api.Position, marketName string) *api.Pos
 	return p.(*api.Position)
 }
 
-// IsExecutionTimeValid ...
 func IsExecutionTimeValid(
 	t time.Time,
 	validMonths []string,
@@ -250,26 +203,23 @@ func IsExecutionTimeValid(
 	return true
 }
 
-func IsOutsideForexHours(utcTime time.Time) bool {
-	weekday := utcTime.Weekday()
+func GetForexUTCTradingHours() map[int][]int {
+	tradingHoursUTC := make(map[int][]int)
 
-	// sun 0, mon 1, tue 2, wed 3, thu 4, fri 5, sat 6
-	if weekday >= 1 && weekday <= 4 {
-		return false
-	}
+	// Monday
+	tradingHoursUTC[1] = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
+	// Tuesday
+	tradingHoursUTC[2] = tradingHoursUTC[1]
+	// Wednesday
+	tradingHoursUTC[3] = tradingHoursUTC[1]
+	// Thursday
+	tradingHoursUTC[4] = tradingHoursUTC[1]
+	// Friday
+	tradingHoursUTC[5] = []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+	// Saturday
+	tradingHoursUTC[6] = []int{}
+	// Sunday
+	tradingHoursUTC[0] = []int{21, 22, 23}
 
-	if weekday == 6 { // saturday
-		return true
-	}
-
-	hour, _ := strconv.Atoi(utcTime.Format("15"))
-	if weekday == 5 { // friday
-		return hour > 20
-	}
-
-	if weekday == 0 { // sunday
-		return hour < 21
-	}
-
-	return false
+	return tradingHoursUTC
 }
