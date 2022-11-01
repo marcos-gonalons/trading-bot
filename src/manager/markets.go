@@ -12,7 +12,6 @@ import (
 	"TradingBot/src/markets/USDCAD"
 	"TradingBot/src/markets/USDCHF"
 	"TradingBot/src/services/candlesHandler"
-	"TradingBot/src/services/candlesHandler/indicators"
 )
 
 func (s *Manager) GetMarkets() []markets.MarketInterface {
@@ -34,7 +33,7 @@ func (s *Manager) GetMarkets() []markets.MarketInterface {
 		instance.SetCandlesHandler(&candlesHandler.Service{
 			Logger:            s.ServicesContainer.Logger,
 			MarketData:        instance.GetMarketData(),
-			IndicatorsBuilder: indicators.GetInstance(),
+			IndicatorsBuilder: s.ServicesContainer.IndicatorsService,
 		})
 	}
 
