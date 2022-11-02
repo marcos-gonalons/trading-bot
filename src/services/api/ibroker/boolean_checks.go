@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-// todo: separate from API instance, they should be static methods
-
 // IsSessionDisconnectedError ...
 func (s *API) IsSessionDisconnectedError(err error) bool {
 	if err == nil {

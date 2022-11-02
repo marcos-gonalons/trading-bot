@@ -8,8 +8,8 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
+	"strings"
 
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/simulator"
@@ -20,7 +20,9 @@ import (
 const initialBalance = float64(5000)
 
 func main() {
-	candlesFile := getCSVFile()
+	marketName := getMarketName()
+
+	candlesFile := getCSVFile(marketName)
 
 	csvLines, err := csv.NewReader(candlesFile).ReadAll()
 	if err != nil {
@@ -48,7 +50,7 @@ func main() {
 		&manager.Manager{
 			ServicesContainer: container,
 		},
-		getMarketName(),
+		marketName,
 	)
 
 	combinations := GetCombinations()
@@ -60,8 +62,8 @@ func main() {
 
 }
 
-func getCSVFile() *os.File {
-	directory := "./"
+func getCSVFile(marketName string) *os.File {
+	directory := "./.sim-candles/"
 	osDir, err := os.Open(directory)
 	if err != nil {
 		panic("Error opening the directory -> " + err.Error())
@@ -72,8 +74,9 @@ func getCSVFile() *os.File {
 	}
 
 	var csvFiles []os.FileInfo
+	marketName = strings.Replace(marketName, "/", "", -1)
 	for _, file := range files {
-		if filepath.Ext(file.Name()) != ".csv" {
+		if file.Name() != marketName+".csv" {
 			continue
 		}
 		csvFiles = append(csvFiles, file)
@@ -123,7 +126,7 @@ func getMarketInstance(
 }
 
 func getMarketName() string {
-	if len(os.Args) != 2 {
+	if len(os.Args) < 2 {
 		panic("market not specified")
 	}
 

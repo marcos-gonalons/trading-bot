@@ -47,6 +47,7 @@ type ParamCombinations struct {
 }
 
 func GetCombinations() *ParamCombinations {
+	return nil
 	var c ParamCombinations
 
 	var priceAdjustment float64 = float64(1) / float64(10000)
