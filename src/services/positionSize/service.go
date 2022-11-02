@@ -40,7 +40,7 @@ func (s *Service) SetStrategy(st uint) {
 
 func GetInstance() Interface {
 	return &Service{
-		//strategy: BASED_ON_MULTIPLIER,
-		strategy: BASED_ON_MIN_SIZE,
+		strategy: BASED_ON_MULTIPLIER,
+		//strategy: BASED_ON_MIN_SIZE,
 	}
 }
