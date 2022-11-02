@@ -104,6 +104,6 @@ func EmaCrossoverShorts(params strategies.Params) {
 		Side:              ibroker.ShortSide,
 		WithPendingOrders: false,
 		OrderType:         ibroker.MarketType,
-		MinPositionSize:   params.MarketStrategyParams.MinPositionSize,
+		MinPositionSize:   params.MarketData.MinPositionSize,
 	})
 }

@@ -104,6 +104,6 @@ func EmaCrossoverLongs(params strategies.Params) {
 		Side:              ibroker.LongSide,
 		WithPendingOrders: false,
 		OrderType:         ibroker.MarketType,
-		MinPositionSize:   params.MarketStrategyParams.MinPositionSize,
+		MinPositionSize:   params.MarketData.MinPositionSize,
 	})
 }

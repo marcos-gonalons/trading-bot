@@ -24,7 +24,6 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 	MaxSecondsOpenTrade:              0,
 
 	MaxTradeExecutionPriceDifference: 9999,
-	MinPositionSize:                  10000,
 }
 
 var EMACrossoverShortParams = types.MarketStrategyParams{
@@ -47,5 +46,4 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	MaxSecondsOpenTrade:              0,
 
 	MaxTradeExecutionPriceDifference: 9999,
-	MinPositionSize:                  10000,
 }

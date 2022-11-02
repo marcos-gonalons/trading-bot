@@ -26,7 +26,6 @@ type MarketStrategyParams struct {
 
 	MaxTradeExecutionPriceDifference float64
 	MaxSecondsOpenTrade              int64
-	MinPositionSize                  int64
 
 	ValidTradingTimes *TradingTimes
 

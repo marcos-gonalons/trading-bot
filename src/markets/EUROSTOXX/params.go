@@ -13,14 +13,13 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 		Past:   0,
 	},
 	MinStopLossDistance:              0 * priceAdjustment,
-	MaxStopLossDistance:              950 * priceAdjustment,
+	MaxStopLossDistance:              600 * priceAdjustment,
 	TakeProfitDistance:               60 * priceAdjustment,
 	MinProfit:                        9999 * priceAdjustment,
 	CandlesAmountWithoutEMAsCrossing: 0,
 	MaxSecondsOpenTrade:              0,
 
 	MaxTradeExecutionPriceDifference: 9999,
-	MinPositionSize:                  1,
 }
 
 var EMACrossoverShortParams = types.MarketStrategyParams{
@@ -32,8 +31,8 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 		Past:   0,
 	},
 	MinStopLossDistance: 0 * priceAdjustment,
-	MaxStopLossDistance: 950 * priceAdjustment,
-	TakeProfitDistance:  40 * priceAdjustment,
+	MaxStopLossDistance: 600 * priceAdjustment,
+	TakeProfitDistance:  45 * priceAdjustment,
 	MinProfit:           99999 * priceAdjustment,
 	TrailingTakeProfit: &types.TrailingTakeProfit{
 		SLDistanceShortForTighterTP: 20 * priceAdjustment,
@@ -43,5 +42,4 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	MaxSecondsOpenTrade:              0,
 
 	MaxTradeExecutionPriceDifference: 9999,
-	MinPositionSize:                  1,
 }

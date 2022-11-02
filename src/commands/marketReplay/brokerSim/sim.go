@@ -6,9 +6,6 @@ import (
 	"TradingBot/src/types"
 )
 
-const SPREAD = float64(.00012)
-const stopOrderSlippage = float64(.00012)
-
 func OnNewCandle(
 	APIData api.DataInterface,
 	simulatorAPI api.Interface,
@@ -28,7 +25,7 @@ func OnNewCandle(
 			if position != nil {
 				panic("the strategies must never create a market order if there is already an open position")
 			}
-			positions = append(positions, createNewPosition(lastCandle.Open, order, order.Qty, SPREAD/2, lastCandle))
+			positions = append(positions, createNewPosition(lastCandle.Open, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle))
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
@@ -36,7 +33,7 @@ func OnNewCandle(
 			continue
 		}
 
-		orderExecutionPrice := getOrderExecutionPrice(simulatorAPI, order, SPREAD)
+		orderExecutionPrice := getOrderExecutionPrice(simulatorAPI, order, market.GetMarketData().SimulatorData.Spread)
 		positionPrice := float64(0)
 
 		if isPriceWithinCandle(orderExecutionPrice, lastCandle) {
@@ -55,7 +52,7 @@ func OnNewCandle(
 			if order.ParentID != nil {
 				continue
 			}
-			positions = append(positions, createNewPosition(positionPrice, order, order.Qty, SPREAD/2, lastCandle))
+			positions = append(positions, createNewPosition(positionPrice, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle))
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
@@ -70,7 +67,7 @@ func OnNewCandle(
 					order,
 					position,
 					func(price float64, order *api.Order) float64 {
-						return addSlippage(price, order, stopOrderSlippage)
+						return addSlippage(price, order, market.GetMarketData().SimulatorData.Slippage)
 					},
 					market.GetMarketData().EurExchangeRate,
 					lastCandle,
@@ -84,7 +81,7 @@ func OnNewCandle(
 					if order.Qty > position.Qty {
 						simulatorAPI.ClosePosition(position.Instrument)
 						p, _ := simulatorAPI.GetPositions()
-						positions = append(p, createNewPosition(positionPrice, order, order.Qty-position.Qty, stopOrderSlippage, lastCandle))
+						positions = append(p, createNewPosition(positionPrice, order, order.Qty-position.Qty, market.GetMarketData().SimulatorData.Slippage, lastCandle))
 						simulatorAPI.SetPositions(positions)
 						break
 					} else {

@@ -8,6 +8,7 @@ type Service struct {
 
 const BASED_ON_STOP_LOSS_DISTANCE = 0
 const BASED_ON_MULTIPLIER = 1
+const BASED_ON_MIN_SIZE = 2
 
 func (s *Service) GetPositionSize(p GetPositionSizeParams) float64 {
 	switch s.strategy {
@@ -25,6 +26,8 @@ func (s *Service) GetPositionSize(p GetPositionSizeParams) float64 {
 			return p.MinPositionSize
 		}
 		return size
+	case BASED_ON_MIN_SIZE:
+		return p.MinPositionSize
 	default:
 		panic("Invalid position size strategy")
 	}
@@ -37,6 +40,7 @@ func (s *Service) SetStrategy(st uint) {
 
 func GetInstance() Interface {
 	return &Service{
-		strategy: BASED_ON_MULTIPLIER,
+		//strategy: BASED_ON_MULTIPLIER,
+		strategy: BASED_ON_MIN_SIZE,
 	}
 }

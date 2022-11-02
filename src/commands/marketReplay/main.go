@@ -17,6 +17,8 @@ import (
 	"TradingBot/src/manager"
 )
 
+const initialBalance = float64(5000)
+
 func main() {
 	candlesFile := getCSVFile()
 
@@ -37,9 +39,9 @@ func main() {
 	container.SetAPI(simulatorAPI)
 
 	simulatorAPI.SetState(&api.State{
-		Balance:      5000,
+		Balance:      initialBalance,
 		UnrealizedPL: 0,
-		Equity:       5000,
+		Equity:       initialBalance,
 	})
 
 	market := getMarketInstance(
@@ -157,5 +159,8 @@ func candlesLoop(
 
 		// fmt.Println(float64(i) * 100.0 / float64(len(csvLines)))
 	}
+
 	fmt.Println("Total trades -> ", simulatorAPI.GetTrades())
+	state, _ := simulatorAPI.GetState()
+	fmt.Println("Profits -> ", state.Balance-initialBalance)
 }

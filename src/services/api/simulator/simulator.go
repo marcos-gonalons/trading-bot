@@ -1,7 +1,6 @@
 package simulator
 
 import (
-	"TradingBot/src/commands/marketReplay/brokerSim"
 	"TradingBot/src/services/httpclient"
 	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
@@ -69,15 +68,6 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 		takeProfit.Instrument = order.Instrument
 		takeProfit.Side = bracketOrdersSide
 
-		if s.IsMarketOrder(order) {
-			if s.IsLongOrder(order) {
-				*takeProfit.LimitPrice += brokerSim.SPREAD / 2
-			}
-			if s.IsShortOrder(order) {
-				*takeProfit.LimitPrice -= brokerSim.SPREAD / 2
-			}
-		}
-
 		s.orders = append(s.orders, &takeProfit)
 	}
 
@@ -90,15 +80,6 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 		stopLoss.ParentID = &order.ID
 		stopLoss.Instrument = order.Instrument
 		stopLoss.Side = bracketOrdersSide
-
-		if s.IsMarketOrder(order) {
-			if s.IsLongOrder(order) {
-				*stopLoss.StopPrice += brokerSim.SPREAD / 2
-			}
-			if s.IsShortOrder(order) {
-				*stopLoss.StopPrice -= brokerSim.SPREAD / 2
-			}
-		}
 
 		s.orders = append(s.orders, &stopLoss)
 	}

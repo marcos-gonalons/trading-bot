@@ -78,7 +78,7 @@ func ResistanceBreakoutAnticipation(params strategies.Params) {
 		Side:              ibroker.LongSide,
 		WithPendingOrders: params.MarketStrategyParams.WithPendingOrders,
 		OrderType:         ibroker.StopType,
-		MinPositionSize:   params.MarketStrategyParams.MinPositionSize,
+		MinPositionSize:   params.MarketData.MinPositionSize,
 	}
 
 	if utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName) != nil {

@@ -50,6 +50,11 @@ func GetMarketInstance() markets.MarketInterface {
 		ShortSetupParams:       &EMACrossoverShortParams,
 		EurExchangeRate:        1,
 		PositionSizeMultiplier: 2,
+		MinPositionSize:        1,
+		SimulatorData: &types.SimulatorData{
+			Spread:   2,
+			Slippage: 2,
+		},
 	}
 
 	market.ToExecuteOnNewCandle = market.GetFuncToExecuteOnNewCandle()
@@ -59,28 +64,33 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		s.Log("Calling EmaCrossoverLongs strategy")
-		emaCrossover.EmaCrossoverLongs(strategies.Params{
-			Type:                 ibroker.LongSide,
-			MarketStrategyParams: s.MarketData.LongSetupParams,
-			MarketData:           &s.MarketData,
-			CandlesHandler:       s.CandlesHandler,
-			Market:               s,
-			Container:            s.Container,
-		})
 
-		// No shorts for SP500. Combining longs and shorts not very worth it for this market.
-		// Better just stick with longs.
-		/*
-			s.Log("Calling EmaCrossoverShorts strategy")
-			emaCrossover.EmaCrossoverShorts(strategies.Params{
-				Type:                 ibroker.ShortSide,
-				MarketStrategyParams: s.MarketData.ShortSetupParams,
+		if s.MarketData.LongSetupParams != nil {
+			s.Log("Calling EmaCrossoverLongs strategy")
+			emaCrossover.EmaCrossoverLongs(strategies.Params{
+				Type:                 ibroker.LongSide,
+				MarketStrategyParams: s.MarketData.LongSetupParams,
 				MarketData:           &s.MarketData,
 				CandlesHandler:       s.CandlesHandler,
 				Market:               s,
 				Container:            s.Container,
 			})
+		}
+
+		// No shorts for SP500. Combining longs and shorts not very worth it for this market.
+		// Better just stick with longs.
+		/*
+			if s.MarketData.ShortSetupParams != nil {
+				s.Log("Calling EmaCrossoverShorts strategy")
+				emaCrossover.EmaCrossoverShorts(strategies.Params{
+					Type:                 ibroker.ShortSide,
+					MarketStrategyParams: s.MarketData.ShortSetupParams,
+					MarketData:           &s.MarketData,
+					CandlesHandler:       s.CandlesHandler,
+					Market:               s,
+					Container:            s.Container,
+				})
+			}
 		*/
 	}
 }

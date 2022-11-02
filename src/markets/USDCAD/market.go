@@ -34,6 +34,11 @@ func GetMarketInstance() markets.MarketInterface {
 		ShortSetupParams:       &EMACrossoverShortParams,
 		EurExchangeRate:        .78,
 		PositionSizeMultiplier: 1,
+		MinPositionSize:        10000,
+		SimulatorData: &types.SimulatorData{
+			Spread:   .00012,
+			Slippage: .00012,
+		},
 	}
 
 	market.ToExecuteOnNewCandle = market.GetFuncToExecuteOnNewCandle()
@@ -43,23 +48,28 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		s.Log("Calling EmaCrossoverLongs strategy")
-		emaCrossover.EmaCrossoverLongs(strategies.Params{
-			Type:                 ibroker.LongSide,
-			MarketStrategyParams: s.MarketData.LongSetupParams,
-			MarketData:           &s.MarketData,
-			CandlesHandler:       s.CandlesHandler,
-			Market:               s,
-			Container:            s.Container,
-		})
-		s.Log("Calling EmaCrossoverShorts strategy")
-		emaCrossover.EmaCrossoverShorts(strategies.Params{
-			Type:                 ibroker.ShortSide,
-			MarketStrategyParams: s.MarketData.ShortSetupParams,
-			MarketData:           &s.MarketData,
-			CandlesHandler:       s.CandlesHandler,
-			Market:               s,
-			Container:            s.Container,
-		})
+		if s.MarketData.LongSetupParams != nil {
+			s.Log("Calling EmaCrossoverLongs strategy")
+			emaCrossover.EmaCrossoverLongs(strategies.Params{
+				Type:                 ibroker.LongSide,
+				MarketStrategyParams: s.MarketData.LongSetupParams,
+				MarketData:           &s.MarketData,
+				CandlesHandler:       s.CandlesHandler,
+				Market:               s,
+				Container:            s.Container,
+			})
+		}
+
+		if s.MarketData.ShortSetupParams != nil {
+			s.Log("Calling EmaCrossoverShorts strategy")
+			emaCrossover.EmaCrossoverShorts(strategies.Params{
+				Type:                 ibroker.ShortSide,
+				MarketStrategyParams: s.MarketData.ShortSetupParams,
+				MarketData:           &s.MarketData,
+				CandlesHandler:       s.CandlesHandler,
+				Market:               s,
+				Container:            s.Container,
+			})
+		}
 	}
 }

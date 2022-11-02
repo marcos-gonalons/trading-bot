@@ -4,6 +4,11 @@ import (
 	logger "TradingBot/src/services/logger/types"
 )
 
+type SimulatorData struct {
+	Spread   float64
+	Slippage float64
+}
+
 type MarketData struct {
 	BrokerAPIName          string
 	SocketName             string
@@ -19,6 +24,8 @@ type MarketData struct {
 	LongSetupParams        *MarketStrategyParams
 	ShortSetupParams       *MarketStrategyParams
 	PositionSizeMultiplier float64
+	MinPositionSize        int64
+	SimulatorData          *SimulatorData
 }
 
 type MarketType string

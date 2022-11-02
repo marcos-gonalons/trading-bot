@@ -13,14 +13,13 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 		Past:   0,
 	},
 	MinStopLossDistance:              0 * priceAdjustment,
-	MaxStopLossDistance:              900 * priceAdjustment,
+	MaxStopLossDistance:              600 * priceAdjustment,
 	TakeProfitDistance:               160 * priceAdjustment,
 	MinProfit:                        100 * priceAdjustment,
 	CandlesAmountWithoutEMAsCrossing: 3,
 	MaxSecondsOpenTrade:              0,
 
 	MaxTradeExecutionPriceDifference: 9999,
-	MinPositionSize:                  1,
 }
 
 var EMACrossoverShortParams = types.MarketStrategyParams{
@@ -43,5 +42,4 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	MaxSecondsOpenTrade:              0,
 
 	MaxTradeExecutionPriceDifference: 9999,
-	MinPositionSize:                  1,
 }
