@@ -47,8 +47,6 @@ type ParamCombinations struct {
 }
 
 func GetCombinations() *ParamCombinations {
-	return nil
-
 	var c ParamCombinations
 
 	var priceAdjustment float64 = float64(1) / float64(10000)
@@ -60,24 +58,24 @@ func GetCombinations() *ParamCombinations {
 	c.MaxTradeExecutionPriceDifference = funk.Map([]float64{999999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.LimitAndStopOrderPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossPriceOffset = funk.Map([]float64{20}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossPriceOffset = funk.Map([]float64{25}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.MinStopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxStopLossDistance = funk.Map([]float64{100, 200, 300, 400, 500, 600, 700, 800, 900}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{620, 640, 660, 680, 700}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.StopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{160}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MinProfit = funk.Map([]float64{100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{330}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinProfit = funk.Map([]float64{220}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.TPDistanceShortForTighterSL = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.SLDistanceShortForTighterTP = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceShortForTighterTP = funk.Map([]float64{40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{-180}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{0}
-	c.PastCandles = []int{0}
-	c.CandlesAmountWithoutEMAsCrossing = []int{3}
+	c.FutureCandles = []int{25}
+	c.PastCandles = []int{45}
+	c.CandlesAmountWithoutEMAsCrossing = []int{21}
 
 	return &c
 }
@@ -156,8 +154,8 @@ func candlesLoopWithCombinations(
 
 																				state, _ := simulatorAPI.GetState()
 
-																				market.SetStrategyParams(&params, nil)
-																				//market.SetStrategyParams(nil, &params)
+																				//market.SetStrategyParams(&params, nil)
+																				market.SetStrategyParams(nil, &params)
 																				candlesLoop(csvLines, market, container, simulatorAPI)
 
 																				state, _ = simulatorAPI.GetState()
