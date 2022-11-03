@@ -242,7 +242,7 @@ func (s *BaseMarketClass) SavePendingOrder(side string, validTimes *types.Tradin
 		s.Log("Closing the current order and saving it for the future, since now it's not the time for profitable trading.")
 		s.Log("This is the current order -> " + utils.GetStringRepresentation(mainOrder))
 
-		slOrder, tpOrder := s.getSlAndTpOrders(mainOrder.ID, workingOrders)
+		slOrder, tpOrder := s.Container.API.GetSLAndTPOrders(mainOrder.ID, workingOrders)
 
 		if slOrder != nil {
 			mainOrder.StopLoss = slOrder.StopPrice
@@ -481,27 +481,4 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 func (s *BaseMarketClass) SetStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams) {
 	s.MarketData.LongSetupParams = longs
 	s.MarketData.ShortSetupParams = shorts
-}
-
-// todo: move away from this base class, maybe utils or maybe API static method
-func (s *BaseMarketClass) getSlAndTpOrders(
-	parentID string,
-	orders []*api.Order,
-) (*api.Order, *api.Order) {
-	var slOrder *api.Order
-	var tpOrder *api.Order
-	for _, workingOrder := range orders {
-		if workingOrder.ParentID == nil || *workingOrder.ParentID != parentID {
-			continue
-		}
-
-		if s.Container.API.IsLimitOrder(workingOrder) {
-			tpOrder = workingOrder
-		}
-		if s.Container.API.IsStopOrder(workingOrder) {
-			slOrder = workingOrder
-		}
-	}
-
-	return slOrder, tpOrder
 }

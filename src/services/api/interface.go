@@ -59,6 +59,7 @@ type Interface interface {
 
 	GetBracketOrders(marketName string) (slOrder, tpOrder *Order)
 	GetWorkingOrderWithBracketOrders(side string, marketName string, orders []*Order) []*Order
+	GetSLAndTPOrders(parentID string, orders []*Order) (*Order, *Order)
 }
 
 type DataInterface interface {

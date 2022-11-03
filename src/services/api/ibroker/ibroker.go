@@ -430,6 +430,25 @@ func (s *API) GetWorkingOrderWithBracketOrders(side string, marketName string, o
 	return workingOrders
 }
 
+func (s *API) GetSLAndTPOrders(parentID string, orders []*api.Order) (*api.Order, *api.Order) {
+	var slOrder *api.Order
+	var tpOrder *api.Order
+	for _, workingOrder := range orders {
+		if workingOrder.ParentID == nil || *workingOrder.ParentID != parentID {
+			continue
+		}
+
+		if s.IsLimitOrder(workingOrder) {
+			tpOrder = workingOrder
+		}
+		if s.IsStopOrder(workingOrder) {
+			slOrder = workingOrder
+		}
+	}
+
+	return slOrder, tpOrder
+}
+
 func (s *API) apiCall(
 	logType loggerTypes.LogType,
 	call func(setHeaders func(rq *http.Request), optionsRequest func(url string, httpMethod string) error) (interface{}, error),

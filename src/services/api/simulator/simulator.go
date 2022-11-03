@@ -6,6 +6,7 @@ import (
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"errors"
+	"fmt"
 	"math"
 	"time"
 
@@ -189,28 +190,27 @@ func (s *API) AddTrade(
 	s.state.Equity = s.state.Balance
 	s.trades++
 
-	/*
-		var side string = "long"
-		if s.IsShortPosition(position) {
-			side = "short"
-		}
-		fmt.Println(
-			side,
-			" | ",
-			utils.FloatToString(position.Qty, 0),
-			" | ",
-			utils.FloatToString(position.AvgPrice, 5),
-			" | ",
-			utils.FloatToString(finalPrice, 5),
-			" | ",
-			utils.FloatToString(tradeResult, 2),
-			" | ",
-			utils.FloatToString(s.state.Equity, 2),
-			" | ",
-			time.Unix(*position.CreatedAt, 0).Format("02/01/2006 15:04:05"),
-			" | ",
-			time.Unix(lastCandle.Timestamp, 0).Format("02/01/2006 15:04:05"),
-		)*/
+	var side string = "long"
+	if s.IsShortPosition(position) {
+		side = "short"
+	}
+	fmt.Println(
+		side,
+		" | ",
+		utils.FloatToString(position.Qty, 0),
+		" | ",
+		utils.FloatToString(position.AvgPrice, 5),
+		" | ",
+		utils.FloatToString(finalPrice, 5),
+		" | ",
+		utils.FloatToString(tradeResult, 2),
+		" | ",
+		utils.FloatToString(s.state.Equity, 2),
+		" | ",
+		time.Unix(*position.CreatedAt, 0).Format("02/01/2006 15:04:05"),
+		" | ",
+		time.Unix(lastCandle.Timestamp, 0).Format("02/01/2006 15:04:05"),
+	)
 }
 
 func (s *API) GetTrades() int64 {
@@ -400,6 +400,27 @@ func (s *API) GetWorkingOrderWithBracketOrders(side string, marketName string, o
 	}
 
 	return workingOrders
+}
+
+// todo: this is same method as in ibroker api
+// maybe create a base api class to contain this common logic between api instances
+func (s *API) GetSLAndTPOrders(parentID string, orders []*api.Order) (*api.Order, *api.Order) {
+	var slOrder *api.Order
+	var tpOrder *api.Order
+	for _, workingOrder := range orders {
+		if workingOrder.ParentID == nil || *workingOrder.ParentID != parentID {
+			continue
+		}
+
+		if s.IsLimitOrder(workingOrder) {
+			tpOrder = workingOrder
+		}
+		if s.IsStopOrder(workingOrder) {
+			slOrder = workingOrder
+		}
+	}
+
+	return slOrder, tpOrder
 }
 
 // CreateAPIServiceInstance ...
