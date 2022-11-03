@@ -44,6 +44,22 @@ func TestIsPriceWithinCandle(t *testing.T) {
 
 }
 
-func TestgetOrderExecutionPrice(t *testing.T) {
+func TestMarketOrderCreatesNewPosition(t *testing.T) {
+
+}
+
+func TestProcessesLimitOrderCorrectly(t *testing.T) {
+
+}
+
+func TestProcessesStopOrderCorrectly(t *testing.T) {
+
+}
+
+func TestProcessesTakeProfitCorrectly(t *testing.T) {
+
+}
+
+func TestProcessesStopLossCorrectly(t *testing.T) {
 
 }

@@ -25,7 +25,7 @@ func OnNewCandle(
 			if position != nil {
 				panic("the strategies must never create a market order if there is already an open position")
 			}
-			positions = append(positions, createNewPosition(lastCandle.Open, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle))
+			positions = append(positions, createNewPosition(lastCandle.Open, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle, simulatorAPI))
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
@@ -49,10 +49,13 @@ func OnNewCandle(
 
 		position := findPosition(positions, order.Instrument)
 		if position == nil {
-			if order.ParentID != nil {
+			if order.ParentID != nil { // If the price reaches the SL or TP order, there is nothing to do since there isn't an open position.
 				continue
 			}
-			positions = append(positions, createNewPosition(price, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle))
+
+			// Here it means that we triggered a limit or a stop order, and there wasn't any open position
+			// So we need to create the position
+			positions = append(positions, createNewPosition(price, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle, simulatorAPI))
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
@@ -63,11 +66,12 @@ func OnNewCandle(
 
 				panic("right now it will never enter here if everything works as expected")
 			} else {
+				// This is a SL or TP order.
 				simulatorAPI.AddTrade(
 					order,
 					position,
 					func(price float64, order *api.Order) float64 {
-						return addSlippage(price, order, market.GetMarketData().SimulatorData.Slippage)
+						return addSlippage(price, order, market.GetMarketData().SimulatorData.Slippage, simulatorAPI)
 					},
 					market.GetMarketData().EurExchangeRate,
 					lastCandle,
@@ -81,7 +85,7 @@ func OnNewCandle(
 					if order.Qty > position.Qty {
 						simulatorAPI.ClosePosition(position.Instrument)
 						p, _ := simulatorAPI.GetPositions()
-						positions = append(p, createNewPosition(price, order, order.Qty-position.Qty, market.GetMarketData().SimulatorData.Slippage, lastCandle))
+						positions = append(p, createNewPosition(price, order, order.Qty-position.Qty, market.GetMarketData().SimulatorData.Slippage, lastCandle, simulatorAPI))
 						simulatorAPI.SetPositions(positions)
 						break
 					} else {
@@ -165,8 +169,9 @@ func createNewPosition(
 	size float64,
 	slippage float64,
 	lastCandle *types.Candle,
+	simulatorAPI api.Interface,
 ) *api.Position {
-	price := addSlippage(positionPrice, order, slippage)
+	price := addSlippage(positionPrice, order, slippage, simulatorAPI)
 
 	return &api.Position{
 		Instrument:   order.Instrument,
@@ -178,15 +183,15 @@ func createNewPosition(
 	}
 }
 
-func addSlippage(price float64, order *api.Order, slippage float64) float64 {
-	if order.Type == "limit" {
+func addSlippage(price float64, order *api.Order, slippage float64, simulatorAPI api.Interface) float64 {
+	if simulatorAPI.IsLimitOrder(order) {
 		return price
 	}
 
-	if order.Side == "buy" {
+	if simulatorAPI.IsLongOrder(order) {
 		return price + slippage
 	}
-	if order.Side == "sell" {
+	if simulatorAPI.IsShortOrder(order) {
 		return price - slippage
 	}
 

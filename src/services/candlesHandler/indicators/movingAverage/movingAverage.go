@@ -11,7 +11,7 @@ type MovingAverage struct{}
 const EMA_SMOOTHING_FACTOR = 2
 
 func (s *MovingAverage) AddData(candles []*types.Candle, lastCandleOnly bool) {
-	emaLengths := []int64{9, 21, 200}
+	emaLengths := []int64{9, 21, 50, 200}
 
 	start := 0
 	if lastCandleOnly {
