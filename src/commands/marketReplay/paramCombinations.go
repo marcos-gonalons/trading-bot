@@ -7,6 +7,7 @@ import (
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"fmt"
+	"os"
 	"reflect"
 
 	"github.com/thoas/go-funk"
@@ -48,6 +49,7 @@ type ParamCombinations struct {
 }
 
 const LONGS_OR_SHORTS = "longs"
+const REPORT_FILE_PATH = "./.combinations-report.txt"
 
 func GetCombinations() (*ParamCombinations, int) {
 	var c ParamCombinations
@@ -56,29 +58,29 @@ func GetCombinations() (*ParamCombinations, int) {
 
 	c.RiskPercentage = []float64{1}
 	c.MaxSecondsOpenTrade = []int64{0}
-	c.TrendCandles = []int{0, 2}
+	c.TrendCandles = []int{0}
 	c.TrendDiff = funk.Map([]float64{1}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.MaxTradeExecutionPriceDifference = funk.Map([]float64{999999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.LimitAndStopOrderPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-
-	c.StopLossPriceOffset = funk.Map([]float64{25}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-
-	c.MinStopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxStopLossDistance = funk.Map([]float64{620, 640, 660, 680, 700}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.StopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{330}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MinProfit = funk.Map([]float64{220}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossPriceOffset = funk.Map([]float64{-150, -125, -100, -75, -50, -25, 0, 25, 50, 75, 100, 125, 150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TPDistanceShortForTighterSL = funk.Map([]float64{0, 10, 20, 30, 40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinStopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{800}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+
+	c.TakeProfitDistance = funk.Map([]float64{20, 50, 80, 110, 140, 170, 200, 230, 260, 290, 320, 350, 380, 410}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinProfit = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+
+	c.TPDistanceShortForTighterSL = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.SLDistanceShortForTighterTP = funk.Map([]float64{40, 3}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{-180}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{25, 5}
-	c.PastCandles = []int{45}
-	c.CandlesAmountWithoutEMAsCrossing = []int{21}
+	c.FutureCandles = []int{0, 10, 25, 40}
+	c.PastCandles = []int{0, 10, 25, 40}
+	c.CandlesAmountWithoutEMAsCrossing = []int{0}
 
 	return &c, getTotalLength(&c)
 }
@@ -99,6 +101,9 @@ func candlesLoopWithCombinations(
 	var bestCombination *types.MarketStrategyParams
 
 	i := 0
+
+	createReportFile()
+
 	for _, RiskPercentage := range c.RiskPercentage {
 		for _, MinStopLossDistance := range c.MinStopLossDistance {
 			for _, MaxStopLossDistance := range c.MaxStopLossDistance {
@@ -173,8 +178,8 @@ func candlesLoopWithCombinations(
 																					bestProfits = profits
 																					bestCombination = &params
 
-																					fmt.Println("New best combination", profits, utils.GetStringRepresentation(bestCombination))
-																					fmt.Println("\n\n")
+																					write("\n\nNew best combination " + utils.FloatToString(profits, 2))
+																					write("\n" + utils.GetStringRepresentation(bestCombination))
 																				}
 
 																				fmt.Println(float64(i)*100.0/float64(combinationsLength), "%")
@@ -199,7 +204,8 @@ func candlesLoopWithCombinations(
 		}
 	}
 
-	fmt.Println("\n\n\nDone! Best combination -> ", bestProfits, utils.GetStringRepresentation(bestCombination))
+	write("\n\n\nDone! Best combination -> " + utils.FloatToString(bestProfits, 2))
+	write(utils.GetStringRepresentation(bestCombination))
 }
 
 func getTotalLength(c *ParamCombinations) int {
@@ -214,4 +220,33 @@ func getTotalLength(c *ParamCombinations) int {
 	}
 
 	return length
+}
+
+func createReportFile() {
+	os.Remove(REPORT_FILE_PATH)
+
+	file, err := os.OpenFile(REPORT_FILE_PATH, os.O_CREATE|os.O_RDWR, 0777)
+	if err != nil {
+		panic("error creating report file" + err.Error())
+	}
+	defer file.Close()
+	if err != nil {
+		file, err = os.Create(REPORT_FILE_PATH)
+		if err != nil {
+			panic("error creating report file")
+		}
+		defer file.Close()
+	}
+}
+
+func write(v string) {
+	fmt.Println(v)
+
+	file, err := os.OpenFile(REPORT_FILE_PATH, os.O_APPEND|os.O_WRONLY, 0777)
+	if err != nil {
+		panic("error writing to file" + err.Error())
+	}
+	defer file.Close()
+
+	file.Write([]byte(v))
 }

@@ -5,4 +5,5 @@ logs/
 .candles-csv/
 .sim-candles/
 .tests-coverage/
+.combinations-report.txt
 error_output.txt
