@@ -36,7 +36,7 @@ func Request(
 	rq, err := http.NewRequest(
 		http.MethodPost,
 		endpoint,
-		getRequestBody(params.Order),
+		getRequestBody(params.Order, httpClient),
 	)
 	if err != nil {
 		return
@@ -71,7 +71,7 @@ func Request(
 	return
 }
 
-func getRequestBody(order *api.Order) io.Reader {
+func getRequestBody(order *api.Order, httpClient httpclient.Interface) io.Reader {
 	body := "" +
 		"currentAsk=" + *order.StringValues.CurrentAsk + "&" +
 		"currentBid=" + *order.StringValues.CurrentBid + "&" +
@@ -97,5 +97,5 @@ func getRequestBody(order *api.Order) io.Reader {
 		body = body + "&" + "takeProfit=" + *order.StringValues.TakeProfit
 	}
 
-	return utils.GetBodyForHTTPRequest(body)
+	return httpClient.GetBodyForHTTPRequest(body)
 }

@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/httpclient"
 	logger "TradingBot/src/services/logger/types"
-	"TradingBot/src/utils"
 	"errors"
 	"io"
 	"net/http"
@@ -36,7 +35,7 @@ func Request(
 	rq, err := http.NewRequest(
 		http.MethodPut,
 		endpoint,
-		getRequestBody(params),
+		getRequestBody(params, httpClient),
 	)
 	if err != nil {
 		return
@@ -71,7 +70,7 @@ func Request(
 	return
 }
 
-func getRequestBody(params *RequestParameters) io.Reader {
+func getRequestBody(params *RequestParameters, httpClient httpclient.Interface) io.Reader {
 	order := params.Order
 
 	body := "" +
@@ -99,5 +98,5 @@ func getRequestBody(params *RequestParameters) io.Reader {
 		body = body + "&" + "takeProfit=" + *order.StringValues.TakeProfit
 	}
 
-	return utils.GetBodyForHTTPRequest(body)
+	return httpClient.GetBodyForHTTPRequest(body)
 }

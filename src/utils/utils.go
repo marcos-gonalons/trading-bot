@@ -2,10 +2,8 @@ package utils
 
 import (
 	"TradingBot/src/services/api"
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"math/rand"
 	"strconv"
@@ -108,10 +106,6 @@ func IsInArray(element string, arr []string) bool {
 		}
 	}
 	return false
-}
-
-func GetBodyForHTTPRequest(body string) io.Reader {
-	return bytes.NewBuffer([]byte(body))
 }
 
 func GetCurrentTimeHourAndMinutes() (int, int) {

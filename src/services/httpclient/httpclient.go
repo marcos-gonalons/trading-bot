@@ -18,18 +18,15 @@ type Service struct {
 	Logger logger.Interface
 }
 
-// Do ...
 func (s *Service) Do(rq *http.Request, logType types.LogType) (*http.Response, error) {
 	s.Logger.Log("REQUEST -> "+s.getRQStringRepresentation(rq), logType)
 	return s.Client.Do(rq)
 }
 
-// SetTimeout sets the original net/http client timeout
 func (s *Service) SetTimeout(timeout time.Duration) {
 	s.Client.Timeout = timeout
 }
 
-// MapJSONResponseToStruct does what it says
 func (s *Service) MapJSONResponseToStruct(targetStruct interface{}, responseBody io.Reader) (string, error) {
 	rawBody, _ := ioutil.ReadAll(responseBody)
 	responseBody = ioutil.NopCloser(bytes.NewBuffer(rawBody))
@@ -37,6 +34,10 @@ func (s *Service) MapJSONResponseToStruct(targetStruct interface{}, responseBody
 	err := json.NewDecoder(responseBody).Decode(&targetStruct)
 
 	return string(rawBody), err
+}
+
+func (s *Service) GetBodyForHTTPRequest(body string) io.Reader {
+	return bytes.NewBuffer([]byte(body))
 }
 
 func (s *Service) getRQStringRepresentation(rq *http.Request) string {

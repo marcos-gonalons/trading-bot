@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/httpclient"
 	logger "TradingBot/src/services/logger/types"
-	"TradingBot/src/utils"
 
 	"errors"
 	"net/http"
@@ -35,7 +34,7 @@ func Request(
 	rq, err := http.NewRequest(
 		http.MethodPost,
 		endpoint,
-		utils.GetBodyForHTTPRequest(bodyString),
+		httpClient.GetBodyForHTTPRequest(bodyString),
 	)
 	if err != nil {
 		return

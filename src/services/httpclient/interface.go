@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-// Interface ...
 type Interface interface {
 	Do(rq *http.Request, logType types.LogType) (*http.Response, error)
 	SetTimeout(timeout time.Duration)
 	MapJSONResponseToStruct(targetStruct interface{}, responseBody io.Reader) (string, error)
+	GetBodyForHTTPRequest(body string) io.Reader
 }

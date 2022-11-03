@@ -34,16 +34,16 @@ func OnNewCandle(
 		}
 
 		orderExecutionPrice := getOrderExecutionPrice(simulatorAPI, order, market.GetMarketData().SimulatorData.Spread)
-		positionPrice := float64(0)
+		price := float64(0)
 
 		if isPriceWithinCandle(orderExecutionPrice, lastCandle) {
-			positionPrice = orderExecutionPrice
+			price = orderExecutionPrice
 		}
 		if hasCandleGapOvercameExecutionPrice(orderExecutionPrice, lastCandle, candles[len(candles)-3]) {
-			positionPrice = lastCandle.Open
+			price = lastCandle.Open
 		}
 
-		if positionPrice == 0 {
+		if price == 0 {
 			continue
 		}
 
@@ -52,14 +52,14 @@ func OnNewCandle(
 			if order.ParentID != nil {
 				continue
 			}
-			positions = append(positions, createNewPosition(positionPrice, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle))
+			positions = append(positions, createNewPosition(price, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle))
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
 		} else {
 			if position.Side == order.Side {
 				position.Qty = position.Qty + order.Qty
-				position.AvgPrice = (position.AvgPrice + positionPrice) / 2
+				position.AvgPrice = (position.AvgPrice + price) / 2
 
 				panic("right now it will never enter here if everything works as expected")
 			} else {
@@ -81,7 +81,7 @@ func OnNewCandle(
 					if order.Qty > position.Qty {
 						simulatorAPI.ClosePosition(position.Instrument)
 						p, _ := simulatorAPI.GetPositions()
-						positions = append(p, createNewPosition(positionPrice, order, order.Qty-position.Qty, market.GetMarketData().SimulatorData.Slippage, lastCandle))
+						positions = append(p, createNewPosition(price, order, order.Qty-position.Qty, market.GetMarketData().SimulatorData.Slippage, lastCandle))
 						simulatorAPI.SetPositions(positions)
 						break
 					} else {
