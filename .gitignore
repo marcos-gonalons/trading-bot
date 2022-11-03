@@ -4,4 +4,5 @@ vendor/
 logs/
 .candles-csv/
 .sim-candles/
+.tests-coverage/
 error_output.txt
