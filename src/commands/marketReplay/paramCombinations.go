@@ -7,6 +7,7 @@ import (
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"fmt"
+	"reflect"
 
 	"github.com/thoas/go-funk"
 )
@@ -46,15 +47,16 @@ type ParamCombinations struct {
 	CloseOrdersOnBadTrend []bool
 }
 
-func GetCombinations() *ParamCombinations {
-	return nil
+const LONGS_OR_SHORTS = "longs"
+
+func GetCombinations() (*ParamCombinations, int) {
 	var c ParamCombinations
 
 	var priceAdjustment float64 = float64(1) / float64(10000)
 
 	c.RiskPercentage = []float64{1}
 	c.MaxSecondsOpenTrade = []int64{0}
-	c.TrendCandles = []int{0}
+	c.TrendCandles = []int{0, 2}
 	c.TrendDiff = funk.Map([]float64{1}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.MaxTradeExecutionPriceDifference = funk.Map([]float64{999999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.LimitAndStopOrderPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
@@ -68,17 +70,17 @@ func GetCombinations() *ParamCombinations {
 	c.TakeProfitDistance = funk.Map([]float64{330}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.MinProfit = funk.Map([]float64{220}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TPDistanceShortForTighterSL = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceShortForTighterSL = funk.Map([]float64{0, 10, 20, 30, 40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.SLDistanceShortForTighterTP = funk.Map([]float64{40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceShortForTighterTP = funk.Map([]float64{40, 3}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{-180}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{25}
+	c.FutureCandles = []int{25, 5}
 	c.PastCandles = []int{45}
 	c.CandlesAmountWithoutEMAsCrossing = []int{21}
 
-	return &c
+	return &c, getTotalLength(&c)
 }
 
 func candlesLoopWithCombinations(
@@ -87,6 +89,7 @@ func candlesLoopWithCombinations(
 	container *services.Container,
 	simulatorAPI api.Interface,
 	c *ParamCombinations,
+	combinationsLength int,
 ) {
 	// todo: refactor
 	state, _ := simulatorAPI.GetState()
@@ -95,6 +98,7 @@ func candlesLoopWithCombinations(
 	var bestProfits float64 = -999999
 	var bestCombination *types.MarketStrategyParams
 
+	i := 0
 	for _, RiskPercentage := range c.RiskPercentage {
 		for _, MinStopLossDistance := range c.MinStopLossDistance {
 			for _, MaxStopLossDistance := range c.MaxStopLossDistance {
@@ -155,8 +159,11 @@ func candlesLoopWithCombinations(
 
 																				state, _ := simulatorAPI.GetState()
 
-																				//market.SetStrategyParams(&params, nil)
-																				market.SetStrategyParams(nil, &params)
+																				if LONGS_OR_SHORTS == "longs" {
+																					market.SetStrategyParams(&params, nil)
+																				} else {
+																					market.SetStrategyParams(nil, &params)
+																				}
 																				candlesLoop(csvLines, market, container, simulatorAPI)
 
 																				state, _ = simulatorAPI.GetState()
@@ -169,6 +176,9 @@ func candlesLoopWithCombinations(
 																					fmt.Println("New best combination", profits, utils.GetStringRepresentation(bestCombination))
 																					fmt.Println("\n\n")
 																				}
+
+																				fmt.Println(float64(i)*100.0/float64(combinationsLength), "%")
+																				i++
 																			}
 																		}
 																	}
@@ -190,4 +200,18 @@ func candlesLoopWithCombinations(
 	}
 
 	fmt.Println("\n\n\nDone! Best combination -> ", bestProfits, utils.GetStringRepresentation(bestCombination))
+}
+
+func getTotalLength(c *ParamCombinations) int {
+	v := reflect.ValueOf(*c)
+
+	length := 1
+	for i := 0; i < v.NumField(); i++ {
+		l := v.Field(i).Len()
+		if l > 0 {
+			length *= l
+		}
+	}
+
+	return length
 }

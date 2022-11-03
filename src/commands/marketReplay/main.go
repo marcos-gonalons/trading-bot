@@ -53,11 +53,11 @@ func main() {
 		marketName,
 	)
 
-	combinations := GetCombinations()
+	combinations, combinationsLength := GetCombinations()
 	if combinations == nil {
 		candlesLoop(csvLines, market, container, simulatorAPI)
 	} else {
-		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations)
+		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength)
 	}
 
 }
