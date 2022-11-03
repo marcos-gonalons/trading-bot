@@ -30,7 +30,7 @@ func EmaCrossoverLongs(params strategies.Params) {
 	lastCompletedCandle := candles[lastCompletedCandleIndex]
 
 	openPosition := utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName)
-	if openPosition != nil {
+	if openPosition != nil && params.Container.API.IsLongPosition(openPosition) {
 		closePositionOnReversal(
 			openPosition,
 			lastCompletedCandle,
