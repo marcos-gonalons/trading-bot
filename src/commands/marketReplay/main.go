@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/simulator"
@@ -20,17 +19,24 @@ import (
 const initialBalance = float64(5000)
 
 func main() {
+	container := services.GetServicesContainer()
+	container.Initialize(false)
+
 	marketName := getMarketName()
 
-	candlesFile := getCSVFile(marketName)
+	market := getMarketInstance(
+		&manager.Manager{
+			ServicesContainer: container,
+		},
+		marketName,
+	)
+
+	candlesFile := getCSVFile(market)
 
 	csvLines, err := csv.NewReader(candlesFile).ReadAll()
 	if err != nil {
 		panic("Error while reading the .csv file -> " + err.Error())
 	}
-
-	container := services.GetServicesContainer()
-	container.Initialize(false)
 
 	simulatorAPI := simulator.CreateAPIServiceInstance(
 		&api.Credentials{},
@@ -46,13 +52,6 @@ func main() {
 		Equity:       initialBalance,
 	})
 
-	market := getMarketInstance(
-		&manager.Manager{
-			ServicesContainer: container,
-		},
-		marketName,
-	)
-
 	combinations, combinationsLength := GetCombinations()
 	if combinations == nil {
 		candlesLoop(csvLines, market, container, simulatorAPI)
@@ -62,8 +61,8 @@ func main() {
 
 }
 
-func getCSVFile(marketName string) *os.File {
-	directory := "./.sim-candles/"
+func getCSVFile(market markets.MarketInterface) *os.File {
+	directory := "./.candles-csv/"
 	osDir, err := os.Open(directory)
 	if err != nil {
 		panic("Error opening the directory -> " + err.Error())
@@ -74,9 +73,8 @@ func getCSVFile(marketName string) *os.File {
 	}
 
 	var csvFiles []os.FileInfo
-	marketName = strings.Replace(marketName, "/", "", -1)
 	for _, file := range files {
-		if file.Name() != marketName+".csv" {
+		if file.Name() != market.GetMarketData().CandlesFileName {
 			continue
 		}
 		csvFiles = append(csvFiles, file)
