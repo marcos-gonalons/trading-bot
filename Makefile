@@ -30,6 +30,7 @@ down:
 ssh:
 	docker-compose exec trading-bot bash
 
-test:
+test: down
+	docker-compose up -d
 	docker-compose exec trading-bot go test -coverprofile .tests-coverage/raw.txt ./src/... || true
 	docker-compose exec trading-bot go tool cover -html=.tests-coverage/raw.txt -o .tests-coverage/report.html
