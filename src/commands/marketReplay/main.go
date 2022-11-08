@@ -52,10 +52,10 @@ func main() {
 		Equity:       initialBalance,
 	})
 
-	combinations, combinationsLength := GetCombinations()
-	if combinations == nil {
+	if getReplayType() == "single" {
 		candlesLoop(csvLines, market, container, simulatorAPI)
 	} else {
+		combinations, combinationsLength := GetCombinations()
 		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength)
 	}
 
@@ -129,6 +129,19 @@ func getMarketName() string {
 	}
 
 	return os.Args[1]
+}
+
+func getReplayType() string {
+	if len(os.Args) < 3 {
+		return "single"
+	}
+
+	t := os.Args[2]
+	if t != "single" && t != "combo" {
+		return "single"
+	}
+
+	return t
 }
 
 func candlesLoop(
