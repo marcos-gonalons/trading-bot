@@ -72,6 +72,8 @@ type HandleTrailingSLAndTPParams struct {
 
 func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 	handleTrailingSL := func() {
+		// todo: utils.GetStringRepresentation(params) doesn't work, investigate why. Maybe because it includes a function
+		// so it doesn't know how to show a json string out of a pointer to a function
 		params.Log("Checking if the position needs to have the SL adjusted with this params ... " + utils.GetStringRepresentation(params))
 
 		_, tpOrder := params.Container.API.GetBracketOrders(params.Position.Instrument)

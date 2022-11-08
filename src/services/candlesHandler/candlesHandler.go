@@ -33,6 +33,11 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 	if fileName != "" {
 		s.csvFileName = fileName
 		s.initCandlesFromFile(currentExecutionTime)
+
+		// todo: Remove last line from the csv file
+		// It will be added back again to the csv file when adding a new candle to the array
+		// The candles array is not affected, that is always correct
+		// we just need to remove the last line from the csv file. Easy.
 	} else {
 		s.candles = []*types.Candle{{
 			Open:       0,
@@ -76,7 +81,7 @@ func (s *Service) UpdateCandles(data *tradingviewsocket.QuoteData, lastVolume fl
 	if s.shouldAddNewCandle(now) {
 		s.updateCSVWithLastCandle()
 		lastCandle, _ := json.Marshal(s.GetLastCandle())
-		s.Logger.Log("Adding new candle to the candles array -> " + string(lastCandle))
+		s.Logger.Log("Adding new candle to the candles array (" + s.MarketData.SocketName + ") -> " + string(lastCandle))
 		s.candles = append(s.candles, &types.Candle{
 			Open:      s.GetLastCandle().Close,
 			Low:       s.GetLastCandle().Close,

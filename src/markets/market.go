@@ -63,6 +63,7 @@ func (s *BaseMarketClass) Initialize() {
 func (s *BaseMarketClass) DailyReset() {
 	var candlesMap = make(map[string][]int)
 
+	// todo: refactor
 	candlesMap["1m"] = []int{7200, 1441}
 	candlesMap["3m"] = []int{5000, 481}
 	candlesMap["5m"] = []int{3000, 289}

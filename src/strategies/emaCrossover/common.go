@@ -55,6 +55,8 @@ func closePositionOnReversal(
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          20,
 		})
+		// todo: API.AddTrade is only used for the simulator API, and it's always called after calling ClosePosition
+		// refactor it: add the trade on ClosePosition method for the simulator API and remove AddTrade from the API interface.
 		API.AddTrade(
 			nil,
 			position,

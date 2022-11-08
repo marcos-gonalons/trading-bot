@@ -39,6 +39,8 @@ func (s *Service) SetStrategy(st uint) {
 }
 
 func GetInstance() Interface {
+	// todo: position size strategy must be a parameter of the strategy params (not market params)
+	// remove the SetStrategy method and pass the strategy as a parameter of GetPositionSize
 	return &Service{
 		//strategy: BASED_ON_MULTIPLIER,
 		strategy: BASED_ON_MIN_SIZE,
