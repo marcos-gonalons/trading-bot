@@ -31,7 +31,9 @@ func (s *Manager) GetMarkets() []markets.MarketInterface {
 	for _, instance := range instances {
 		instance.SetContainer(s.ServicesContainer)
 		instance.SetCandlesHandler(&candlesHandler.Service{
-			Logger:            s.ServicesContainer.Logger,
+			Log: func(msg string) {
+				instance.Log(msg)
+			},
 			MarketData:        instance.GetMarketData(),
 			IndicatorsBuilder: s.ServicesContainer.IndicatorsService,
 		})

@@ -2,7 +2,6 @@ package candlesHandler
 
 import (
 	"TradingBot/src/services/candlesHandler/indicators"
-	"TradingBot/src/services/logger"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"encoding/csv"
@@ -17,9 +16,8 @@ import (
 
 const CandlesFolder = ".candles-csv/"
 
-// todo: don't use logger instance, use custom log() function from the market
 type Service struct {
-	Logger            logger.Interface
+	Log               func(msg string)
 	MarketData        *types.MarketData
 	IndicatorsBuilder indicators.MainInterface
 
@@ -33,6 +31,8 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 	if fileName != "" {
 		s.csvFileName = fileName
 		s.initCandlesFromFile(currentExecutionTime)
+
+		s.Log("Adding indicators to candles ...")
 		s.IndicatorsBuilder.AddIndicators(s.completedCandles, false)
 	} else {
 		s.currentCandle = &types.Candle{
@@ -52,11 +52,19 @@ func (s *Service) InitCandles(currentExecutionTime time.Time, fileName string) {
 
 func (s *Service) UpdateCandles(data *tradingviewsocket.QuoteData, lastVolume float64, onNewCandleCallback func()) {
 	price, volume := s.getPriceAndVolume(data, lastVolume)
+
+	s.Log("Updating candles data with this socket data -> " + utils.GetStringRepresentation(data))
+	s.Log("Last volume is -> " + utils.FloatToString(lastVolume, 0))
+	s.Log("Volume is -> " + utils.FloatToString(volume, 0))
+
 	now := time.Now()
 	timestamp := utils.GetTimestamp(now, s.getTimeLayout())
 	if s.shouldCompleteCurrentCandle(now) {
+		s.Log("Time to complete the current candle")
 		s.completeCurrentCandle(volume, timestamp, onNewCandleCallback)
+		s.Log("A new candle has been completed!")
 	} else {
+		s.Log("Current candle hasn't been completed yet. Updating current candle data ...")
 		if s.currentCandle == nil {
 			s.updateCurrentCandleWithLastCompletedCandle(volume, timestamp)
 		}
@@ -107,6 +115,9 @@ func (s *Service) RemoveOldCandles(amount uint) {
 }
 
 func (s *Service) writeRowIntoCSVFile(row []byte, fileName string) (err error) {
+	s.Log("Writing row into the csv file. Csv file is -> " + CandlesFolder + fileName)
+	s.Log("Row is " + string(row))
+
 	csvFile, err := os.OpenFile(CandlesFolder+fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
 		return
@@ -152,14 +163,16 @@ func (s *Service) shouldCompleteCurrentCandle(currentExecutionTime time.Time) bo
 	candleDurationInSeconds = int64(s.MarketData.Timeframe.Value) * multiplier
 	currentTimestamp = utils.GetTimestamp(currentExecutionTime, s.getTimeLayout())
 
-	cond1 := currentTimestamp-s.currentCandle.Timestamp >= int64(candleDurationInSeconds)
-	cond2 := utils.IsWithinTradingHours(currentExecutionTime, s.MarketData.TradingHours)
+	hasEnoughTimePassed := currentTimestamp-s.currentCandle.Timestamp >= int64(candleDurationInSeconds)
+	isWithinTradingHours := utils.IsWithinTradingHours(currentExecutionTime, s.MarketData.TradingHours)
 
-	s.Logger.Log("Should add new candle for " + s.MarketData.BrokerAPIName)
-	s.Logger.Log("condition 1 is -> " + strconv.FormatBool(cond1))
-	s.Logger.Log("condition 2 is -> " + strconv.FormatBool(cond2))
+	s.Log("Should the current candle be completed?")
+	s.Log("currentCandle is  ->" + utils.GetStringRepresentation(s.currentCandle))
+	s.Log("marketData is ->" + utils.GetStringRepresentation(s.MarketData))
+	s.Log("hasEnoughTimePassed? -> " + strconv.FormatBool(hasEnoughTimePassed))
+	s.Log("isWithinTradingHours? -> " + strconv.FormatBool(isWithinTradingHours))
 
-	return cond1 && cond2
+	return hasEnoughTimePassed && isWithinTradingHours
 }
 
 func (s *Service) completeCurrentCandle(
@@ -169,11 +182,11 @@ func (s *Service) completeCurrentCandle(
 ) {
 	err := s.writeRowIntoCSVFile(s.getRowForCSV(s.currentCandle), s.csvFileName)
 	if err != nil {
-		s.Logger.Error("Error when writing the current candle into the CSV file -> " + err.Error())
+		s.Log("Error when writing the current candle into the CSV file -> " + err.Error())
 	}
 
 	lastCandle, _ := json.Marshal(s.currentCandle)
-	s.Logger.Log("Adding new completed candle to the completed candles array (" + s.MarketData.SocketName + ") -> " + string(lastCandle))
+	s.Log("Adding new completed candle to the completed candles array (" + s.MarketData.SocketName + ") -> " + string(lastCandle))
 	s.completedCandles = append(s.completedCandles, &types.Candle{
 		Open:      s.currentCandle.Open,
 		High:      s.currentCandle.High,
@@ -185,13 +198,15 @@ func (s *Service) completeCurrentCandle(
 
 	s.updateCurrentCandleWithLastCompletedCandle(volume, timestamp)
 
-	s.Logger.Log("Current candle now is " + utils.GetStringRepresentation(s.currentCandle))
+	s.Log("Current candle now is " + utils.GetStringRepresentation(s.currentCandle))
 
 	s.IndicatorsBuilder.AddIndicators(s.completedCandles, true)
 	onNewCandleCallback()
 }
 
 func (s *Service) createCSVFile(fileName string) {
+	s.Log("Creating candles file -> " + fileName)
+
 	csvFile, err := os.OpenFile(CandlesFolder+fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	defer csvFile.Close()
 	if err != nil {
@@ -200,7 +215,7 @@ func (s *Service) createCSVFile(fileName string) {
 		defer csvFile.Close()
 		if err != nil {
 			s.csvFileMtx.Unlock()
-			s.Logger.Error("Error while creating the csv file -> " + err.Error())
+			panic("Error while creating the csv file -> " + err.Error())
 		} else {
 			s.csvFileMtx.Unlock()
 		}
@@ -208,6 +223,8 @@ func (s *Service) createCSVFile(fileName string) {
 }
 
 func (s *Service) initCandlesFromFile(currentExecutionTime time.Time) {
+	s.Log("Initializing candles from file -> " + CandlesFolder + s.csvFileName)
+
 	csvFile, err := os.OpenFile(CandlesFolder+s.csvFileName, os.O_APPEND|os.O_RDWR, os.ModeAppend)
 	if err != nil {
 		panic("Error while opening the .csv file -> " + err.Error())
