@@ -4,6 +4,7 @@ import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/types"
+	"TradingBot/src/utils"
 	"time"
 
 	"github.com/thoas/go-funk"
@@ -81,23 +82,34 @@ type GetStopLossParams struct {
 	Candles                         []*types.Candle
 	GetResistancePrice              func(types.CandlesAmountForHorizontalLevel, []*types.Candle) (float64, error)
 	GetSupportPrice                 func(types.CandlesAmountForHorizontalLevel, []*types.Candle) (float64, error)
+	Log                             func(m string)
 }
 
 func getStopLoss(params GetStopLossParams) float64 {
+	params.Log("getStopLoss called with this params -> " + utils.GetStringRepresentation(params))
 	if params.CandlesAmountForHorizontalLevel != nil {
 		if params.LongOrShort == "long" {
 			sl, err := params.GetSupportPrice(
 				*params.CandlesAmountForHorizontalLevel,
 				params.Candles,
 			)
+			if err != nil {
+				params.Log("LONG POSITION | Error when getting the support price for the SL -> " + err.Error())
+			}
+			params.Log("LONG POSITION | Support price is -> " + utils.FloatToString(sl, 5))
 			sl = sl + params.PriceOffset
+			params.Log("LONG POSITION | SL price after offset is -> " + utils.FloatToString(sl, 5))
 			if err != nil || sl >= params.PositionPrice {
+				params.Log("LONG POSITION | Using MaxStopLossDistance because there was an error or the SL price is above the current position price")
+				// todo: check using MINStopLossDistance here
 				return params.PositionPrice - params.MaxStopLossDistance
 			}
 			if params.PositionPrice-sl >= params.MaxStopLossDistance {
+				params.Log("LONG POSITION | Using MaxStopLossDistance because the SL distance is bigger than the MaxStopLossDistance")
 				return params.PositionPrice - params.MaxStopLossDistance
 			}
 			if params.PositionPrice-sl <= params.MinStopLossDistance {
+				params.Log("LONG POSITION | Using MinStopLossDistance because the SL distance is lower than the MinStopLossDistance")
 				return params.PositionPrice - params.MinStopLossDistance
 			}
 			return sl
@@ -107,14 +119,23 @@ func getStopLoss(params GetStopLossParams) float64 {
 				*params.CandlesAmountForHorizontalLevel,
 				params.Candles,
 			)
+			if err != nil {
+				params.Log("SHORT POSITION | Error when getting the resistance price for the SL -> " + err.Error())
+			}
+			params.Log("SHORT POSITION | Resistance price is -> " + utils.FloatToString(sl, 5))
 			sl = sl - params.PriceOffset
+			params.Log("SHORT POSITION | SL price after offset is -> " + utils.FloatToString(sl, 5))
 			if err != nil || sl <= params.PositionPrice {
+				params.Log("SHORT POSITION | Using MaxStopLossDistance because there was an error or the SL price is lower the current position price")
+				// todo: check using MINStopLossDistance here
 				return params.PositionPrice + params.MaxStopLossDistance
 			}
 			if sl-params.PositionPrice >= params.MaxStopLossDistance {
+				params.Log("SHORT POSITION | Using MaxStopLossDistance because the SL distance is bigger than the MaxStopLossDistance")
 				return params.PositionPrice + params.MaxStopLossDistance
 			}
 			if sl-params.PositionPrice <= params.MinStopLossDistance {
+				params.Log("SHORT POSITION | Using MinStopLossDistance because the SL distance is lower than the MinStopLossDistance")
 				return params.PositionPrice + params.MinStopLossDistance
 			}
 			return sl
