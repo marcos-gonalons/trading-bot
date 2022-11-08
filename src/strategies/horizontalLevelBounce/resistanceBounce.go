@@ -21,11 +21,9 @@ func ResistanceBounce(params strategies.Params) {
 		return
 	}
 
-	lastCompletedCandleIndex := len(params.CandlesHandler.GetCandles()) - 2
 	price, err := params.Container.HorizontalLevelsService.GetResistancePrice(
 		*params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
-		lastCompletedCandleIndex,
-		params.CandlesHandler.GetCandles(),
+		params.CandlesHandler.GetCompletedCandles(),
 	)
 
 	if err != nil {
@@ -45,8 +43,7 @@ func ResistanceBounce(params strategies.Params) {
 	if !params.Container.TrendsService.IsBearishTrend(
 		params.MarketStrategyParams.TrendCandles,
 		params.MarketStrategyParams.TrendDiff,
-		params.CandlesHandler.GetCandles(),
-		lastCompletedCandleIndex,
+		params.CandlesHandler.GetCompletedCandles(),
 	) {
 		params.Market.Log("At the end it wasn't a good short setup, doing nothing ...")
 

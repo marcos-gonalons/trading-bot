@@ -76,12 +76,11 @@ type GetStopLossParams struct {
 	PositionPrice                   float64
 	MinStopLossDistance             float64
 	MaxStopLossDistance             float64
-	CandleIndex                     int
 	PriceOffset                     float64
 	CandlesAmountForHorizontalLevel *types.CandlesAmountForHorizontalLevel
 	Candles                         []*types.Candle
-	GetResistancePrice              func(types.CandlesAmountForHorizontalLevel, int, []*types.Candle) (float64, error)
-	GetSupportPrice                 func(types.CandlesAmountForHorizontalLevel, int, []*types.Candle) (float64, error)
+	GetResistancePrice              func(types.CandlesAmountForHorizontalLevel, []*types.Candle) (float64, error)
+	GetSupportPrice                 func(types.CandlesAmountForHorizontalLevel, []*types.Candle) (float64, error)
 }
 
 func getStopLoss(params GetStopLossParams) float64 {
@@ -89,7 +88,6 @@ func getStopLoss(params GetStopLossParams) float64 {
 		if params.LongOrShort == "long" {
 			sl, err := params.GetSupportPrice(
 				*params.CandlesAmountForHorizontalLevel,
-				params.CandleIndex,
 				params.Candles,
 			)
 			sl = sl + params.PriceOffset
@@ -107,7 +105,6 @@ func getStopLoss(params GetStopLossParams) float64 {
 		if params.LongOrShort == "short" {
 			sl, err := params.GetResistancePrice(
 				*params.CandlesAmountForHorizontalLevel,
-				params.CandleIndex,
 				params.Candles,
 			)
 			sl = sl - params.PriceOffset

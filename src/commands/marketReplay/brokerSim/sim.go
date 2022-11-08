@@ -15,10 +15,10 @@ func OnNewCandle(
 	positions, _ := simulatorAPI.GetPositions()
 	state, _ := simulatorAPI.GetState()
 
-	candles := market.GetCandlesHandler().GetCandles()
+	candles := market.GetCandlesHandler().GetCompletedCandles()
 	orderIDsToRemove := []string{}
 	for _, order := range orders {
-		lastCandle := candles[len(candles)-2]
+		lastCandle := market.GetCandlesHandler().GetLastCompletedCandle()
 
 		if simulatorAPI.IsMarketOrder(order) {
 			position := findPosition(positions, order.Instrument)
@@ -39,7 +39,7 @@ func OnNewCandle(
 		if isPriceWithinCandle(orderExecutionPrice, lastCandle) {
 			price = orderExecutionPrice
 		}
-		if hasCandleGapOvercameExecutionPrice(orderExecutionPrice, lastCandle, candles[len(candles)-3]) {
+		if hasCandleGapOvercameExecutionPrice(orderExecutionPrice, lastCandle, candles[len(candles)-2]) {
 			price = lastCandle.Open
 		}
 

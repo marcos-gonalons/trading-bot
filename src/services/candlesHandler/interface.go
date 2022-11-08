@@ -13,7 +13,8 @@ type Interface interface {
 	UpdateCandles(data *tradingviewsocket.QuoteData, lastVolume float64, onNewCandleCallback func())
 	AddNewCandle(types.Candle)
 	RemoveOldCandles(amount uint)
-	GetCandles() []*types.Candle
-	GetLastCandle() *types.Candle
+	GetCompletedCandles() []*types.Candle
+	GetLastCompletedCandle() *types.Candle
+	GetCurrentCandle() *types.Candle
 	SetCandles([]*types.Candle)
 }

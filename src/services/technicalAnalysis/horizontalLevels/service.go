@@ -9,12 +9,10 @@ type Service struct{}
 
 func (s *Service) GetResistancePrice(
 	candlesWithLowerPriceToBeConsideredTop types.CandlesAmountForHorizontalLevel,
-	lastCompletedCandleIndex int,
 	candles []*types.Candle,
 ) (price float64, err error) {
 	return s.getPrice(
 		candlesWithLowerPriceToBeConsideredTop,
-		lastCompletedCandleIndex,
 		ResistanceName,
 		candles,
 	)
@@ -22,12 +20,10 @@ func (s *Service) GetResistancePrice(
 
 func (s *Service) GetSupportPrice(
 	candlesWithHigherPriceToBeConsideredBottom types.CandlesAmountForHorizontalLevel,
-	lastCompletedCandleIndex int,
 	candles []*types.Candle,
 ) (price float64, err error) {
 	return s.getPrice(
 		candlesWithHigherPriceToBeConsideredBottom,
-		lastCompletedCandleIndex,
 		SupportName,
 		candles,
 	)
@@ -35,12 +31,12 @@ func (s *Service) GetSupportPrice(
 
 func (s *Service) getPrice(
 	candlesAmount types.CandlesAmountForHorizontalLevel,
-	lastCompletedCandleIndex int,
 	supportOrResistance string,
 	candles []*types.Candle,
 ) (float64, error) {
 	candlesToCheck := 300
-	lastCompletedCandleIndex++
+	lastCompletedCandleIndex := len(candles) - 1
+
 	for x := lastCompletedCandleIndex; x > lastCompletedCandleIndex-candlesToCheck; x-- {
 		if x < 0 {
 			break

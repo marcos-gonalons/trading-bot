@@ -21,11 +21,9 @@ func SupportBreakoutAnticipation(params strategies.Params) {
 		return
 	}
 
-	lastCompletedCandleIndex := len(params.CandlesHandler.GetCandles()) - 2
 	price, err := params.Container.HorizontalLevelsService.GetSupportPrice(
 		*params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
-		lastCompletedCandleIndex,
-		params.CandlesHandler.GetCandles(),
+		params.CandlesHandler.GetCompletedCandles(),
 	)
 
 	if err != nil {
@@ -45,8 +43,7 @@ func SupportBreakoutAnticipation(params strategies.Params) {
 	if !params.Container.TrendsService.IsBearishTrend(
 		params.MarketStrategyParams.TrendCandles,
 		params.MarketStrategyParams.TrendDiff,
-		params.CandlesHandler.GetCandles(),
-		lastCompletedCandleIndex,
+		params.CandlesHandler.GetCompletedCandles(),
 	) {
 		params.Market.Log("At the end it wasn't a good short setup")
 		if params.MarketStrategyParams.CloseOrdersOnBadTrend && utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName) == nil {

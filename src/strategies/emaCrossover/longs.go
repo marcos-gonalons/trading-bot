@@ -25,8 +25,8 @@ func EmaCrossoverLongs(params strategies.Params) {
 		return
 	}
 
-	candles := params.CandlesHandler.GetCandles()
-	lastCompletedCandleIndex := len(candles) - 2
+	candles := params.CandlesHandler.GetCompletedCandles()
+	lastCompletedCandleIndex := len(candles) - 1
 	lastCompletedCandle := candles[lastCompletedCandleIndex]
 
 	openPosition := utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName)
@@ -63,7 +63,7 @@ func EmaCrossoverLongs(params strategies.Params) {
 		}
 	}
 
-	if getEma(candles[lastCompletedCandleIndex], SMALL_EMA).Value < getEma(candles[lastCompletedCandleIndex], BIG_EMA).Value {
+	if getEma(lastCompletedCandle, SMALL_EMA).Value < getEma(lastCompletedCandle, BIG_EMA).Value {
 		log("Small EMA is still below the big EMA - doing nothing - " + utils.GetStringRepresentation(lastCompletedCandle))
 		return
 	}
@@ -75,10 +75,9 @@ func EmaCrossoverLongs(params strategies.Params) {
 		PositionPrice:                   price,
 		MinStopLossDistance:             params.MarketStrategyParams.MinStopLossDistance,
 		MaxStopLossDistance:             params.MarketStrategyParams.MaxStopLossDistance,
-		CandleIndex:                     lastCompletedCandleIndex,
 		PriceOffset:                     params.MarketStrategyParams.StopLossPriceOffset,
 		CandlesAmountForHorizontalLevel: params.MarketData.LongSetupParams.CandlesAmountForHorizontalLevel,
-		Candles:                         params.CandlesHandler.GetCandles(),
+		Candles:                         params.CandlesHandler.GetCompletedCandles(),
 		GetResistancePrice:              params.Container.HorizontalLevelsService.GetResistancePrice,
 		GetSupportPrice:                 params.Container.HorizontalLevelsService.GetSupportPrice,
 	})

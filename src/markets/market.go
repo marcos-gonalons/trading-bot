@@ -80,7 +80,7 @@ func (s *BaseMarketClass) DailyReset() {
 	maxCandles := candlesMap[key][0]
 	candlesToRemove := candlesMap[key][1]
 
-	totalCandles := len(s.CandlesHandler.GetCandles())
+	totalCandles := len(s.CandlesHandler.GetCompletedCandles())
 
 	s.Log("Total candles is " + strconv.Itoa(totalCandles) + " - max candles is " + strconv.Itoa(maxCandles))
 	if totalCandles < maxCandles {
@@ -118,7 +118,7 @@ func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 			s.lastVolume = *data.Volume
 		}
 
-		s.Log("Candles amount -> " + strconv.Itoa(len(s.CandlesHandler.GetCandles())))
+		s.Log("Candles amount -> " + strconv.Itoa(len(s.CandlesHandler.GetCompletedCandles())))
 		s.mutex.Unlock()
 	}()
 
@@ -128,11 +128,11 @@ func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 
 func (s *BaseMarketClass) OnNewCandle() {
 	s.Log("\n\n")
-	s.Log("New candle has been added " + time.Unix(s.CandlesHandler.GetLastCandle().Timestamp, 0).Format("02/01/2006 15:04:05"))
+	s.Log("New candle has been added " + time.Unix(s.CandlesHandler.GetLastCompletedCandle().Timestamp, 0).Format("02/01/2006 15:04:05"))
 
-	s.Log("Last candles")
-	candles := s.CandlesHandler.GetCandles()
-	for i := len(candles) - 5; i < len(candles)-1; i++ {
+	s.Log("Last completed candles")
+	candles := s.CandlesHandler.GetCompletedCandles()
+	for i := len(candles) - 7; i < len(candles)-1; i++ {
 		if i >= 0 {
 			s.Log(utils.GetStringRepresentation(candles[i]))
 		}
@@ -292,8 +292,7 @@ func (s *BaseMarketClass) CreatePendingOrder(side string) {
 			price = *pendingOrder.LimitPrice
 		}
 
-		candles := s.CandlesHandler.GetCandles()
-		lastCompletedCandle := candles[len(candles)-2]
+		lastCompletedCandle := s.CandlesHandler.GetLastCompletedCandle()
 		s.Log("Last completed candle -> " + utils.GetStringRepresentation(lastCompletedCandle))
 
 		if side == ibroker.LongSide {
@@ -456,7 +455,7 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 	s.Log("Position is " + utils.GetStringRepresentation(position))
 	s.Log("Max seconds open trade is" + strconv.FormatInt(params.MaxSecondsOpenTrade, 10))
 
-	var diffInSeconds = s.CandlesHandler.GetLastCandle().Timestamp - s.currentPositionExecutedAt.Unix()
+	var diffInSeconds = s.CandlesHandler.GetLastCompletedCandle().Timestamp - s.currentPositionExecutedAt.Unix()
 	s.Log("Difference in seconds is " + strconv.FormatInt(diffInSeconds, 10))
 
 	if diffInSeconds > params.MaxSecondsOpenTrade {
@@ -465,7 +464,6 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 			DelayBetweenRetries: 5 * time.Second,
 			MaxRetries:          20,
 		})
-		candles := s.CandlesHandler.GetCandles()
 		s.Container.API.AddTrade(
 			nil,
 			position,
@@ -473,7 +471,7 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 				return price
 			},
 			s.MarketData.EurExchangeRate,
-			candles[len(candles)-3],
+			s.CandlesHandler.GetLastCompletedCandle(),
 			&s.MarketData,
 		)
 	} else {

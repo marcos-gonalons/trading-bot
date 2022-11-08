@@ -10,8 +10,8 @@ func (s *Service) IsBullishTrend(
 	candlesAmountToCheck int,
 	priceGap float64,
 	candles []*types.Candle,
-	lastCompletedCandleIndex int,
 ) bool {
+	lastCompletedCandleIndex := len(candles) - 1
 	lowestValue := candles[lastCompletedCandleIndex].Low
 	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-candlesAmountToCheck; i-- {
 		if i < 1 {
@@ -29,8 +29,8 @@ func (s *Service) IsBearishTrend(
 	candlesAmountToCheck int,
 	priceGap float64,
 	candles []*types.Candle,
-	lastCompletedCandleIndex int,
 ) bool {
+	lastCompletedCandleIndex := len(candles) - 1
 	highestValue := candles[lastCompletedCandleIndex].High
 	for i := lastCompletedCandleIndex; i > lastCompletedCandleIndex-candlesAmountToCheck; i-- {
 		if i < 1 {

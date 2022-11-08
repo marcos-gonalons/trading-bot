@@ -154,7 +154,7 @@ func candlesLoop(
 		candle := getCandleObject(line)
 		market.GetCandlesHandler().AddNewCandle(candle)
 
-		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCandles(), true)
+		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCompletedCandles(), true)
 
 		market.SetCurrentBrokerQuote(&api.Quote{
 			Ask:    candle.Close,

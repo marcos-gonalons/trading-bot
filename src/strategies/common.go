@@ -49,7 +49,7 @@ func OnBegin(params Params) (err error) {
 			TrailingSL: params.MarketStrategyParams.TrailingStopLoss,
 			TrailingTP: params.MarketStrategyParams.TrailingTakeProfit,
 			Position:   p,
-			LastCandle: params.CandlesHandler.GetCandles()[len(params.CandlesHandler.GetCandles())-2],
+			LastCandle: params.CandlesHandler.GetLastCompletedCandle(),
 			MarketData: params.MarketData,
 			Container:  params.Container,
 			Log:        params.Market.Log,
