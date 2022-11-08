@@ -17,7 +17,7 @@ import (
 
 const CandlesFolder = ".candles-csv/"
 
-// Service ...
+// todo: don't use logger instance, use custom log() function from the market
 type Service struct {
 	Logger            logger.Interface
 	MarketData        *types.MarketData
