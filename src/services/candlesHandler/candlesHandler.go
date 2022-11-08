@@ -76,16 +76,10 @@ func (s *Service) GetCompletedCandles() []*types.Candle {
 	return s.completedCandles
 }
 
-// GetCurrentCandle ...
-func (s *Service) GetCurrentCandle() *types.Candle {
-	return s.currentCandle
-}
-
 func (s *Service) SetCandles(c []*types.Candle) {
 	s.completedCandles = c
 }
 
-// RemoveOldCandles
 func (s *Service) RemoveOldCandles(amount uint) {
 	s.completedCandles = s.completedCandles[amount:]
 

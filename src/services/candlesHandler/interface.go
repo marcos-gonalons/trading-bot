@@ -15,6 +15,5 @@ type Interface interface {
 	RemoveOldCandles(amount uint)
 	GetCompletedCandles() []*types.Candle
 	GetLastCompletedCandle() *types.Candle
-	GetCurrentCandle() *types.Candle
 	SetCandles([]*types.Candle)
 }
