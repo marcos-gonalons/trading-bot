@@ -11,6 +11,7 @@ import (
 )
 
 func OnBegin(params Params) (err error) {
+	params.Market.Log("OnBegin... " + params.Type)
 	var validMonths, validWeekdays, validHalfHours []string
 
 	if params.MarketStrategyParams.ValidTradingTimes != nil {
@@ -33,10 +34,14 @@ func OnBegin(params Params) (err error) {
 	)
 
 	if params.MarketStrategyParams.WithPendingOrders {
+		params.Market.Log("Strategy has pending orders enabled.")
 		if !isValidTimeToOpenAPosition {
+			params.Market.Log("Not a valid time to open any position now. Calling SavePendingOrder ...")
 			params.Market.SavePendingOrder(params.Type, params.MarketStrategyParams.ValidTradingTimes)
 		} else {
+			params.Market.Log("Time is valid")
 			if params.Market.GetPendingOrder() != nil {
+				params.Market.Log("There is a pending order. Creating the pending order ...")
 				params.Market.CreatePendingOrder(params.Type)
 			}
 			params.Market.SetPendingOrder(nil)
@@ -45,6 +50,8 @@ func OnBegin(params Params) (err error) {
 
 	p := utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName)
 	if p != nil && p.Side == params.Type {
+		params.Market.Log("There is an open position. Calling HandleTrailingSLAndTP and CheckOpenPositionTTL ...")
+		params.Market.Log("Position is -> " + utils.GetStringRepresentation(p))
 		HandleTrailingSLAndTP(HandleTrailingSLAndTPParams{
 			TrailingSL: params.MarketStrategyParams.TrailingStopLoss,
 			TrailingTP: params.MarketStrategyParams.TrailingTakeProfit,
