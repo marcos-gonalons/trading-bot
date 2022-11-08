@@ -341,15 +341,16 @@ func (s *BaseMarketClass) CreatePendingOrder(side string) {
 }
 
 type OnValidTradeSetupParams struct {
-	Price              float64
-	StopLossDistance   float64
-	TakeProfitDistance float64
-	RiskPercentage     float64
-	IsValidTime        bool
-	Side               string
-	WithPendingOrders  bool
-	OrderType          string
-	MinPositionSize    int64
+	Price                float64
+	StopLossDistance     float64
+	TakeProfitDistance   float64
+	RiskPercentage       float64
+	IsValidTime          bool
+	Side                 string
+	WithPendingOrders    bool
+	OrderType            string
+	MinPositionSize      int64
+	PositionSizeStrategy positionSize.Strategy
 }
 
 func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
@@ -373,6 +374,7 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 			MinPositionSize:  float64(params.MinPositionSize),
 			EurExchangeRate:  s.MarketData.EurExchangeRate,
 			Multiplier:       s.MarketData.PositionSizeMultiplier,
+			Strategy:         params.PositionSizeStrategy,
 		},
 	)
 

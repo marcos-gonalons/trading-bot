@@ -7,8 +7,8 @@ type GetPositionSizeParams struct {
 	MinPositionSize  float64
 	EurExchangeRate  float64
 	Multiplier       float64
+	Strategy         Strategy
 }
 type Interface interface {
 	GetPositionSize(GetPositionSizeParams) float64
-	SetStrategy(uint)
 }

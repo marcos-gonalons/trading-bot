@@ -101,9 +101,10 @@ func EmaCrossoverShorts(params strategies.Params) {
 			validWeekdays,
 			validHalfHours,
 		),
-		Side:              ibroker.ShortSide,
-		WithPendingOrders: false,
-		OrderType:         ibroker.MarketType,
-		MinPositionSize:   params.MarketData.MinPositionSize,
+		Side:                 ibroker.ShortSide,
+		WithPendingOrders:    false,
+		OrderType:            ibroker.MarketType,
+		MinPositionSize:      params.MarketData.MinPositionSize,
+		PositionSizeStrategy: params.MarketStrategyParams.PositionSizeStrategy,
 	})
 }

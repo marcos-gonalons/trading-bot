@@ -1,5 +1,7 @@
 package types
 
+import "TradingBot/src/services/positionSize"
+
 // MarketStrategyParams ...
 // todo: document meaning of each param
 // group params that are only used for a specific strategy
@@ -31,6 +33,8 @@ type MarketStrategyParams struct {
 
 	WithPendingOrders     bool
 	CloseOrdersOnBadTrend bool
+
+	PositionSizeStrategy positionSize.Strategy
 }
 
 type TradingTimes struct {

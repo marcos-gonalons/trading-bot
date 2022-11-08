@@ -2,16 +2,10 @@ package positionSize
 
 import "math"
 
-type Service struct {
-	strategy uint
-}
-
-const BASED_ON_STOP_LOSS_DISTANCE = 0
-const BASED_ON_MULTIPLIER = 1
-const BASED_ON_MIN_SIZE = 2
+type Service struct{}
 
 func (s *Service) GetPositionSize(p GetPositionSizeParams) float64 {
-	switch s.strategy {
+	switch p.Strategy {
 	case BASED_ON_STOP_LOSS_DISTANCE:
 		size := math.Floor((p.CurrentBalance*(p.RiskPercentage/100))/(p.StopLossDistance*p.MinPositionSize*p.EurExchangeRate)) * p.MinPositionSize
 		if size == 0 {
@@ -31,18 +25,8 @@ func (s *Service) GetPositionSize(p GetPositionSizeParams) float64 {
 	default:
 		panic("Invalid position size strategy")
 	}
-
-}
-
-func (s *Service) SetStrategy(st uint) {
-	s.strategy = st
 }
 
 func GetInstance() Interface {
-	// todo: position size strategy must be a parameter of the strategy params (not market params)
-	// remove the SetStrategy method and pass the strategy as a parameter of GetPositionSize
-	return &Service{
-		//strategy: BASED_ON_MULTIPLIER,
-		strategy: BASED_ON_MIN_SIZE,
-	}
+	return &Service{}
 }

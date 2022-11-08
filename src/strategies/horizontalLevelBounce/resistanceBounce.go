@@ -75,10 +75,11 @@ func ResistanceBounce(params strategies.Params) {
 			params.MarketStrategyParams.ValidTradingTimes.ValidWeekdays,
 			params.MarketStrategyParams.ValidTradingTimes.ValidHalfHours,
 		),
-		Side:              ibroker.ShortSide,
-		WithPendingOrders: params.MarketStrategyParams.WithPendingOrders,
-		OrderType:         ibroker.LimitType,
-		MinPositionSize:   params.MarketData.MinPositionSize,
+		Side:                 ibroker.ShortSide,
+		WithPendingOrders:    params.MarketStrategyParams.WithPendingOrders,
+		OrderType:            ibroker.LimitType,
+		MinPositionSize:      params.MarketData.MinPositionSize,
+		PositionSizeStrategy: params.MarketStrategyParams.PositionSizeStrategy,
 	}
 
 	if utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName) != nil {

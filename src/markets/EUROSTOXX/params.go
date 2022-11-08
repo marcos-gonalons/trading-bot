@@ -1,6 +1,9 @@
 package EUROSTOXX
 
-import "TradingBot/src/types"
+import (
+	"TradingBot/src/services/positionSize"
+	"TradingBot/src/types"
+)
 
 var priceAdjustment float64 = float64(1)
 
@@ -20,6 +23,7 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 	MaxSecondsOpenTrade:              0,
 
 	MaxTradeExecutionPriceDifference: 9999,
+	PositionSizeStrategy:             positionSize.BASED_ON_MULTIPLIER,
 }
 
 var EMACrossoverShortParams = types.MarketStrategyParams{
@@ -42,4 +46,5 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	MaxSecondsOpenTrade:              0,
 
 	MaxTradeExecutionPriceDifference: 9999,
+	PositionSizeStrategy:             positionSize.BASED_ON_MULTIPLIER,
 }
