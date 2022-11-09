@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const DAYS_TO_KEEP_OLD_LOGS = 5
+
 // Logger ...
 type Logger struct {
 	rootPath  string
@@ -84,7 +86,7 @@ func (logger *Logger) ResetLogs() {
 				panic("Error moving the log file to the backup folder -> " + bkFolder + " -> " + file.Name() + " -> " + err.Error())
 			}
 		} else {
-			if now.Unix()-file.ModTime().Unix() > 60*60*24*7 {
+			if now.Unix()-file.ModTime().Unix() > 60*60*24*DAYS_TO_KEEP_OLD_LOGS {
 				err = os.RemoveAll(logger.rootPath + file.Name())
 				if err != nil {
 					panic("Error deleting the old backup folder " + file.Name() + " -> " + err.Error())
