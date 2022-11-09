@@ -59,8 +59,7 @@ func OnBegin(params Params) (err error) {
 			LastCandle: params.CandlesHandler.GetLastCompletedCandle(),
 			MarketData: params.MarketData,
 			Container:  params.Container,
-			Log:        params.Market.Log,
-		})
+		}, params.Market.Log)
 		params.Market.CheckOpenPositionTTL(params.MarketStrategyParams, p)
 	}
 
@@ -74,19 +73,19 @@ type HandleTrailingSLAndTPParams struct {
 	LastCandle *types.Candle
 	MarketData *types.MarketData
 	Container  *services.Container
-	Log        func(msg string)
 }
 
-func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
+func HandleTrailingSLAndTP(
+	params HandleTrailingSLAndTPParams,
+	log func(msg string),
+) {
 	handleTrailingSL := func() {
-		// todo: utils.GetStringRepresentation(params) doesn't work, investigate why. Maybe because it includes a function
-		// so it doesn't know how to show a json string out of a pointer to a function
-		params.Log("Checking if the position needs to have the SL adjusted with this params ... " + utils.GetStringRepresentation(params))
+		log("Checking if the position needs to have the SL adjusted with this params ... " + utils.GetStringRepresentation(params))
 
 		_, tpOrder := params.Container.API.GetBracketOrders(params.Position.Instrument)
 
 		if tpOrder == nil {
-			params.Log("Take Profit order not found ...")
+			log("Take Profit order not found ...")
 			return
 		}
 
@@ -97,8 +96,8 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 			newSL = params.Position.AvgPrice + params.TrailingSL.SLDistanceWhenTPIsVeryClose
 
 			if shouldBeAdjusted && newSL >= params.LastCandle.Close {
-				params.Log("Can't adjust the SL for the long position since the new SL is higher than the current price")
-				params.Log("New SL that will not be applied -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
+				log("Can't adjust the SL for the long position since the new SL is higher than the current price")
+				log("New SL that will not be applied -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
 				return
 			}
 		} else {
@@ -106,19 +105,19 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 			newSL = params.Position.AvgPrice - params.TrailingSL.SLDistanceWhenTPIsVeryClose
 
 			if shouldBeAdjusted && newSL <= params.LastCandle.Close {
-				params.Log("Can't adjust the SL for the short position since the new SL is lower than the current price")
-				params.Log("New SL that will not be applied -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
+				log("Can't adjust the SL for the short position since the new SL is lower than the current price")
+				log("New SL that will not be applied -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
 				return
 			}
 		}
 
 		if !shouldBeAdjusted {
-			params.Log("The price is not close to the TP yet. Doing nothing ...")
+			log("The price is not close to the TP yet. Doing nothing ...")
 			return
 		}
 
-		params.Log("The price is very close to the TP. Adjusting SL...")
-		params.Log("New SL -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
+		log("The price is very close to the TP. Adjusting SL...")
+		log("New SL -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
 		params.Container.APIRetryFacade.ModifyPosition(
 			params.MarketData.BrokerAPIName,
 			utils.FloatToString(*tpOrder.LimitPrice, params.MarketData.PriceDecimals),
@@ -131,12 +130,12 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 	}
 
 	handleTrailingTP := func() {
-		params.Log("Checking if the position needs to have the TP adjusted with this params ... " + utils.GetStringRepresentation(params))
+		log("Checking if the position needs to have the TP adjusted with this params ... " + utils.GetStringRepresentation(params))
 
 		slOrder, _ := params.Container.API.GetBracketOrders(params.Position.Instrument)
 
 		if slOrder == nil {
-			params.Log("Stop Loss order not found ...")
+			log("Stop Loss order not found ...")
 			return
 		}
 
@@ -146,8 +145,8 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 			shouldBeAdjusted = params.LastCandle.Low-*slOrder.StopPrice < params.TrailingTP.SLDistanceShortForTighterTP
 			newTP = params.Position.AvgPrice - params.TrailingTP.TPDistanceWhenSLIsVeryClose
 			if shouldBeAdjusted && newTP <= params.LastCandle.Close {
-				params.Log("Can't adjust the TP for the long position since the new TP is lower than the current price")
-				params.Log("New TP that will not be applied -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
+				log("Can't adjust the TP for the long position since the new TP is lower than the current price")
+				log("New TP that will not be applied -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
 				return
 			}
 		} else {
@@ -155,19 +154,19 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 			newTP = params.Position.AvgPrice + params.TrailingTP.TPDistanceWhenSLIsVeryClose
 
 			if shouldBeAdjusted && newTP >= params.LastCandle.Close {
-				params.Log("Can't adjust the TP for the short position since the new TP is higher than the current price")
-				params.Log("New TP that will not be applied -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
+				log("Can't adjust the TP for the short position since the new TP is higher than the current price")
+				log("New TP that will not be applied -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
 				return
 			}
 		}
 
 		if !shouldBeAdjusted {
-			params.Log("The price is not close to the SL yet. Doing nothing ...")
+			log("The price is not close to the SL yet. Doing nothing ...")
 			return
 		}
 
-		params.Log("The price is very close to the SL. Adjusting TP...")
-		params.Log("New TP -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
+		log("The price is very close to the SL. Adjusting TP...")
+		log("New TP -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
 		params.Container.APIRetryFacade.ModifyPosition(
 			params.MarketData.BrokerAPIName,
 			utils.FloatToString(newTP, params.MarketData.PriceDecimals),
@@ -179,8 +178,8 @@ func HandleTrailingSLAndTP(params HandleTrailingSLAndTPParams) {
 		)
 	}
 
-	params.Log("Position is " + utils.GetStringRepresentation(params.Position))
-	params.Log("LastCandle is " + utils.GetStringRepresentation(params.LastCandle))
+	log("Position is " + utils.GetStringRepresentation(params.Position))
+	log("LastCandle is " + utils.GetStringRepresentation(params.LastCandle))
 
 	if params.TrailingSL != nil && params.TrailingSL.TPDistanceShortForTighterSL > 0 {
 		handleTrailingSL()

@@ -86,7 +86,14 @@ type GetStopLossParams struct {
 }
 
 func getStopLoss(params GetStopLossParams) float64 {
-	params.Log("getStopLoss called with this params -> " + utils.GetStringRepresentation(params))
+	params.Log("getStopLoss called with this params -> " +
+		"LongOrShort -> " + params.LongOrShort + " " +
+		"PositionPrice -> " + utils.FloatToString(params.PositionPrice, 5) + " " +
+		"MinStopLossDistance -> " + utils.FloatToString(params.MinStopLossDistance, 5) + " " +
+		"MaxStopLossDistance -> " + utils.FloatToString(params.MaxStopLossDistance, 5) + " " +
+		"PriceOffset -> " + utils.FloatToString(params.PriceOffset, 5) + " " +
+		"CandlesAmountForHorizontalLevel -> " + utils.GetStringRepresentation(params.CandlesAmountForHorizontalLevel) + " ",
+	)
 	if params.CandlesAmountForHorizontalLevel != nil {
 		if params.LongOrShort == "long" {
 			sl, err := params.GetSupportPrice(
