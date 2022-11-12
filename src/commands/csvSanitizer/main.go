@@ -30,10 +30,7 @@ func main() {
 			panic("Error while reading the .csv file -> " + err.Error())
 		}
 
-		for i, line := range csvLines {
-			if i == 0 {
-				continue
-			}
+		for _, line := range csvLines {
 			newLine := getTimestamp(line[0]) + "," + line[1] + "," + line[2] + "," + line[3] + "," + line[4] + ",0\n"
 			tmpCsvFile.Write([]byte(newLine))
 		}
