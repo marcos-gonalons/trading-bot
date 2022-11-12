@@ -31,7 +31,7 @@ func GetMarketInstance() markets.MarketInterface {
 	// Saturday
 	tradingHoursUTC[6] = []int{}
 	// Sunday
-	tradingHoursUTC[0] = []int{21, 22, 23}
+	tradingHoursUTC[0] = []int{22, 23} // todo: Winter time starts at 22 UTC, summer time starts at 21 UTC.
 
 	market.MarketData = types.MarketData{
 		BrokerAPIName: ibroker.GER30SymbolName,

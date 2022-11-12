@@ -19,7 +19,7 @@ func GetMarketInstance() markets.MarketInterface {
 	tradingHoursUTC := make(map[int][]int)
 
 	// Monday
-	tradingHoursUTC[1] = []int{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+	tradingHoursUTC[1] = []int{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20} // todo: winter starts at 5 UTC, summer starts at 6 UTC
 	// Tuesday
 	tradingHoursUTC[2] = tradingHoursUTC[1]
 	// Wednesday
