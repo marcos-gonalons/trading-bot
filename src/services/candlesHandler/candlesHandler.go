@@ -115,9 +115,6 @@ func (s *Service) RemoveOldCandles(amount uint) {
 }
 
 func (s *Service) writeRowIntoCSVFile(row []byte, fileName string) (err error) {
-	s.Log("Writing row into the csv file. Csv file is -> " + CandlesFolder + fileName)
-	s.Log("Row is " + string(row))
-
 	csvFile, err := os.OpenFile(CandlesFolder+fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
 		return
@@ -180,7 +177,10 @@ func (s *Service) completeCurrentCandle(
 	timestamp int64,
 	onNewCandleCallback func(),
 ) {
-	err := s.writeRowIntoCSVFile(s.getRowForCSV(s.currentCandle), s.csvFileName)
+	row := s.getRowForCSV(s.currentCandle)
+	s.Log("Writing current candle row into the csv file. Csv file is -> " + s.csvFileName)
+	s.Log("Row is " + string(row))
+	err := s.writeRowIntoCSVFile(row, s.csvFileName)
 	if err != nil {
 		s.Log("Error when writing the current candle into the CSV file -> " + err.Error())
 	}
