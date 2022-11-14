@@ -132,7 +132,7 @@ func (s *BaseMarketClass) OnNewCandle() {
 
 	s.Log("Last completed candles")
 	candles := s.CandlesHandler.GetCompletedCandles()
-	for i := len(candles) - 7; i < len(candles)-1; i++ {
+	for i := len(candles) - 7; i < len(candles); i++ {
 		if i >= 0 {
 			s.Log(utils.GetStringRepresentation(candles[i]))
 		}
