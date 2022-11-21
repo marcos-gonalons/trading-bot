@@ -21,7 +21,7 @@ type API struct {
 	orders    []*api.Order
 	positions []*api.Position
 
-	trades int64
+	trades []*api.Trade
 }
 
 // Login ...
@@ -187,35 +187,26 @@ func (s *API) AddTrade(
 
 	s.state.Balance = s.state.Balance + tradeResult
 	s.state.Equity = s.state.Balance
-	s.trades++
-	/*
-		var side string = "long"
-		if s.IsShortPosition(position) {
-			side = "short"
-		}
-			fmt.Println(
-				side,
-				" | ",
-				utils.FloatToString(position.Qty, 0),
-				" | ",
-				utils.FloatToString(position.AvgPrice, 5),
-				" | ",
-				utils.FloatToString(finalPrice, 5),
-				" | ",
-				utils.FloatToString(tradeResult, 2),
-				" | ",
-				utils.FloatToString(s.state.Equity, 2),
-				" | ",
-				time.Unix(*position.CreatedAt, 0).Format("02/01/2006 15:04:05"),
-				" | ",
-				time.Unix(lastCandle.Timestamp, 0).Format("02/01/2006 15:04:05"),
-			)*/
+
+	var side string = "long"
+	if s.IsShortPosition(position) {
+		side = "short"
+	}
+	s.trades = append(s.trades, &api.Trade{
+		Side:         side,
+		Size:         position.Qty,
+		InitialPrice: position.AvgPrice,
+		FinalPrice:   finalPrice,
+		Result:       tradeResult,
+		OpenedAt:     time.Unix(*position.CreatedAt, 0),
+		ClosedAt:     time.Unix(lastCandle.Timestamp, 0),
+	})
 }
 
-func (s *API) GetTrades() int64 {
+func (s *API) GetTrades() []*api.Trade {
 	return s.trades
 }
-func (s *API) SetTrades(t int64) {
+func (s *API) SetTrades(t []*api.Trade) {
 	s.trades = t
 }
 

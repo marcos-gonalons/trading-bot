@@ -5,6 +5,16 @@ import (
 	"time"
 )
 
+type Trade struct {
+	Side         string
+	Size         float64
+	InitialPrice float64
+	FinalPrice   float64
+	Result       float64
+	OpenedAt     time.Time
+	ClosedAt     time.Time
+}
+
 // Interface implemented by the broker APIs
 type Interface interface {
 	Login() (*AccessToken, error)
@@ -26,8 +36,8 @@ type Interface interface {
 		lastCandle *types.Candle,
 		marketData *types.MarketData,
 	)
-	GetTrades() int64
-	SetTrades(int64) // todo: in simulator API create the Trade object and save them properly
+	GetTrades() []*Trade
+	SetTrades([]*Trade)
 	CloseAllOrders() error
 	CloseAllPositions() error
 	GetState() (*State, error)

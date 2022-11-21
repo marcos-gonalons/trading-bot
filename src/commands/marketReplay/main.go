@@ -5,6 +5,7 @@ import (
 	"TradingBot/src/markets"
 	"TradingBot/src/services"
 	"TradingBot/src/types"
+	"TradingBot/src/utils"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -12,6 +13,7 @@ import (
 
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/simulator"
+	"TradingBot/src/services/positionSize"
 
 	"TradingBot/src/manager"
 )
@@ -53,9 +55,12 @@ func main() {
 	})
 
 	if getReplayType() == "single" {
-		candlesLoop(csvLines, market, container, simulatorAPI)
+		candlesLoop(csvLines, market, container, simulatorAPI, true)
+		PrintTrades(simulatorAPI.GetTrades())
+		state, _ := simulatorAPI.GetState()
+		fmt.Println("Profits -> ", state.Balance-initialBalance)
 	} else {
-		combinations, combinationsLength := GetCombinations()
+		combinations, combinationsLength := GetCombinations(market.GetMarketData().MinPositionSize)
 		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength)
 	}
 
@@ -149,8 +154,9 @@ func candlesLoop(
 	market markets.MarketInterface,
 	container *services.Container,
 	simulatorAPI api.Interface,
+	printProgress bool,
 ) {
-	for _, line := range csvLines {
+	for i, line := range csvLines {
 		candle := getCandleObject(line)
 		market.GetCandlesHandler().AddNewCandle(candle)
 
@@ -163,6 +169,8 @@ func candlesLoop(
 			Volume: 0,
 		})
 
+		SetPositionSizeStrategy(market)
+
 		brokerSim.OnNewCandle(
 			container.APIData,
 			container.API,
@@ -171,10 +179,40 @@ func candlesLoop(
 
 		market.OnNewCandle()
 
-		// fmt.Println(float64(i) * 100.0 / float64(len(csvLines)))
+		if printProgress {
+			// todo: print only every X iterations, otherwise it's prints too much
+			fmt.Println(float64(i+1) * 100.0 / float64(len(csvLines)))
+		}
 	}
+}
 
-	fmt.Println("Total trades -> ", simulatorAPI.GetTrades())
-	state, _ := simulatorAPI.GetState()
-	fmt.Println("Profits -> ", state.Balance-initialBalance)
+func SetPositionSizeStrategy(market markets.MarketInterface) {
+	if market.GetMarketData().LongSetupParams != nil {
+		market.GetMarketData().LongSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+	}
+	if market.GetMarketData().ShortSetupParams != nil {
+		market.GetMarketData().ShortSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+	}
+}
+
+func PrintTrades(trades []*api.Trade) {
+	fmt.Println("Total trades -> ", len(trades))
+
+	for _, trade := range trades {
+		fmt.Println(
+			trade.Side,
+			" | ",
+			utils.FloatToString(trade.Size, 0),
+			" | ",
+			utils.FloatToString(trade.InitialPrice, 5),
+			" | ",
+			utils.FloatToString(trade.FinalPrice, 5),
+			" | ",
+			utils.FloatToString(trade.Result, 2),
+			" | ",
+			trade.OpenedAt.Format("02/01/2006 15:04:05"),
+			" | ",
+			trade.ClosedAt.Format("02/01/2006 15:04:05"),
+		)
+	}
 }

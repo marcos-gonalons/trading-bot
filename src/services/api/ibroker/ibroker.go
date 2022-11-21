@@ -199,13 +199,13 @@ func (s *API) AddTrade(
 }
 
 // GetTrades ...
-func (s *API) GetTrades() int64 {
+func (s *API) GetTrades() []*api.Trade {
 	// Nothing to do here ...
-	return 0
+	return nil
 }
 
 // SetTrades ...
-func (s *API) SetTrades(t int64) {
+func (s *API) SetTrades(t []*api.Trade) {
 }
 
 // CloseOrder ...

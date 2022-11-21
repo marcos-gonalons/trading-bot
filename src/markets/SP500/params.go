@@ -12,8 +12,8 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 
 	StopLossPriceOffset: 20 * priceAdjustment,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
-		Future: 0,
-		Past:   0,
+		Future: 21,
+		Past:   15,
 	},
 	MinStopLossDistance:              0 * priceAdjustment,
 	MaxStopLossDistance:              600 * priceAdjustment,

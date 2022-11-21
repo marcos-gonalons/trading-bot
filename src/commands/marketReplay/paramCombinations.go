@@ -51,10 +51,10 @@ type ParamCombinations struct {
 const LONGS_OR_SHORTS = "longs"
 const REPORT_FILE_PATH = "./.combinations-report.txt"
 
-func GetCombinations() (*ParamCombinations, int) {
+func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 	var c ParamCombinations
 
-	var priceAdjustment float64 = float64(1) / float64(10000)
+	var priceAdjustment float64 = float64(1) / float64(minPositionSize)
 
 	c.RiskPercentage = []float64{1}
 	c.MaxSecondsOpenTrade = []int64{0}
@@ -64,23 +64,23 @@ func GetCombinations() (*ParamCombinations, int) {
 	c.LimitAndStopOrderPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.StopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossPriceOffset = funk.Map([]float64{-150, -125, -100, -75, -50, -25, 0, 25, 50, 75, 100, 125, 150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossPriceOffset = funk.Map([]float64{20}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.MinStopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxStopLossDistance = funk.Map([]float64{800}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{600}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{20, 50, 80, 110, 140, 170, 200, 230, 260, 290, 320, 350, 380, 410}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MinProfit = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{160}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinProfit = funk.Map([]float64{100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.TPDistanceShortForTighterSL = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.SLDistanceShortForTighterTP = funk.Map([]float64{40, 3}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{-180}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceShortForTighterTP = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{0, 10, 25, 40}
-	c.PastCandles = []int{0, 10, 25, 40}
-	c.CandlesAmountWithoutEMAsCrossing = []int{0}
+	c.FutureCandles = []int{21}
+	c.PastCandles = []int{15}
+	c.CandlesAmountWithoutEMAsCrossing = []int{3}
 
 	return &c, getTotalLength(&c)
 }
@@ -155,7 +155,7 @@ func candlesLoopWithCombinations(
 
 																				simulatorAPI.CloseAllOrders()
 																				simulatorAPI.CloseAllPositions()
-																				simulatorAPI.SetTrades(0)
+																				simulatorAPI.SetTrades(nil)
 																				simulatorAPI.SetState(&api.State{
 																					Balance:      initialBalance,
 																					UnrealizedPL: 0,
@@ -169,7 +169,7 @@ func candlesLoopWithCombinations(
 																				} else {
 																					market.SetStrategyParams(nil, &params)
 																				}
-																				candlesLoop(csvLines, market, container, simulatorAPI)
+																				candlesLoop(csvLines, market, container, simulatorAPI, false)
 
 																				state, _ = simulatorAPI.GetState()
 																				profits := state.Balance - initialBalance
@@ -182,8 +182,8 @@ func candlesLoopWithCombinations(
 																					write("\n" + utils.GetStringRepresentation(bestCombination))
 																				}
 
-																				fmt.Println(float64(i)*100.0/float64(combinationsLength), "%")
 																				i++
+																				fmt.Println(float64(i)*100.0/float64(combinationsLength), "%")
 																			}
 																		}
 																	}
