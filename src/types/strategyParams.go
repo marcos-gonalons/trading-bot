@@ -22,6 +22,7 @@ type MarketStrategyParams struct {
 	CandlesAmountWithoutEMAsCrossing int
 	LimitAndStopOrderPriceOffset     float64
 	StopLossPriceOffset              float64
+	MaxAttemptsToGetSL               int
 
 	TrendCandles int
 	TrendDiff    float64

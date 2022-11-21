@@ -55,7 +55,7 @@ func main() {
 	})
 
 	if getReplayType() == "single" {
-		candlesLoop(csvLines, market, container, simulatorAPI, true)
+		candlesLoop(csvLines, market, container, simulatorAPI, false)
 		PrintTrades(simulatorAPI.GetTrades())
 		state, _ := simulatorAPI.GetState()
 		fmt.Println("Profits -> ", state.Balance-initialBalance)

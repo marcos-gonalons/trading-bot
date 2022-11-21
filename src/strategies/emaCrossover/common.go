@@ -80,6 +80,7 @@ type GetStopLossParams struct {
 	PriceOffset                     float64
 	CandlesAmountForHorizontalLevel *types.CandlesAmountForHorizontalLevel
 	Candles                         []*types.Candle
+	MaxAttempts                     int
 	GetResistancePrice              func(types.CandlesAmountForHorizontalLevel, []*types.Candle) (float64, error)
 	GetSupportPrice                 func(types.CandlesAmountForHorizontalLevel, []*types.Candle) (float64, error)
 	Log                             func(m string)
