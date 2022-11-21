@@ -21,9 +21,11 @@ func ResistanceBounce(params strategies.Params) {
 		return
 	}
 
-	price, err := params.Container.HorizontalLevelsService.GetResistancePrice(
+	candles := params.CandlesHandler.GetCompletedCandles()
+	price, _, err := params.Container.HorizontalLevelsService.GetResistancePrice(
 		*params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
-		params.CandlesHandler.GetCompletedCandles(),
+		candles,
+		len(candles)-1,
 	)
 
 	if err != nil {

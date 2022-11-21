@@ -81,8 +81,7 @@ type GetStopLossParams struct {
 	CandlesAmountForHorizontalLevel *types.CandlesAmountForHorizontalLevel
 	Candles                         []*types.Candle
 	MaxAttempts                     int
-	GetResistancePrice              func(types.CandlesAmountForHorizontalLevel, []*types.Candle) (float64, error)
-	GetSupportPrice                 func(types.CandlesAmountForHorizontalLevel, []*types.Candle) (float64, error)
+	GetHorizontalLevel              func(types.CandlesAmountForHorizontalLevel, []*types.Candle, int) (float64, int, error)
 	Log                             func(m string)
 }
 
@@ -95,69 +94,61 @@ func getStopLoss(params GetStopLossParams) float64 {
 		"PriceOffset -> " + utils.FloatToString(params.PriceOffset, 5) + " " +
 		"CandlesAmountForHorizontalLevel -> " + utils.GetStringRepresentation(params.CandlesAmountForHorizontalLevel) + " ",
 	)
-	if params.CandlesAmountForHorizontalLevel != nil {
+
+	var sl float64
+	var foundAtIndex int
+	var err error
+	var attempt int = 0
+	var isValidSL bool = false
+	index := len(params.Candles) - 1
+	for {
+		sl, foundAtIndex, err = params.GetHorizontalLevel(
+			*params.CandlesAmountForHorizontalLevel,
+			params.Candles,
+			index,
+		)
+		if err != nil {
+			params.Log(params.LongOrShort + " POSITION | Error when getting the horizontal level price for the SL -> " + err.Error())
+		}
+		params.Log(params.LongOrShort + " POSITION | Horizontal level price is -> " + utils.FloatToString(sl, 5))
+
 		if params.LongOrShort == "long" {
-			sl, err := params.GetSupportPrice(
-				*params.CandlesAmountForHorizontalLevel,
-				params.Candles,
-			)
-			if err != nil {
-				params.Log("LONG POSITION | Error when getting the support price for the SL -> " + err.Error())
-			}
-			params.Log("LONG POSITION | Support price is -> " + utils.FloatToString(sl, 5))
 			sl = sl + params.PriceOffset
-			params.Log("LONG POSITION | SL price after offset is -> " + utils.FloatToString(sl, 5))
-			if err != nil || sl >= params.PositionPrice {
-				params.Log("LONG POSITION | Using MaxStopLossDistance because there was an error or the SL price is above the current position price")
-				// todo: check using MINStopLossDistance here
-				return params.PositionPrice - params.MaxStopLossDistance
-			}
-			if params.PositionPrice-sl >= params.MaxStopLossDistance {
-				params.Log("LONG POSITION | Using MaxStopLossDistance because the SL distance is bigger than the MaxStopLossDistance")
-				return params.PositionPrice - params.MaxStopLossDistance
-			}
-			if params.PositionPrice-sl <= params.MinStopLossDistance {
-				params.Log("LONG POSITION | Using MinStopLossDistance because the SL distance is lower than the MinStopLossDistance")
-				return params.PositionPrice - params.MinStopLossDistance
-			}
-			return sl
-		}
-		if params.LongOrShort == "short" {
-			sl, err := params.GetResistancePrice(
-				*params.CandlesAmountForHorizontalLevel,
-				params.Candles,
-			)
-			if err != nil {
-				params.Log("SHORT POSITION | Error when getting the resistance price for the SL -> " + err.Error())
-			}
-			params.Log("SHORT POSITION | Resistance price is -> " + utils.FloatToString(sl, 5))
+		} else {
 			sl = sl - params.PriceOffset
-			params.Log("SHORT POSITION | SL price after offset is -> " + utils.FloatToString(sl, 5))
-			if err != nil || sl <= params.PositionPrice {
-				params.Log("SHORT POSITION | Using MaxStopLossDistance because there was an error or the SL price is lower the current position price")
-				// todo: check using MINStopLossDistance here
-				return params.PositionPrice + params.MaxStopLossDistance
-			}
-			if sl-params.PositionPrice >= params.MaxStopLossDistance {
-				params.Log("SHORT POSITION | Using MaxStopLossDistance because the SL distance is bigger than the MaxStopLossDistance")
-				return params.PositionPrice + params.MaxStopLossDistance
-			}
-			if sl-params.PositionPrice <= params.MinStopLossDistance {
-				params.Log("SHORT POSITION | Using MinStopLossDistance because the SL distance is lower than the MinStopLossDistance")
-				return params.PositionPrice + params.MinStopLossDistance
-			}
-			return sl
 		}
-	} else {
+		params.Log(params.LongOrShort + " POSITION | SL price after offset is -> " + utils.FloatToString(sl, 5))
+
 		if params.LongOrShort == "long" {
-			return params.PositionPrice - params.MaxStopLossDistance
+			isValidSL = !((err != nil || sl >= params.PositionPrice) || (params.PositionPrice-sl >= params.MaxStopLossDistance) || (params.PositionPrice-sl <= params.MinStopLossDistance))
+		} else {
+			isValidSL = !((err != nil || sl <= params.PositionPrice) || (sl-params.PositionPrice >= params.MaxStopLossDistance) || (sl-params.PositionPrice <= params.MinStopLossDistance))
 		}
-		if params.LongOrShort == "short" {
-			return params.PositionPrice + params.MaxStopLossDistance
+
+		if isValidSL {
+			break
+		}
+
+		params.Log(params.LongOrShort + " POSITION | Invalid SL, trying again ...")
+		index = foundAtIndex
+		attempt++
+
+		if attempt == params.MaxAttempts {
+			params.Log(params.LongOrShort + " POSITION | Max attempts reached - Unable to find a propert stop loss.")
+			break
 		}
 	}
 
-	return 0.
+	if isValidSL {
+		return sl
+	}
+
+	if params.LongOrShort == "long" {
+		return params.PositionPrice - params.MaxStopLossDistance
+	} else {
+		return params.PositionPrice + params.MaxStopLossDistance
+	}
+
 }
 
 func getEma(candle *types.Candle, candlesAmount int64) types.MovingAverage {

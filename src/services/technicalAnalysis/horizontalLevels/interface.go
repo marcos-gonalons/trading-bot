@@ -7,9 +7,11 @@ type Interface interface {
 	GetResistancePrice(
 		candlesWithLowerPriceToBeConsideredTop types.CandlesAmountForHorizontalLevel,
 		candles []*types.Candle,
-	) (float64, error)
+		startingIndex int,
+	) (float64, int, error)
 	GetSupportPrice(
 		candlesWithHigherPriceToBeConsideredBottom types.CandlesAmountForHorizontalLevel,
 		candles []*types.Candle,
-	) (float64, error)
+		startingIndex int,
+	) (float64, int, error)
 }

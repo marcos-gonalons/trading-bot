@@ -10,22 +10,26 @@ type Service struct{}
 func (s *Service) GetResistancePrice(
 	candlesWithLowerPriceToBeConsideredTop types.CandlesAmountForHorizontalLevel,
 	candles []*types.Candle,
-) (price float64, err error) {
+	startingIndex int,
+) (price float64, foundAtIndex int, err error) {
 	return s.getPrice(
 		candlesWithLowerPriceToBeConsideredTop,
 		ResistanceName,
 		candles,
+		startingIndex,
 	)
 }
 
 func (s *Service) GetSupportPrice(
 	candlesWithHigherPriceToBeConsideredBottom types.CandlesAmountForHorizontalLevel,
 	candles []*types.Candle,
-) (price float64, err error) {
+	startingIndex int,
+) (price float64, foundAtIndex int, err error) {
 	return s.getPrice(
 		candlesWithHigherPriceToBeConsideredBottom,
 		SupportName,
 		candles,
+		startingIndex,
 	)
 }
 
@@ -33,11 +37,11 @@ func (s *Service) getPrice(
 	candlesAmount types.CandlesAmountForHorizontalLevel,
 	supportOrResistance string,
 	candles []*types.Candle,
-) (float64, error) {
+	startingIndex int,
+) (float64, int, error) {
 	candlesToCheck := 300
-	lastCompletedCandleIndex := len(candles) - 1
 
-	for x := lastCompletedCandleIndex; x > lastCompletedCandleIndex-candlesToCheck; x-- {
+	for x := startingIndex; x > startingIndex-candlesToCheck; x-- {
 		if x < 0 {
 			break
 		}
@@ -69,7 +73,7 @@ func (s *Service) getPrice(
 
 		pastCandlesOvercomePrice := false
 		for j := horizontalLevelCandleIndex - candlesAmount.Past; j < horizontalLevelCandleIndex; j++ {
-			if j < 1 || j > lastCompletedCandleIndex {
+			if j < 1 || j > startingIndex {
 				continue
 			}
 			if supportOrResistance == ResistanceName {
@@ -91,15 +95,15 @@ func (s *Service) getPrice(
 		}
 
 		if supportOrResistance == ResistanceName {
-			return candles[horizontalLevelCandleIndex].High, nil
+			return candles[horizontalLevelCandleIndex].High, horizontalLevelCandleIndex, nil
 		}
 		if supportOrResistance == SupportName {
-			return candles[horizontalLevelCandleIndex].Low, nil
+			return candles[horizontalLevelCandleIndex].Low, horizontalLevelCandleIndex, nil
 		}
 
 	}
 
-	return 0, errors.New("unable to find the horizontal level")
+	return 0, 0, errors.New("unable to find the horizontal level")
 }
 
 func GetServiceInstance() Interface {

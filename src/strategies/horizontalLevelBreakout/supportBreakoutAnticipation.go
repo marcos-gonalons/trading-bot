@@ -21,9 +21,11 @@ func SupportBreakoutAnticipation(params strategies.Params) {
 		return
 	}
 
-	price, err := params.Container.HorizontalLevelsService.GetSupportPrice(
+	candles := params.CandlesHandler.GetCompletedCandles()
+	price, _, err := params.Container.HorizontalLevelsService.GetSupportPrice(
 		*params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
-		params.CandlesHandler.GetCompletedCandles(),
+		candles,
+		len(candles)-1,
 	)
 
 	if err != nil {

@@ -63,7 +63,7 @@ func EmaCrossoverShorts(params strategies.Params) {
 		}
 	}
 
-	if getEma(candles[lastCompletedCandleIndex], SMALL_EMA).Value > getEma(candles[lastCompletedCandleIndex], BIG_EMA).Value {
+	if getEma(lastCompletedCandle, SMALL_EMA).Value > getEma(lastCompletedCandle, BIG_EMA).Value {
 		log("Small EMA is still above the big EMA - doing nothing - " + utils.GetStringRepresentation(lastCompletedCandle))
 		return
 	}
@@ -78,8 +78,7 @@ func EmaCrossoverShorts(params strategies.Params) {
 		PriceOffset:                     params.MarketStrategyParams.StopLossPriceOffset,
 		CandlesAmountForHorizontalLevel: params.MarketData.ShortSetupParams.CandlesAmountForHorizontalLevel,
 		Candles:                         params.CandlesHandler.GetCompletedCandles(),
-		GetResistancePrice:              params.Container.HorizontalLevelsService.GetResistancePrice,
-		GetSupportPrice:                 params.Container.HorizontalLevelsService.GetSupportPrice,
+		GetHorizontalLevel:              params.Container.HorizontalLevelsService.GetResistancePrice,
 		MaxAttempts:                     params.MarketStrategyParams.MaxAttemptsToGetSL,
 		Log:                             params.Market.Log,
 	})

@@ -19,6 +19,7 @@ import (
 )
 
 const initialBalance = float64(5000)
+const LONGS_OR_SHORTS = "longs"
 
 func main() {
 	container := services.GetServicesContainer()
@@ -55,6 +56,11 @@ func main() {
 	})
 
 	if getReplayType() == "single" {
+		if LONGS_OR_SHORTS == "longs" {
+			market.GetMarketData().ShortSetupParams = nil
+		} else {
+			market.GetMarketData().LongSetupParams = nil
+		}
 		candlesLoop(csvLines, market, container, simulatorAPI, false)
 		PrintTrades(simulatorAPI.GetTrades())
 		state, _ := simulatorAPI.GetState()
