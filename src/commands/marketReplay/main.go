@@ -54,20 +54,17 @@ func main() {
 		Equity:       initialBalance,
 	})
 
-	var longsOrShorts = os.Args[3]
+	var side = os.Args[3]
 	if os.Args[2] == "single" {
-		if longsOrShorts == "longs" {
-			market.GetMarketData().ShortSetupParams = nil
-		} else {
-			market.GetMarketData().LongSetupParams = nil
-		}
+		setStrategyData(side, market)
+
 		candlesLoop(csvLines, market, container, simulatorAPI, false)
 		PrintTrades(simulatorAPI.GetTrades())
 		state, _ := simulatorAPI.GetState()
 		fmt.Println("Profits -> ", state.Balance-initialBalance)
 	} else {
 		combinations, combinationsLength := GetCombinations(market.GetMarketData().MinPositionSize)
-		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength, longsOrShorts)
+		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength, side)
 	}
 
 }
@@ -142,17 +139,12 @@ func getMarketName() string {
 	return os.Args[1]
 }
 
-func getReplayType() string {
-	if len(os.Args) < 3 {
-		return "single"
+func setStrategyData(side string, market markets.MarketInterface) {
+	if side == "longs" {
+		market.GetMarketData().ShortSetupParams = nil
+	} else if side == "shorts" {
+		market.GetMarketData().LongSetupParams = nil
 	}
-
-	t := os.Args[2]
-	if t != "single" && t != "combo" {
-		return "single"
-	}
-
-	return t
 }
 
 func candlesLoop(
