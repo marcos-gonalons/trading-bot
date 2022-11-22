@@ -17,10 +17,10 @@ up-debug: down
 	docker-compose exec trading-bot dlv debug ./src --headless --listen=:2345 --api-version=2 --log
 
 debug-command:
-	docker run --rm -p 127.0.0.1:2345:2345/tcp trading-bot dlv debug ./src/commands/${command} --headless --listen=:2345 --api-version=2 --log -- ${args}
+	docker run --rm --mount type=bind,src=$$PWD/.,dst=/TradingBot -p 127.0.0.1:2345:2345/tcp trading-bot dlv debug ./src/commands/${command} --headless --listen=:2345 --api-version=2 --log -- ${args}
 
 run-command:
-	docker run --rm trading-bot go run ./src/commands/${command}/. ${args}
+	docker run --rm --mount type=bind,src=$$PWD/.,dst=/TradingBot trading-bot go run ./src/commands/${command}/. ${args}
 
 down:
 	docker-compose down
