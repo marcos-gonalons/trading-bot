@@ -17,10 +17,10 @@ up-debug: down
 	docker-compose exec trading-bot dlv debug ./src --headless --listen=:2345 --api-version=2 --log
 
 debug-command:
-	docker run --rm --mount type=bind,src=$$PWD/.,dst=/TradingBot -p 127.0.0.1:2345:2345/tcp trading-bot dlv debug ./src/commands/${command} --headless --listen=:2345 --api-version=2 --log -- ${args}
+	docker-compose run --rm -p 127.0.0.1:2345:2345/tcp trading-bot dlv debug ./src/commands/${command} --headless --listen=:2345 --api-version=2 --log -- ${args}
 
 run-command:
-	docker run --rm --mount type=bind,src=$$PWD/.,dst=/TradingBot trading-bot go run ./src/commands/${command}/. ${args}
+	docker-compose run --rm trading-bot go run ./src/commands/${command}/. ${args}
 
 down:
 	docker-compose down
@@ -28,7 +28,6 @@ down:
 ssh:
 	docker-compose exec trading-bot bash
 
-test: down
-	docker-compose up -d
-	docker-compose exec trading-bot go test -coverprofile .tests-coverage/raw.txt ./src/... || true
-	docker-compose exec trading-bot go tool cover -html=.tests-coverage/raw.txt -o .tests-coverage/report.html
+test: 
+	docker-compose run --rm trading-bot go test -coverprofile .tests-coverage/raw.txt ./src/... || true
+	docker-compose run --rm trading-bot go tool cover -html=.tests-coverage/raw.txt -o .tests-coverage/report.html
