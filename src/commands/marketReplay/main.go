@@ -19,7 +19,6 @@ import (
 )
 
 const initialBalance = float64(5000)
-const LONGS_OR_SHORTS = "longs"
 
 func main() {
 	container := services.GetServicesContainer()
@@ -55,8 +54,9 @@ func main() {
 		Equity:       initialBalance,
 	})
 
-	if getReplayType() == "single" {
-		if LONGS_OR_SHORTS == "longs" {
+	var longsOrShorts = os.Args[3]
+	if os.Args[2] == "single" {
+		if longsOrShorts == "longs" {
 			market.GetMarketData().ShortSetupParams = nil
 		} else {
 			market.GetMarketData().LongSetupParams = nil
@@ -67,7 +67,7 @@ func main() {
 		fmt.Println("Profits -> ", state.Balance-initialBalance)
 	} else {
 		combinations, combinationsLength := GetCombinations(market.GetMarketData().MinPositionSize)
-		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength)
+		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength, longsOrShorts)
 	}
 
 }

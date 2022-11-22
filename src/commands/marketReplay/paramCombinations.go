@@ -66,10 +66,10 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 	c.StopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.StopLossPriceOffset = funk.Map([]float64{75}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxAttemptsToGetSL = []int{16, 14, 10, 8, 6, 4, 2, 1}
+	c.MaxAttemptsToGetSL = []int{12}
 
-	c.MinStopLossDistance = funk.Map([]float64{0, 20, 30, 40, 60, 80, 90, 100, 110, 120}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxStopLossDistance = funk.Map([]float64{100, 300, 400, 500, 600, 700, 800}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinStopLossDistance = funk.Map([]float64{10}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{550, 600, 650, 700, 750, 800}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.TakeProfitDistance = funk.Map([]float64{230}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.MinProfit = funk.Map([]float64{99999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
@@ -80,8 +80,8 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 	c.SLDistanceShortForTighterTP = funk.Map([]float64{100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{-20}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{5, 15, 25, 35, 45}
-	c.PastCandles = []int{5, 15, 25, 35, 45}
+	c.FutureCandles = []int{30}
+	c.PastCandles = []int{45}
 	c.CandlesAmountWithoutEMAsCrossing = []int{12}
 
 	return &c, getTotalLength(&c)
@@ -94,6 +94,7 @@ func candlesLoopWithCombinations(
 	simulatorAPI api.Interface,
 	c *ParamCombinations,
 	combinationsLength int,
+	longsOrShorts string,
 ) {
 	// todo: refactor
 	state, _ := simulatorAPI.GetState()
@@ -168,7 +169,7 @@ func candlesLoopWithCombinations(
 
 																					state, _ := simulatorAPI.GetState()
 
-																					if LONGS_OR_SHORTS == "longs" {
+																					if longsOrShorts == "longs" {
 																						market.SetStrategyParams(&params, nil)
 																					} else {
 																						market.SetStrategyParams(nil, &params)
