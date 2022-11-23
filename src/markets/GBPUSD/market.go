@@ -48,21 +48,17 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		/*
-			if s.MarketData.LongSetupParams != nil {
-				s.Log("Calling EmaCrossoverLongs strategy")
-				emaCrossover.EmaCrossoverLongs(strategies.Params{
-					Type:                 ibroker.LongSide,
+		if s.MarketData.LongSetupParams != nil {
+			s.Log("Calling EmaCrossoverLongs strategy")
+			emaCrossover.EmaCrossoverLongs(strategies.Params{
+				Type:                 ibroker.LongSide,
 				MarketStrategyParams: s.MarketData.LongSetupParams,
-					MarketData:           &s.MarketData,
-					CandlesHandler:       s.CandlesHandler,
-					Market:               s,
-					Container:            s.Container,
-				})
-			}
-		*/
-		// No longs for GBPUSD. Combining longs and shorts not very worth it for this market.
-		// Better just stick with shorts.
+				MarketData:           &s.MarketData,
+				CandlesHandler:       s.CandlesHandler,
+				Market:               s,
+				Container:            s.Container,
+			})
+		}
 
 		if s.MarketData.ShortSetupParams != nil {
 			s.Log("Calling EmaCrossoverShorts strategy")
