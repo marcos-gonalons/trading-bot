@@ -67,23 +67,23 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 	c.StopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.StopLossPriceOffset = funk.Map([]float64{25}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxAttemptsToGetSL = []int{2, 10, 20}
+	c.MaxAttemptsToGetSL = []int{11}
 
-	c.MinStopLossDistance = funk.Map([]float64{0, 20, 60, 100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxStopLossDistance = funk.Map([]float64{200, 300, 400, 500, 600, 700}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinStopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{200}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{330}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MinProfit = funk.Map([]float64{220}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{120}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinProfit = funk.Map([]float64{60}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.TPDistanceShortForTighterSL = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.SLDistanceShortForTighterTP = funk.Map([]float64{40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{-180}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceShortForTighterTP = funk.Map([]float64{20}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{-100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{20, 25, 30}
-	c.PastCandles = []int{40, 45, 50}
-	c.CandlesAmountWithoutEMAsCrossing = []int{21}
+	c.FutureCandles = []int{30}
+	c.PastCandles = []int{45}
+	c.CandlesAmountWithoutEMAsCrossing = []int{10}
 
 	return &c, getTotalLength(&c)
 }
