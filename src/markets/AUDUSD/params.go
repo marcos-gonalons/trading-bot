@@ -11,7 +11,7 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
 	StopLossPriceOffset: 0 * priceAdjustment,
-	MaxAttemptsToGetSL:  10,
+	MaxAttemptsToGetSL:  8,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 2,
 		Past:   0,
@@ -35,10 +35,10 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
 	StopLossPriceOffset: 200 * priceAdjustment,
-	MaxAttemptsToGetSL:  10,
+	MaxAttemptsToGetSL:  2,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 25,
-		Past:   40,
+		Past:   50,
 	},
 	MinStopLossDistance: 0 * priceAdjustment,
 	MaxStopLossDistance: 550 * priceAdjustment,
