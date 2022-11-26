@@ -11,15 +11,15 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
 	StopLossPriceOffset: 20 * priceAdjustment,
-	MaxAttemptsToGetSL:  10,
+	MaxAttemptsToGetSL:  2,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 21,
 		Past:   15,
 	},
-	MinStopLossDistance:              0 * priceAdjustment,
-	MaxStopLossDistance:              600 * priceAdjustment,
-	TakeProfitDistance:               160 * priceAdjustment,
-	MinProfit:                        100 * priceAdjustment,
+	MinStopLossDistance:              120 * priceAdjustment,
+	MaxStopLossDistance:              275 * priceAdjustment,
+	TakeProfitDistance:               120 * priceAdjustment,
+	MinProfit:                        60 * priceAdjustment,
 	CandlesAmountWithoutEMAsCrossing: 3,
 	MaxSecondsOpenTrade:              0,
 
@@ -31,18 +31,18 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
 	StopLossPriceOffset: 10 * priceAdjustment,
-	MaxAttemptsToGetSL:  10,
+	MaxAttemptsToGetSL:  2,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 20,
 		Past:   5,
 	},
 	MinStopLossDistance: 0 * priceAdjustment,
 	MaxStopLossDistance: 150 * priceAdjustment,
-	TakeProfitDistance:  290 * priceAdjustment,
+	TakeProfitDistance:  280 * priceAdjustment,
 	MinProfit:           -40 * priceAdjustment,
 	TrailingStopLoss: &types.TrailingStopLoss{
-		TPDistanceShortForTighterSL: 240 * priceAdjustment,
-		SLDistanceWhenTPIsVeryClose: -10 * priceAdjustment,
+		TPDistanceShortForTighterSL: 0 * priceAdjustment,
+		SLDistanceWhenTPIsVeryClose: 0 * priceAdjustment,
 	},
 	CandlesAmountWithoutEMAsCrossing: 3,
 	MaxSecondsOpenTrade:              0,

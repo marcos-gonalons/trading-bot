@@ -77,20 +77,16 @@ func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 			})
 		}
 
-		// No shorts for SP500. Combining longs and shorts not very worth it for this market.
-		// Better just stick with longs.
-		/*
-			if s.MarketData.ShortSetupParams != nil {
-				s.Log("Calling EmaCrossoverShorts strategy")
-				emaCrossover.EmaCrossoverShorts(strategies.Params{
-					Type:                 ibroker.ShortSide,
-					MarketStrategyParams: s.MarketData.ShortSetupParams,
-					MarketData:           &s.MarketData,
-					CandlesHandler:       s.CandlesHandler,
-					Market:               s,
-					Container:            s.Container,
-				})
-			}
-		*/
+		if s.MarketData.ShortSetupParams != nil {
+			s.Log("Calling EmaCrossoverShorts strategy")
+			emaCrossover.EmaCrossoverShorts(strategies.Params{
+				Type:                 ibroker.ShortSide,
+				MarketStrategyParams: s.MarketData.ShortSetupParams,
+				MarketData:           &s.MarketData,
+				CandlesHandler:       s.CandlesHandler,
+				Market:               s,
+				Container:            s.Container,
+			})
+		}
 	}
 }
