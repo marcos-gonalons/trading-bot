@@ -66,24 +66,24 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 	c.LimitAndStopOrderPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.StopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossPriceOffset = funk.Map([]float64{60}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxAttemptsToGetSL = []int{10}
+	c.StopLossPriceOffset = funk.Map([]float64{-75}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxAttemptsToGetSL = []int{2}
 
-	c.MinStopLossDistance = funk.Map([]float64{90}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxStopLossDistance = funk.Map([]float64{620}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinStopLossDistance = funk.Map([]float64{60}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{200, 250, 300, 350, 400, 450, 500, 550, 600}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{100, 150, 200, 250, 300, 350, 400, 450, 500, 550}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MinProfit = funk.Map([]float64{-100, -60, -20, 0, 40, 80, 120, 160, 200, 240, 280, 320}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{450}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinProfit = funk.Map([]float64{250}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TPDistanceShortForTighterSL = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceShortForTighterSL = funk.Map([]float64{120}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{-75}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.SLDistanceShortForTighterTP = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{15}
-	c.PastCandles = []int{28}
-	c.CandlesAmountWithoutEMAsCrossing = []int{0, 10, 20, 30}
+	c.FutureCandles = []int{23}
+	c.PastCandles = []int{30}
+	c.CandlesAmountWithoutEMAsCrossing = []int{3}
 
 	return &c, getTotalLength(&c)
 }
