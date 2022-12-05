@@ -146,7 +146,6 @@ func (s *APIFacade) ModifyPosition(
 // CreateOrder ...
 func (s *APIFacade) CreateOrder(
 	order *api.Order,
-	getCurrentBrokerQuote func() *api.Quote,
 	setStringValues func(order *api.Order),
 	retryParams RetryParams,
 ) {
@@ -155,30 +154,6 @@ func (s *APIFacade) CreateOrder(
 	utils.RepeatUntilSuccess(
 		"CreateOrder",
 		func() (err error) {
-			currentQuote := getCurrentBrokerQuote()
-			s.Logger.Log("Current broker quote is" + utils.GetStringRepresentation(currentQuote))
-
-			if s.API.IsLongOrder(order) {
-				if s.API.IsLimitOrder(order) && *order.LimitPrice >= currentQuote.Bid {
-					s.Logger.Log("Can't create the limit buy order since the order price is bigger than the current bid")
-					return
-				}
-				if s.API.IsStopOrder(order) && *order.StopPrice <= currentQuote.Ask {
-					s.Logger.Log("Can't create the stop buy order since the order price is lower than the current ask")
-					return
-				}
-			}
-			if s.API.IsShortOrder(order) {
-				if s.API.IsLimitOrder(order) && *order.LimitPrice <= currentQuote.Ask {
-					s.Logger.Log("Can't create the limit sell order since the order price is lower than the current ask")
-					return
-				}
-				if s.API.IsStopOrder(order) && *order.StopPrice >= currentQuote.Bid {
-					s.Logger.Log("Can't create the stop sell order since the order price is bigger than the current bid")
-					return
-				}
-			}
-
 			setStringValues(order)
 			err = s.API.CreateOrder(order)
 			if err != nil {

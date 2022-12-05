@@ -11,5 +11,5 @@ type Interface interface {
 	ClosePositions(retryParams RetryParams)
 	ClosePosition(marketName string, retryParams RetryParams)
 	ModifyPosition(marketName string, tp string, sl string, retryParams RetryParams)
-	CreateOrder(order *api.Order, getCurrentBrokerQuote func() *api.Quote, setStringValues func(order *api.Order), retryParams RetryParams)
+	CreateOrder(order *api.Order, setStringValues func(order *api.Order), retryParams RetryParams)
 }

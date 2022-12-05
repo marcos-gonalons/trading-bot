@@ -14,8 +14,6 @@ type MarketInterface interface {
 	DailyReset()
 	OnReceiveMarketData(data *tradingviewsocket.QuoteData)
 	OnNewCandle()
-	GetCurrentBrokerQuote() *api.Quote
-	SetCurrentBrokerQuote(quote *api.Quote)
 	GetMarketData() *types.MarketData
 	SetCurrentPositionExecutedAt(timestamp int64)
 

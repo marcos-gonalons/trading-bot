@@ -35,9 +35,8 @@ func SupportBreakoutAnticipation(params strategies.Params) {
 	}
 
 	price = price + params.MarketStrategyParams.LimitAndStopOrderPriceOffset
-	if price >= params.Market.GetCurrentBrokerQuote().Bid {
+	if price >= params.CandlesHandler.GetLastCompletedCandle().Close {
 		params.Market.Log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, params.MarketData.PriceDecimals))
-		params.Market.Log("Quote is -> " + utils.GetStringRepresentation(params.Market.GetCurrentBrokerQuote()))
 		return
 	}
 

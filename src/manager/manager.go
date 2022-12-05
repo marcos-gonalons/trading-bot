@@ -67,7 +67,7 @@ func (s *Manager) OnReceiveMarketData(marketName string, data *tradingviewsocket
 		if marketName != market.GetMarketData().SocketName {
 			continue
 		}
-		if market.GetCurrentBrokerQuote() != nil {
+		if utils.IsWithinTradingHours(time.Now(), market.GetMarketData().TradingHours) {
 			go market.OnReceiveMarketData(data)
 		}
 	}
@@ -120,34 +120,15 @@ func (s *Manager) fetchDataLoop() {
 		var waitingGroup sync.WaitGroup
 		var fetchFuncs []func()
 
+		shouldFetch := false
 		for _, market := range s.markets {
-			if !utils.IsWithinTradingHours(time.Now(), market.GetMarketData().TradingHours) {
-				continue
+			if utils.IsWithinTradingHours(time.Now(), market.GetMarketData().TradingHours) {
+				shouldFetch = true
+				break
 			}
-
-			fetchFuncs = append(fetchFuncs,
-				func(marketName string) func() {
-					return func() {
-						quote := s.fetch(func() (interface{}, error) {
-							defer waitingGroup.Done()
-							s.ServicesContainer.Logger.Log("Fetching quote ...")
-							return s.ServicesContainer.API.GetQuote(marketName)
-						}).(*api.Quote)
-						s.ServicesContainer.Logger.Log("Quote is -> " + utils.GetStringRepresentation(quote))
-						if quote != nil {
-							for _, market := range s.markets {
-								if market.GetMarketData().BrokerAPIName != marketName {
-									continue
-								}
-								market.SetCurrentBrokerQuote(quote)
-							}
-						}
-					}
-				}(market.GetMarketData().BrokerAPIName),
-			)
 		}
 
-		if len(fetchFuncs) > 0 {
+		if shouldFetch {
 			fetchFuncs = append(fetchFuncs,
 				func() {
 					orders := s.fetch(func() (interface{}, error) {

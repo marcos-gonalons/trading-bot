@@ -68,7 +68,7 @@ func EmaCrossoverShorts(params strategies.Params) {
 		return
 	}
 
-	price := params.Market.GetCurrentBrokerQuote().Ask
+	price := lastCompletedCandle.Close
 
 	stopLoss := getStopLoss(GetStopLossParams{
 		LongOrShort:                     "short",

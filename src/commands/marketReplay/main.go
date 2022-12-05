@@ -160,13 +160,6 @@ func candlesLoop(
 
 		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCompletedCandles(), true)
 
-		market.SetCurrentBrokerQuote(&api.Quote{
-			Ask:    candle.Close,
-			Bid:    candle.Close,
-			Price:  candle.Close,
-			Volume: 0,
-		})
-
 		SetPositionSizeStrategy(market)
 
 		brokerSim.OnNewCandle(

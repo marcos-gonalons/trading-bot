@@ -24,7 +24,6 @@ type BaseMarketClass struct {
 	MarketData           types.MarketData
 	ToExecuteOnNewCandle func()
 
-	currentBrokerQuote        *api.Quote
 	currentPosition           *api.Position
 	currentPositionExecutedAt time.Time
 	pendingOrder              *api.Order
@@ -96,14 +95,6 @@ func (s *BaseMarketClass) SetCurrentPositionExecutedAt(timestamp int64) {
 	s.currentPositionExecutedAt = time.Unix(timestamp, 0)
 }
 
-func (s *BaseMarketClass) SetCurrentBrokerQuote(quote *api.Quote) {
-	s.currentBrokerQuote = quote
-}
-
-func (s *BaseMarketClass) GetCurrentBrokerQuote() *api.Quote {
-	return s.currentBrokerQuote
-}
-
 func (s *BaseMarketClass) OnReceiveMarketData(data *tradingviewsocket.QuoteData) {
 	s.Log("Received data -> " + utils.GetStringRepresentation(data))
 
@@ -147,11 +138,12 @@ func (s *BaseMarketClass) Log(message string) {
 }
 
 func (s *BaseMarketClass) SetStringValues(order *api.Order) {
-	order.CurrentAsk = &s.currentBrokerQuote.Ask
-	order.CurrentBid = &s.currentBrokerQuote.Bid
+	order.CurrentAsk = nil
+	order.CurrentBid = nil
 
-	currentAsk := utils.FloatToString(*order.CurrentAsk, s.MarketData.PriceDecimals)
-	currentBid := utils.FloatToString(*order.CurrentBid, s.MarketData.PriceDecimals)
+	currentAsk := "0.0"
+	currentBid := "0.0"
+
 	qty := utils.IntToString(int64(order.Qty))
 	order.StringValues = &api.OrderStringValues{
 		CurrentAsk: &currentAsk,
@@ -319,9 +311,6 @@ func (s *BaseMarketClass) CreatePendingOrder(side string) {
 		order := s.GetPendingOrder()
 		s.Container.APIRetryFacade.CreateOrder(
 			pendingOrder,
-			func() *api.Quote {
-				return s.GetCurrentBrokerQuote()
-			},
 			s.SetStringValues,
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 10 * time.Second,
@@ -378,8 +367,8 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 	)
 
 	order := &api.Order{
-		CurrentAsk: &s.GetCurrentBrokerQuote().Ask,
-		CurrentBid: &s.GetCurrentBrokerQuote().Bid,
+		CurrentAsk: nil,
+		CurrentBid: nil,
 		Instrument: s.GetMarketData().BrokerAPIName,
 		Qty:        size,
 		Side:       params.Side,
@@ -424,9 +413,6 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 
 		s.Container.APIRetryFacade.CreateOrder(
 			order,
-			func() *api.Quote {
-				return s.GetCurrentBrokerQuote()
-			},
 			s.SetStringValues,
 			retryFacade.RetryParams{
 				DelayBetweenRetries: 10 * time.Second,
