@@ -95,7 +95,7 @@ func candlesLoopWithCombinations(
 	simulatorAPI api.Interface,
 	c *ParamCombinations,
 	combinationsLength int,
-	longsOrShorts string,
+	side Side,
 ) {
 	// todo: refactor
 	state, _ := simulatorAPI.GetState()
@@ -168,7 +168,7 @@ func candlesLoopWithCombinations(
 																						Equity:       initialBalance,
 																					})
 
-																					if longsOrShorts == "longs" {
+																					if side == LONGS_SIDE {
 																						market.SetStrategyParams(&params, nil)
 																					} else {
 																						market.SetStrategyParams(nil, &params)

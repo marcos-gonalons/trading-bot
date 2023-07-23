@@ -25,6 +25,8 @@ func main() {
 	container.Initialize(false)
 
 	marketName := getMarketName()
+	replayType := getReplayType()
+	side := getSide()
 
 	market := getMarketInstance(
 		&manager.Manager{
@@ -54,8 +56,7 @@ func main() {
 		Equity:       initialBalance,
 	})
 
-	var side = os.Args[3]
-	if os.Args[2] == "single" {
+	if replayType == SINGLE_TYPE {
 		setStrategyData(side, market)
 
 		candlesLoop(csvLines, market, container, simulatorAPI, false)
@@ -139,10 +140,34 @@ func getMarketName() string {
 	return os.Args[1]
 }
 
-func setStrategyData(side string, market markets.MarketInterface) {
-	if side == "longs" {
+func getReplayType() ReplayType {
+	var t = os.Args[2]
+	switch t {
+	case "single":
+		return SINGLE_TYPE
+	case "combo":
+		return COMBO_TYPE
+	}
+
+	panic("Invalid replay type. Only allowed single or combo.")
+}
+
+func getSide() Side {
+	var s = os.Args[3]
+	switch s {
+	case "longs":
+		return LONGS_SIDE
+	case "shorts":
+		return SHORTS_SIDE
+	}
+
+	panic("Invalid side. Only allowed longs or shorts.")
+}
+
+func setStrategyData(side Side, market markets.MarketInterface) {
+	if side == LONGS_SIDE {
 		market.GetMarketData().ShortSetupParams = nil
-	} else if side == "shorts" {
+	} else if side == SHORTS_SIDE {
 		market.GetMarketData().LongSetupParams = nil
 	}
 }
