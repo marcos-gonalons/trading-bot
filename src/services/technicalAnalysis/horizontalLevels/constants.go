@@ -1,7 +1,8 @@
 package horizontalLevels
 
-// ResistanceName ...
-const ResistanceName = "resistance"
+type LevelType string
 
-// SupportName ...
-const SupportName = "support"
+const (
+	RESISTANCE LevelType = "resistance"
+	SUPPORT    LevelType = "support"
+)

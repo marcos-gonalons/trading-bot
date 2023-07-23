@@ -14,7 +14,7 @@ func (s *Service) GetResistancePrice(
 ) (price float64, foundAtIndex int, err error) {
 	return s.getPrice(
 		candlesWithLowerPriceToBeConsideredTop,
-		ResistanceName,
+		RESISTANCE,
 		candles,
 		startingIndex,
 	)
@@ -27,15 +27,17 @@ func (s *Service) GetSupportPrice(
 ) (price float64, foundAtIndex int, err error) {
 	return s.getPrice(
 		candlesWithHigherPriceToBeConsideredBottom,
-		SupportName,
+		SUPPORT,
 		candles,
 		startingIndex,
 	)
 }
 
+// todo: call this getPriceOLD and keep using it for emacrossover strategy
+// until I find a better strategy that uses the correct method to get the horizontal level
 func (s *Service) getPrice(
 	candlesAmount types.CandlesAmountForHorizontalLevel,
-	supportOrResistance string,
+	levelType LevelType,
 	candles []*types.Candle,
 	startingIndex int,
 ) (float64, int, error) {
@@ -53,13 +55,13 @@ func (s *Service) getPrice(
 
 		futureCandlesOvercomePrice := false
 		for j := horizontalLevelCandleIndex + 1; j < x; j++ {
-			if supportOrResistance == ResistanceName {
+			if levelType == RESISTANCE {
 				if candles[j].High > candles[horizontalLevelCandleIndex].High {
 					futureCandlesOvercomePrice = true
 					break
 				}
 			}
-			if supportOrResistance == SupportName {
+			if levelType == SUPPORT {
 				if candles[j].Low < candles[horizontalLevelCandleIndex].Low {
 					futureCandlesOvercomePrice = true
 					break
@@ -76,13 +78,13 @@ func (s *Service) getPrice(
 			if j < 1 || j > startingIndex {
 				continue
 			}
-			if supportOrResistance == ResistanceName {
+			if levelType == RESISTANCE {
 				if candles[j].High > candles[horizontalLevelCandleIndex].High {
 					pastCandlesOvercomePrice = true
 					break
 				}
 			}
-			if supportOrResistance == SupportName {
+			if levelType == SUPPORT {
 				if candles[j].Low < candles[horizontalLevelCandleIndex].Low {
 					pastCandlesOvercomePrice = true
 					break
@@ -94,10 +96,10 @@ func (s *Service) getPrice(
 			continue
 		}
 
-		if supportOrResistance == ResistanceName {
+		if levelType == RESISTANCE {
 			return candles[horizontalLevelCandleIndex].High, horizontalLevelCandleIndex, nil
 		}
-		if supportOrResistance == SupportName {
+		if levelType == SUPPORT {
 			return candles[horizontalLevelCandleIndex].Low, horizontalLevelCandleIndex, nil
 		}
 

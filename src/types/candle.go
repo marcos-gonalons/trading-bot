@@ -21,3 +21,5 @@ type MovingAverage struct {
 type Indicators struct {
 	MovingAverages []MovingAverage
 }
+
+type Level struct{}
