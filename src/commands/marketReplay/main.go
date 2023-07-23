@@ -212,8 +212,6 @@ func SetPositionSizeStrategy(market markets.MarketInterface) {
 }
 
 func PrintTrades(trades []*api.Trade) {
-	fmt.Println("Total trades -> ", len(trades))
-
 	for _, trade := range trades {
 		fmt.Println(
 			trade.Side,
@@ -231,4 +229,5 @@ func PrintTrades(trades []*api.Trade) {
 			trade.ClosedAt.Format("02/01/2006 15:04:05"),
 		)
 	}
+	fmt.Println("Total trades -> ", len(trades))
 }
