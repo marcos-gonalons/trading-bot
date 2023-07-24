@@ -4,6 +4,7 @@ import (
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
+	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/strategies"
 	"TradingBot/src/utils"
 	"time"
@@ -22,11 +23,12 @@ func SupportBreakoutAnticipation(params strategies.Params) {
 	}
 
 	candles := params.CandlesHandler.GetCompletedCandles()
-	price, _, err := params.Container.HorizontalLevelsService.GetSupportPrice(
-		*params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
-		candles,
-		len(candles)-1,
-	)
+	level, err := params.Container.HorizontalLevelsService.GetSupport(horizontalLevels.GetLevelParams{
+		StartAt: int64(len(candles) - 1),
+		CandlesAmountToBeConsideredHorizontalLevel: *params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
+		Candles:        candles,
+		CandlesToCheck: 300,
+	})
 
 	if err != nil {
 		errorMessage := "Not a good short setup yet -> " + err.Error()
@@ -34,7 +36,7 @@ func SupportBreakoutAnticipation(params strategies.Params) {
 		return
 	}
 
-	price = price + params.MarketStrategyParams.LimitAndStopOrderPriceOffset
+	price := level.Candle.Low + params.MarketStrategyParams.LimitAndStopOrderPriceOffset
 	if price >= params.CandlesHandler.GetLastCompletedCandle().Close {
 		params.Market.Log("Price is lower than the current ask, so we can't create the short order now. Price is -> " + utils.FloatToString(price, params.MarketData.PriceDecimals))
 		return

@@ -3,6 +3,7 @@ package emaCrossover
 import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
+	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"time"
@@ -81,7 +82,7 @@ type GetStopLossParams struct {
 	CandlesAmountForHorizontalLevel *types.CandlesAmountForHorizontalLevel
 	Candles                         []*types.Candle
 	MaxAttempts                     int
-	GetHorizontalLevel              func(types.CandlesAmountForHorizontalLevel, []*types.Candle, int) (float64, int, error)
+	GetHorizontalLevel              func(horizontalLevels.GetLevelParams) (*horizontalLevels.Level, error)
 	Log                             func(m string)
 }
 
@@ -96,21 +97,28 @@ func getStopLoss(params GetStopLossParams) float64 {
 	)
 
 	var sl float64
-	var foundAtIndex int
-	var err error
 	var attempt int = 0
 	var isValidSL bool = false
-	index := len(params.Candles) - 1
+	index := int64(len(params.Candles) - 1)
 	for {
-		sl, foundAtIndex, err = params.GetHorizontalLevel(
-			*params.CandlesAmountForHorizontalLevel,
-			params.Candles,
-			index,
-		)
+		level, err := params.GetHorizontalLevel(horizontalLevels.GetLevelParams{
+			StartAt: index,
+			CandlesAmountToBeConsideredHorizontalLevel: *params.CandlesAmountForHorizontalLevel,
+			Candles:        params.Candles,
+			CandlesToCheck: 300,
+		})
 		if err != nil {
 			params.Log(params.LongOrShort + " POSITION | Error when getting the horizontal level price for the SL -> " + err.Error())
+			break
 		}
-		params.Log(params.LongOrShort + " POSITION | Horizontal level price is -> " + utils.FloatToString(sl, 5))
+		params.Log(params.LongOrShort + " POSITION | Horizontal level is -> " + utils.GetStringRepresentation(level))
+
+		if level.Type == horizontalLevels.RESISTANCE_TYPE {
+			sl = level.Candle.High
+		}
+		if level.Type == horizontalLevels.SUPPORT_TYPE {
+			sl = level.Candle.Low
+		}
 
 		if params.LongOrShort == "long" {
 			sl = sl + params.PriceOffset
@@ -130,7 +138,7 @@ func getStopLoss(params GetStopLossParams) float64 {
 		}
 
 		params.Log(params.LongOrShort + " POSITION | Invalid SL, trying again ...")
-		index = foundAtIndex
+		index = level.CandleIndex - 1
 		attempt++
 
 		if attempt == params.MaxAttempts {

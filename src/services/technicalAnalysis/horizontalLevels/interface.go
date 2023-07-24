@@ -4,18 +4,13 @@ import "TradingBot/src/types"
 
 // Interface ...
 type Interface interface {
-	// TODO: Remove old GetResistancePrice and GetSupportPrice
-	GetResistancePrice(
-		candlesWithLowerPriceToBeConsideredTop types.CandlesAmountForHorizontalLevel,
-		candles []*types.Candle,
-		startingIndex int,
-	) (float64, int, error)
+	GetResistance(params GetLevelParams) (*Level, error)
+	GetSupport(params GetLevelParams) (*Level, error)
+}
 
-	GetSupportPrice(
-		candlesWithHigherPriceToBeConsideredBottom types.CandlesAmountForHorizontalLevel,
-		candles []*types.Candle,
-		startingIndex int,
-	) (float64, int, error)
-
-	// GetLevel() (types.Level, error)
+type GetLevelParams struct {
+	StartAt                                    int64
+	CandlesAmountToBeConsideredHorizontalLevel types.CandlesAmountForHorizontalLevel
+	Candles                                    []*types.Candle
+	CandlesToCheck                             int64
 }
