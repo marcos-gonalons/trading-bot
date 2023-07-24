@@ -66,24 +66,24 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 	c.LimitAndStopOrderPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.StopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossPriceOffset = funk.Map([]float64{125}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxAttemptsToGetSL = []int{2}
+	c.StopLossPriceOffset = funk.Map([]float64{75}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxAttemptsToGetSL = []int{12}
 
-	c.MinStopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxStopLossDistance = funk.Map([]float64{500}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinStopLossDistance = funk.Map([]float64{10}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{600}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{45}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MinProfit = funk.Map([]float64{9999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{230}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MinProfit = funk.Map([]float64{99999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TPDistanceShortForTighterSL = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceShortForTighterSL = funk.Map([]float64{30}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{-90}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.SLDistanceShortForTighterTP = funk.Map([]float64{20}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{-30}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceShortForTighterTP = funk.Map([]float64{100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{-20}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{20}
-	c.PastCandles = []int{3}
-	c.CandlesAmountWithoutEMAsCrossing = []int{3}
+	c.FutureCandles = []int{5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70}
+	c.PastCandles = []int{5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70}
+	c.CandlesAmountWithoutEMAsCrossing = []int{12}
 
 	return &c, getTotalLength(&c)
 }
@@ -148,10 +148,10 @@ func candlesLoopWithCombinations(
 																						Future: FutureCandles,
 																						Past:   PastCandles,
 																					}
-																					params.CandlesAmountWithoutEMAsCrossing = CandlesAmountWithoutEMAsCrossing
+																					params.EmaCrossover.CandlesAmountWithoutEMAsCrossing = CandlesAmountWithoutEMAsCrossing
 																					params.LimitAndStopOrderPriceOffset = LimitAndStopOrderPriceOffset
-																					params.StopLossPriceOffset = StopLossPriceOffset
-																					params.MaxAttemptsToGetSL = MaxAttemptsToGetSL
+																					params.EmaCrossover.StopLossPriceOffset = StopLossPriceOffset
+																					params.EmaCrossover.MaxAttemptsToGetSL = MaxAttemptsToGetSL
 																					params.TrendCandles = TrendCandles
 																					params.TrendDiff = TrendDiff
 																					params.MaxTradeExecutionPriceDifference = MaxTradeExecutionPriceDifference
@@ -188,7 +188,9 @@ func candlesLoopWithCombinations(
 																					}
 
 																					i++
-																					fmt.Println(float64(i)*100.0/float64(combinationsLength), "%")
+
+																					progress := fmt.Sprintf("%.4f", float64(i)*100.0/float64(combinationsLength))
+																					fmt.Println(progress, "%")
 																				}
 																			}
 																		}

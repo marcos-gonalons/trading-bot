@@ -10,8 +10,6 @@ var priceAdjustment float64 = float64(1) / float64(10000)
 var EMACrossoverLongParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: -100 * priceAdjustment,
-	MaxAttemptsToGetSL:  2,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 30,
 		Past:   30,
@@ -24,18 +22,22 @@ var EMACrossoverLongParams = types.MarketStrategyParams{
 		TPDistanceShortForTighterSL: 105 * priceAdjustment,
 		SLDistanceWhenTPIsVeryClose: -150 * priceAdjustment,
 	},
-	CandlesAmountWithoutEMAsCrossing: 21,
-	MaxSecondsOpenTrade:              0,
+
+	MaxSecondsOpenTrade: 0,
 
 	MaxTradeExecutionPriceDifference: 9999,
 	PositionSizeStrategy:             positionSize.BASED_ON_MULTIPLIER,
+
+	EmaCrossover: types.EmaCrossover{
+		StopLossPriceOffset:              -100 * priceAdjustment,
+		MaxAttemptsToGetSL:               2,
+		CandlesAmountWithoutEMAsCrossing: 21,
+	},
 }
 
 var EMACrossoverShortParams = types.MarketStrategyParams{
 	RiskPercentage: 3,
 
-	StopLossPriceOffset: 75 * priceAdjustment,
-	MaxAttemptsToGetSL:  5,
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 3,
 		Past:   6,
@@ -48,9 +50,14 @@ var EMACrossoverShortParams = types.MarketStrategyParams{
 		SLDistanceShortForTighterTP: 60 * priceAdjustment,
 		TPDistanceWhenSLIsVeryClose: -50 * priceAdjustment,
 	},
-	CandlesAmountWithoutEMAsCrossing: 0,
-	MaxSecondsOpenTrade:              0,
+	MaxSecondsOpenTrade: 0,
 
 	MaxTradeExecutionPriceDifference: 9999,
 	PositionSizeStrategy:             positionSize.BASED_ON_MULTIPLIER,
+
+	EmaCrossover: types.EmaCrossover{
+		StopLossPriceOffset:              75 * priceAdjustment,
+		MaxAttemptsToGetSL:               5,
+		CandlesAmountWithoutEMAsCrossing: 0,
+	},
 }

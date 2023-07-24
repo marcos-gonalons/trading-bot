@@ -52,7 +52,7 @@ func EmaCrossoverShorts(params strategies.Params) {
 
 	log("Price is below huge EMA, only shorts allowed...")
 
-	for i := lastCompletedCandleIndex - params.MarketStrategyParams.CandlesAmountWithoutEMAsCrossing - 1; i < lastCompletedCandleIndex; i++ {
+	for i := lastCompletedCandleIndex - params.MarketStrategyParams.EmaCrossover.CandlesAmountWithoutEMAsCrossing - 1; i < lastCompletedCandleIndex; i++ {
 		if i <= 0 {
 			return
 		}
@@ -75,11 +75,11 @@ func EmaCrossoverShorts(params strategies.Params) {
 		PositionPrice:                   price,
 		MinStopLossDistance:             params.MarketStrategyParams.MinStopLossDistance,
 		MaxStopLossDistance:             params.MarketStrategyParams.MaxStopLossDistance,
-		PriceOffset:                     params.MarketStrategyParams.StopLossPriceOffset,
+		PriceOffset:                     params.MarketStrategyParams.EmaCrossover.StopLossPriceOffset,
 		CandlesAmountForHorizontalLevel: params.MarketData.ShortSetupParams.CandlesAmountForHorizontalLevel,
 		Candles:                         params.CandlesHandler.GetCompletedCandles(),
 		GetHorizontalLevel:              params.Container.HorizontalLevelsService.GetResistance,
-		MaxAttempts:                     params.MarketStrategyParams.MaxAttemptsToGetSL,
+		MaxAttempts:                     params.MarketStrategyParams.EmaCrossover.MaxAttemptsToGetSL,
 		Log:                             params.Market.Log,
 	})
 

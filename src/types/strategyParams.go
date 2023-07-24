@@ -18,11 +18,8 @@ type MarketStrategyParams struct {
 	TrailingStopLoss   *TrailingStopLoss
 	TrailingTakeProfit *TrailingTakeProfit
 
-	CandlesAmountForHorizontalLevel  *CandlesAmountForHorizontalLevel
-	CandlesAmountWithoutEMAsCrossing int
-	LimitAndStopOrderPriceOffset     float64
-	StopLossPriceOffset              float64
-	MaxAttemptsToGetSL               int
+	CandlesAmountForHorizontalLevel *CandlesAmountForHorizontalLevel
+	LimitAndStopOrderPriceOffset    float64
 
 	TrendCandles int
 	TrendDiff    float64
@@ -36,6 +33,8 @@ type MarketStrategyParams struct {
 	CloseOrdersOnBadTrend bool
 
 	PositionSizeStrategy positionSize.Strategy
+
+	EmaCrossover EmaCrossover
 }
 
 type TradingTimes struct {
@@ -57,4 +56,10 @@ type TrailingStopLoss struct {
 type TrailingTakeProfit struct {
 	SLDistanceShortForTighterTP float64
 	TPDistanceWhenSLIsVeryClose float64
+}
+
+type EmaCrossover struct {
+	StopLossPriceOffset              float64
+	MaxAttemptsToGetSL               int
+	CandlesAmountWithoutEMAsCrossing int
 }
