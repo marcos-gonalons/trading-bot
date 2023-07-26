@@ -30,10 +30,12 @@ func GetMarketInstance() markets.MarketInterface {
 			Unit:  "h",
 		},
 		CandlesFileName:        "NZDUSD-4H.csv",
-		LongSetupParams:        &EMACrossoverLongParams,
 		EurExchangeRate:        1,
 		PositionSizeMultiplier: 1,
 		MinPositionSize:        10000,
+		EmaCrossoverSetup: &types.SetupParams{
+			LongSetupParams: &EMACrossoverLongParams,
+		},
 		SimulatorData: &types.SimulatorData{
 			Spread:   .00012,
 			Slippage: .00012,
@@ -47,11 +49,15 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		if s.MarketData.LongSetupParams != nil {
+		if s.MarketData.EmaCrossoverSetup == nil {
+			return
+		}
+
+		if s.MarketData.EmaCrossoverSetup.LongSetupParams != nil {
 			s.Log("Calling EmaCrossoverLongs strategy")
 			emaCrossover.EmaCrossoverLongs(strategies.Params{
 				Type:                 ibroker.LongSide,
-				MarketStrategyParams: s.MarketData.LongSetupParams,
+				MarketStrategyParams: s.MarketData.EmaCrossoverSetup.LongSetupParams,
 				MarketData:           &s.MarketData,
 				CandlesHandler:       s.CandlesHandler,
 				Market:               s,

@@ -466,6 +466,6 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 }
 
 func (s *BaseMarketClass) SetStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams) {
-	s.MarketData.LongSetupParams = longs
-	s.MarketData.ShortSetupParams = shorts
+	s.MarketData.EmaCrossoverSetup.LongSetupParams = longs
+	s.MarketData.EmaCrossoverSetup.ShortSetupParams = shorts
 }

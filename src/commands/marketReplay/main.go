@@ -34,6 +34,7 @@ func main() {
 		},
 		marketName,
 	)
+	SetPositionSizeStrategy(market)
 
 	candlesFile := getCSVFile(market)
 
@@ -166,9 +167,9 @@ func getSide() Side {
 
 func setStrategyData(side Side, market markets.MarketInterface) {
 	if side == LONGS_SIDE {
-		market.GetMarketData().ShortSetupParams = nil
+		market.SetStrategyParams(market.GetMarketData().EmaCrossoverSetup.LongSetupParams, nil)
 	} else if side == SHORTS_SIDE {
-		market.GetMarketData().LongSetupParams = nil
+		market.SetStrategyParams(nil, market.GetMarketData().EmaCrossoverSetup.ShortSetupParams)
 	}
 }
 
@@ -184,8 +185,6 @@ func candlesLoop(
 		market.GetCandlesHandler().AddNewCandle(candle)
 
 		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCompletedCandles(), true)
-
-		SetPositionSizeStrategy(market)
 
 		brokerSim.OnNewCandle(
 			container.APIData,
@@ -203,11 +202,11 @@ func candlesLoop(
 }
 
 func SetPositionSizeStrategy(market markets.MarketInterface) {
-	if market.GetMarketData().LongSetupParams != nil {
-		market.GetMarketData().LongSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+	if market.GetMarketData().EmaCrossoverSetup.LongSetupParams != nil {
+		market.GetMarketData().EmaCrossoverSetup.LongSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
 	}
-	if market.GetMarketData().ShortSetupParams != nil {
-		market.GetMarketData().ShortSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+	if market.GetMarketData().EmaCrossoverSetup.ShortSetupParams != nil {
+		market.GetMarketData().EmaCrossoverSetup.ShortSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
 	}
 }
 

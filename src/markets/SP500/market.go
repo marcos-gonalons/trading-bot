@@ -46,11 +46,13 @@ func GetMarketInstance() markets.MarketInterface {
 			Unit:  "h",
 		},
 		CandlesFileName:        "SP500-4H.csv",
-		LongSetupParams:        &EMACrossoverLongParams,
-		ShortSetupParams:       &EMACrossoverShortParams,
 		EurExchangeRate:        1,
 		PositionSizeMultiplier: 2,
 		MinPositionSize:        1,
+		EmaCrossoverSetup: &types.SetupParams{
+			LongSetupParams:  &EMACrossoverLongParams,
+			ShortSetupParams: &EMACrossoverShortParams,
+		},
 		SimulatorData: &types.SimulatorData{
 			Spread:   2,
 			Slippage: 2,
@@ -64,12 +66,15 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
+		if s.MarketData.EmaCrossoverSetup == nil {
+			return
+		}
 
-		if s.MarketData.LongSetupParams != nil {
+		if s.MarketData.EmaCrossoverSetup.LongSetupParams != nil {
 			s.Log("Calling EmaCrossoverLongs strategy")
 			emaCrossover.EmaCrossoverLongs(strategies.Params{
 				Type:                 ibroker.LongSide,
-				MarketStrategyParams: s.MarketData.LongSetupParams,
+				MarketStrategyParams: s.MarketData.EmaCrossoverSetup.LongSetupParams,
 				MarketData:           &s.MarketData,
 				CandlesHandler:       s.CandlesHandler,
 				Market:               s,
@@ -77,11 +82,11 @@ func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 			})
 		}
 
-		if s.MarketData.ShortSetupParams != nil {
+		if s.MarketData.EmaCrossoverSetup.ShortSetupParams != nil {
 			s.Log("Calling EmaCrossoverShorts strategy")
 			emaCrossover.EmaCrossoverShorts(strategies.Params{
 				Type:                 ibroker.ShortSide,
-				MarketStrategyParams: s.MarketData.ShortSetupParams,
+				MarketStrategyParams: s.MarketData.EmaCrossoverSetup.ShortSetupParams,
 				MarketData:           &s.MarketData,
 				CandlesHandler:       s.CandlesHandler,
 				Market:               s,

@@ -8,7 +8,10 @@ type SimulatorData struct {
 	Spread   float64
 	Slippage float64
 }
-
+type SetupParams struct {
+	LongSetupParams  *MarketStrategyParams
+	ShortSetupParams *MarketStrategyParams
+}
 type MarketData struct {
 	BrokerAPIName          string
 	SocketName             string
@@ -21,11 +24,12 @@ type MarketData struct {
 	Timeframe              Timeframe
 	CandlesFileName        string
 	EurExchangeRate        float64
-	LongSetupParams        *MarketStrategyParams
-	ShortSetupParams       *MarketStrategyParams
 	PositionSizeMultiplier float64
 	MinPositionSize        int64
 	SimulatorData          *SimulatorData
+
+	EmaCrossoverSetup *SetupParams
+	RangesSetup       *SetupParams
 }
 
 type MarketType string

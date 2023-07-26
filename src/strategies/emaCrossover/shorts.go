@@ -76,7 +76,7 @@ func EmaCrossoverShorts(params strategies.Params) {
 		MinStopLossDistance:             params.MarketStrategyParams.MinStopLossDistance,
 		MaxStopLossDistance:             params.MarketStrategyParams.MaxStopLossDistance,
 		PriceOffset:                     params.MarketStrategyParams.EmaCrossover.StopLossPriceOffset,
-		CandlesAmountForHorizontalLevel: params.MarketData.ShortSetupParams.CandlesAmountForHorizontalLevel,
+		CandlesAmountForHorizontalLevel: params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
 		Candles:                         params.CandlesHandler.GetCompletedCandles(),
 		GetHorizontalLevel:              params.Container.HorizontalLevelsService.GetResistance,
 		MaxAttempts:                     params.MarketStrategyParams.EmaCrossover.MaxAttemptsToGetSL,

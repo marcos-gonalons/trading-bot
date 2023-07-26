@@ -30,10 +30,12 @@ func GetMarketInstance() markets.MarketInterface {
 		},
 		CandlesFileName:        "USDCHF-4H.csv",
 		Rollover:               .7,
-		ShortSetupParams:       &EMACrossoverShortParams,
 		EurExchangeRate:        1,
 		PositionSizeMultiplier: 1,
 		MinPositionSize:        10000,
+		EmaCrossoverSetup: &types.SetupParams{
+			ShortSetupParams: &EMACrossoverShortParams,
+		},
 		SimulatorData: &types.SimulatorData{
 			Spread:   .00012,
 			Slippage: .00012,
@@ -47,11 +49,15 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		if s.MarketData.ShortSetupParams != nil {
+		if s.MarketData.EmaCrossoverSetup == nil {
+			return
+		}
+
+		if s.MarketData.EmaCrossoverSetup.ShortSetupParams != nil {
 			s.Log("Calling EmaCrossoverShorts strategy")
 			emaCrossover.EmaCrossoverShorts(strategies.Params{
 				Type:                 ibroker.ShortSide,
-				MarketStrategyParams: s.MarketData.ShortSetupParams,
+				MarketStrategyParams: s.MarketData.EmaCrossoverSetup.ShortSetupParams,
 				MarketData:           &s.MarketData,
 				CandlesHandler:       s.CandlesHandler,
 				Market:               s,

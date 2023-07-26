@@ -1,10 +1,10 @@
 package types
 
-import "TradingBot/src/services/positionSize"
+import (
+	"TradingBot/src/services/positionSize"
+)
 
-// MarketStrategyParams ...
 // todo: document meaning of each param
-// group params that are only used for a specific strategy
 type MarketStrategyParams struct {
 	RiskPercentage float64
 
@@ -35,6 +35,7 @@ type MarketStrategyParams struct {
 	PositionSizeStrategy positionSize.Strategy
 
 	EmaCrossover EmaCrossover
+	Ranges       Ranges
 }
 
 type TradingTimes struct {
@@ -62,4 +63,19 @@ type EmaCrossover struct {
 	StopLossPriceOffset              float64
 	MaxAttemptsToGetSL               int
 	CandlesAmountWithoutEMAsCrossing int
+}
+
+type Ranges struct {
+	CandlesToCheck                           int
+	MaxPriceDifferenceForSameHorizontalLevel int
+	MinPriceDifferenceBetweenRangePoints     int
+	MinCandlesBetweenRangePoints             int
+	MaxCandlesBetweenRangePoints             int
+	RangePoints                              int
+	PriceOffset                              int
+	StartWith                                string // must use horizontalLevels.LevelType
+	TakeProfitStrategy                       string // "level" | "half" | "levelWithOffset" | "distance";
+	StopLossStrategy                         string // "level" | "half" | "levelWithOffset" | "distance";
+	OrderType                                string // refactor, use OrderType custom type (limit,stop,market)
+	TrendyOnly                               bool
 }
