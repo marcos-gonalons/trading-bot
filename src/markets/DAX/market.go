@@ -65,20 +65,24 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		if s.MarketData.EmaCrossoverSetup == nil {
-			return
-		}
+		s.EmaCrossover()
+	}
+}
 
-		if s.MarketData.EmaCrossoverSetup.LongSetupParams != nil {
-			s.Log("Calling EmaCrossoverLongs strategy")
-			emaCrossover.EmaCrossoverLongs(strategies.Params{
-				Type:                 ibroker.LongSide,
-				MarketStrategyParams: s.MarketData.EmaCrossoverSetup.LongSetupParams,
-				MarketData:           &s.MarketData,
-				CandlesHandler:       s.CandlesHandler,
-				Market:               s,
-				Container:            s.Container,
-			})
-		}
+func (s *Market) EmaCrossover() {
+	if s.MarketData.EmaCrossoverSetup == nil {
+		return
+	}
+
+	if s.MarketData.EmaCrossoverSetup.LongSetupParams != nil {
+		s.Log("Calling EmaCrossoverLongs strategy")
+		emaCrossover.EmaCrossoverLongs(strategies.Params{
+			Type:                 ibroker.LongSide,
+			MarketStrategyParams: s.MarketData.EmaCrossoverSetup.LongSetupParams,
+			MarketData:           &s.MarketData,
+			CandlesHandler:       s.CandlesHandler,
+			Market:               s,
+			Container:            s.Container,
+		})
 	}
 }
