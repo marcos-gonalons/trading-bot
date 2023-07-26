@@ -11,25 +11,23 @@ func OnNewCandle(market markets.MarketInterface) {
 		return
 	}
 
+	params := strategies.Params{
+		MarketData:     market.GetMarketData(),
+		CandlesHandler: market.GetCandlesHandler(),
+		Market:         market,
+	}
+
 	if market.GetMarketData().EmaCrossoverSetup.LongSetupParams != nil {
 		market.Log("Calling EmaCrossoverLongs strategy")
-		EmaCrossoverLongs(strategies.Params{
-			Type:                 ibroker.LongSide,
-			MarketStrategyParams: market.GetMarketData().EmaCrossoverSetup.LongSetupParams,
-			MarketData:           market.GetMarketData(),
-			CandlesHandler:       market.GetCandlesHandler(),
-			Market:               market,
-		})
+		params.Type = ibroker.LongSide
+		params.MarketStrategyParams = market.GetMarketData().EmaCrossoverSetup.LongSetupParams
+		EmaCrossoverLongs(params)
 	}
 
 	if market.GetMarketData().EmaCrossoverSetup.ShortSetupParams != nil {
 		market.Log("Calling EmaCrossoverShorts strategy")
-		EmaCrossoverShorts(strategies.Params{
-			Type:                 ibroker.ShortSide,
-			MarketStrategyParams: market.GetMarketData().EmaCrossoverSetup.ShortSetupParams,
-			MarketData:           market.GetMarketData(),
-			CandlesHandler:       market.GetCandlesHandler(),
-			Market:               market,
-		})
+		params.Type = ibroker.ShortSide
+		params.MarketStrategyParams = market.GetMarketData().EmaCrossoverSetup.ShortSetupParams
+		EmaCrossoverLongs(params)
 	}
 }
