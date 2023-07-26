@@ -4,7 +4,6 @@ import (
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
-	"TradingBot/src/strategies"
 	"TradingBot/src/strategies/emaCrossover"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
@@ -49,24 +48,6 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		s.EmaCrossover()
-	}
-}
-
-func (s *Market) EmaCrossover() {
-	if s.MarketData.EmaCrossoverSetup == nil {
-		return
-	}
-
-	if s.MarketData.EmaCrossoverSetup.ShortSetupParams != nil {
-		s.Log("Calling EmaCrossoverShorts strategy")
-		emaCrossover.EmaCrossoverShorts(strategies.Params{
-			Type:                 ibroker.ShortSide,
-			MarketStrategyParams: s.MarketData.EmaCrossoverSetup.ShortSetupParams,
-			MarketData:           &s.MarketData,
-			CandlesHandler:       s.CandlesHandler,
-			Market:               s,
-			Container:            s.Container,
-		})
+		emaCrossover.OnNewCandle(s)
 	}
 }

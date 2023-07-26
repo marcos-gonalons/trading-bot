@@ -1,6 +1,7 @@
 package emaCrossover
 
 import (
+	"TradingBot/src/services"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 
 	"TradingBot/src/markets"
@@ -13,6 +14,7 @@ func EmaCrossoverShorts(params strategies.Params) {
 	var log = func(m string) {
 		params.Market.Log("EmaCrossoverShorts | " + m)
 	}
+	container := services.GetServicesContainer()
 
 	log("EmaCrossoverShorts started")
 	defer func() {
@@ -29,14 +31,14 @@ func EmaCrossoverShorts(params strategies.Params) {
 	lastCompletedCandleIndex := len(candles) - 1
 	lastCompletedCandle := candles[lastCompletedCandleIndex]
 
-	openPosition := utils.FindPositionByMarket(params.Container.APIData.GetPositions(), params.MarketData.BrokerAPIName)
-	if openPosition != nil && params.Container.API.IsShortPosition(openPosition) {
+	openPosition := utils.FindPositionByMarket(container.APIData.GetPositions(), params.MarketData.BrokerAPIName)
+	if openPosition != nil && container.API.IsShortPosition(openPosition) {
 		closePositionOnReversal(
 			openPosition,
 			lastCompletedCandle,
 			params.MarketStrategyParams.MinProfit,
-			params.Container.API,
-			params.Container.APIRetryFacade,
+			container.API,
+			container.APIRetryFacade,
 			params.MarketData,
 			params.Market.Log,
 		)
@@ -78,7 +80,7 @@ func EmaCrossoverShorts(params strategies.Params) {
 		PriceOffset:                     params.MarketStrategyParams.EmaCrossover.StopLossPriceOffset,
 		CandlesAmountForHorizontalLevel: params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
 		Candles:                         params.CandlesHandler.GetCompletedCandles(),
-		GetHorizontalLevel:              params.Container.HorizontalLevelsService.GetResistance,
+		GetHorizontalLevel:              container.HorizontalLevelsService.GetResistance,
 		MaxAttempts:                     params.MarketStrategyParams.EmaCrossover.MaxAttemptsToGetSL,
 		Log:                             params.Market.Log,
 	})

@@ -2,7 +2,6 @@ package strategies
 
 import (
 	"TradingBot/src/markets"
-	"TradingBot/src/services"
 	"TradingBot/src/services/candlesHandler"
 	"TradingBot/src/types"
 )
@@ -14,6 +13,4 @@ type Params struct {
 	MarketData     *types.MarketData
 	CandlesHandler candlesHandler.Interface
 	Market         markets.MarketInterface
-
-	Container *services.Container
 }
