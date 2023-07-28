@@ -25,9 +25,9 @@ func ResistanceBreakoutAnticipation(params strategies.Params) {
 	}
 
 	candles := params.CandlesHandler.GetCompletedCandles()
-	level, err := container.HorizontalLevelsService.GetResistance(horizontalLevels.GetLevelParams{
+	level := container.HorizontalLevelsService.GetResistance(horizontalLevels.GetLevelParams{
 		StartAt: int64(len(candles) - 1),
-		CandlesAmountToBeConsideredHorizontalLevel: *params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
+		CandlesAmountToBeConsideredHorizontalLevel: params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
 		Candles:        candles,
 		CandlesToCheck: 300,
 	})

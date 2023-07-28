@@ -28,6 +28,6 @@ func OnNewCandle(market markets.MarketInterface) {
 		market.Log("Calling EmaCrossoverShorts strategy")
 		params.Type = ibroker.ShortSide
 		params.MarketStrategyParams = market.GetMarketData().EmaCrossoverSetup.ShortSetupParams
-		EmaCrossoverLongs(params)
+		EmaCrossoverShorts(params)
 	}
 }

@@ -1,75 +1,75 @@
 package horizontalLevels
 
-import (
-	"errors"
-)
+import "TradingBot/src/types"
 
 type Service struct{}
 
-func (s *Service) GetResistance(params GetLevelParams) (*Level, error) {
-	return s.getLevel(RESISTANCE_TYPE, params)
+func (s *Service) GetResistance(params GetLevelParams) *Level {
+	return s.getLevel(types.RESISTANCE_TYPE, params)
 }
-func (s *Service) GetSupport(params GetLevelParams) (*Level, error) {
-	return s.getLevel(SUPPORT_TYPE, params)
+func (s *Service) GetSupport(params GetLevelParams) *Level {
+	return s.getLevel(types.SUPPORT_TYPE, params)
 }
 
-func (s *Service) getLevel(levelType LevelType, params GetLevelParams) (*Level, error) {
+func (s *Service) getLevel(levelType types.LevelType, params GetLevelParams) *Level {
 	for x := params.StartAt; x > params.StartAt-params.CandlesToCheck; x-- {
 		if x < 0 {
 			break
 		}
 
-		if !s.isLevelValid(x, levelType, params) {
-			continue
-		}
-
-		return &Level{
+		level := &Level{
 			Type:        levelType,
 			CandleIndex: x,
 			Candle:      params.Candles[x],
-		}, nil
+		}
+
+		if !s.isLevelValid(level, params) {
+			continue
+		}
+
+		return level
 	}
 
-	return nil, errors.New("Unable to find the horizontal level")
+	return nil
 }
 
-func (s *Service) isLevelValid(index int64, levelType LevelType, params GetLevelParams) bool {
+func (s *Service) isLevelValid(level *Level, params GetLevelParams) bool {
 	totalCandles := int64(len(params.Candles))
 
-	if index >= totalCandles || index < 0 {
+	if level.CandleIndex >= totalCandles || level.CandleIndex < 0 {
 		return false
 	}
 
 	// Future candles
-	for i := index + 1; i < index+1+int64(params.CandlesAmountToBeConsideredHorizontalLevel.Future); i++ {
+	for i := level.CandleIndex + 1; i < level.CandleIndex+1+int64(params.CandlesAmountToBeConsideredHorizontalLevel.Future); i++ {
 		if i == totalCandles {
 			return false
 		}
-		if levelType == RESISTANCE_TYPE {
-			if params.Candles[i].High > params.Candles[index].High {
+		if level.IsResistance() {
+			if params.Candles[i].High > params.Candles[level.CandleIndex].High {
 				return false
 			}
 		}
-		if levelType == SUPPORT_TYPE {
-			if params.Candles[i].Low < params.Candles[index].Low {
+		if level.IsSupport() {
+			if params.Candles[i].Low < params.Candles[level.CandleIndex].Low {
 				return false
 			}
 		}
 	}
 
 	// Past candles
-	for i := index - int64(params.CandlesAmountToBeConsideredHorizontalLevel.Past); i < index; i++ {
+	for i := level.CandleIndex - int64(params.CandlesAmountToBeConsideredHorizontalLevel.Past); i < level.CandleIndex; i++ {
 		if i < 0 {
 			return false
 		}
-		if levelType == RESISTANCE_TYPE {
-			if params.Candles[i].High > params.Candles[index].High {
+		if level.IsResistance() {
+			if params.Candles[i].High > params.Candles[level.CandleIndex].High {
 				return false
 			}
 		}
 
-		if levelType == SUPPORT_TYPE {
-			if params.Candles[i].Low < params.Candles[index].Low {
+		if level.IsSupport() {
+			if params.Candles[i].Low < params.Candles[level.CandleIndex].Low {
 				return false
 			}
 		}

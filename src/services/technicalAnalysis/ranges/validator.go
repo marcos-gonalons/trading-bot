@@ -8,14 +8,14 @@ import (
 	"github.com/thoas/go-funk"
 )
 
-type Params struct {
+type IsRangeValidParams struct {
 	Range            []*horizontalLevels.Level
-	ValidationParams types.Ranges
+	ValidationParams *types.Ranges
 	Candles          []*types.Candle
 	CurrentCandle    *types.Candle
 }
 
-func IsRangeValid(params Params) bool {
+func IsRangeValid(params *IsRangeValidParams) bool {
 	return (hasEnoughLevels(params.Range) &&
 		hasAlternatingLevels(params.Range) &&
 		areSameLevelPricesCloseEnough(params.Range, params.ValidationParams.MaxPriceDifferenceForSameHorizontalLevel) &&
@@ -114,7 +114,7 @@ func areAllCandlesBoundedBetweenLevels(r []*horizontalLevels.Level, candles []*t
 }
 
 // There must be enough candles between each level and not too many
-func hasAppropiateAmountOfCandlesBetweenLevels(r []*horizontalLevels.Level, minCandles int, maxCandles int) bool {
+func hasAppropiateAmountOfCandlesBetweenLevels(r []*horizontalLevels.Level, minCandles int64, maxCandles int64) bool {
 	for i := 0; i < len(r)-1; i++ {
 		diff := math.Abs(float64(r[i].CandleIndex) - float64(r[i+1].CandleIndex))
 		if diff < float64(minCandles) || diff > float64(maxCandles) {

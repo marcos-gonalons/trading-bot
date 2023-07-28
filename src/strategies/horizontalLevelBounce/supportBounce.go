@@ -25,9 +25,9 @@ func SupportBounce(params strategies.Params) {
 	}
 
 	candles := params.CandlesHandler.GetCompletedCandles()
-	level, err := container.HorizontalLevelsService.GetSupport(horizontalLevels.GetLevelParams{
+	level := container.HorizontalLevelsService.GetSupport(horizontalLevels.GetLevelParams{
 		StartAt: int64(len(candles) - 1),
-		CandlesAmountToBeConsideredHorizontalLevel: *params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
+		CandlesAmountToBeConsideredHorizontalLevel: params.MarketStrategyParams.CandlesAmountForHorizontalLevel,
 		Candles:        candles,
 		CandlesToCheck: 300,
 	})

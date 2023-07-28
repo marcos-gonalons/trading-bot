@@ -80,7 +80,7 @@ type GetStopLossParams struct {
 	CandlesAmountForHorizontalLevel *types.CandlesAmountForHorizontalLevel
 	Candles                         []*types.Candle
 	MaxAttempts                     int
-	GetHorizontalLevel              func(horizontalLevels.GetLevelParams) (*horizontalLevels.Level, error)
+	GetHorizontalLevel              func(horizontalLevels.GetLevelParams) *horizontalLevels.Level
 	Log                             func(m string)
 }
 
@@ -94,27 +94,27 @@ func getStopLoss(params GetStopLossParams) float64 {
 		"CandlesAmountForHorizontalLevel -> " + utils.GetStringRepresentation(params.CandlesAmountForHorizontalLevel) + " ",
 	)
 
-	var sl float64
+	var sl float64 = 0
 	var attempt int = 0
 	var isValidSL bool = false
 	index := int64(len(params.Candles) - 1)
 	for {
-		level, err := params.GetHorizontalLevel(horizontalLevels.GetLevelParams{
+		level := params.GetHorizontalLevel(horizontalLevels.GetLevelParams{
 			StartAt: index,
-			CandlesAmountToBeConsideredHorizontalLevel: *params.CandlesAmountForHorizontalLevel,
+			CandlesAmountToBeConsideredHorizontalLevel: params.CandlesAmountForHorizontalLevel,
 			Candles:        params.Candles,
 			CandlesToCheck: 300,
 		})
-		if err != nil {
-			params.Log(params.LongOrShort + " POSITION | Error when getting the horizontal level price for the SL -> " + err.Error())
+		if level == nil {
+			params.Log(params.LongOrShort + " POSITION | Couldn't get the horizontal level for the SL")
 			break
 		}
 		params.Log(params.LongOrShort + " POSITION | Horizontal level is -> " + utils.GetStringRepresentation(level))
 
-		if level.Type == horizontalLevels.RESISTANCE_TYPE {
+		if level.IsResistance() {
 			sl = level.Candle.High
 		}
-		if level.Type == horizontalLevels.SUPPORT_TYPE {
+		if level.IsSupport() {
 			sl = level.Candle.Low
 		}
 
@@ -126,9 +126,9 @@ func getStopLoss(params GetStopLossParams) float64 {
 		params.Log(params.LongOrShort + " POSITION | SL price after offset is -> " + utils.FloatToString(sl, 5))
 
 		if params.LongOrShort == "long" {
-			isValidSL = !((err != nil || sl >= params.PositionPrice) || (params.PositionPrice-sl >= params.MaxStopLossDistance) || (params.PositionPrice-sl <= params.MinStopLossDistance))
+			isValidSL = !((sl >= params.PositionPrice) || (params.PositionPrice-sl >= params.MaxStopLossDistance) || (params.PositionPrice-sl <= params.MinStopLossDistance))
 		} else {
-			isValidSL = !((err != nil || sl <= params.PositionPrice) || (sl-params.PositionPrice >= params.MaxStopLossDistance) || (sl-params.PositionPrice <= params.MinStopLossDistance))
+			isValidSL = !((sl <= params.PositionPrice) || (sl-params.PositionPrice >= params.MaxStopLossDistance) || (sl-params.PositionPrice <= params.MinStopLossDistance))
 		}
 
 		if isValidSL {

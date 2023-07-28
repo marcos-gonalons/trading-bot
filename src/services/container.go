@@ -39,7 +39,7 @@ func (c *Container) Initialize(logging bool) {
 	c.HttpClient = httpclient.GetInstance(c.Logger)
 	c.TrendsService = trends.GetServiceInstance()
 	c.HorizontalLevelsService = horizontalLevels.GetServiceInstance()
-	c.RangesService = ranges.GetServiceInstance()
+	c.RangesService = ranges.GetServiceInstance(c.HorizontalLevelsService)
 	c.IndicatorsService = indicators.GetInstance()
 	c.PositionSizeService = positionSize.GetInstance()
 }

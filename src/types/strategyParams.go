@@ -65,15 +65,22 @@ type EmaCrossover struct {
 	CandlesAmountWithoutEMAsCrossing int
 }
 
+type LevelType string
+
+const (
+	RESISTANCE_TYPE LevelType = "resistance"
+	SUPPORT_TYPE    LevelType = "support"
+)
+
 type Ranges struct {
-	CandlesToCheck                           int
+	CandlesToCheck                           int64
 	MaxPriceDifferenceForSameHorizontalLevel float64
 	MinPriceDifferenceBetweenRangePoints     float64
-	MinCandlesBetweenRangePoints             int
-	MaxCandlesBetweenRangePoints             int
+	MinCandlesBetweenRangePoints             int64
+	MaxCandlesBetweenRangePoints             int64
 	RangePoints                              int
 	PriceOffset                              int
-	StartWith                                string // must use horizontalLevels.LevelType
+	StartWith                                LevelType
 	TakeProfitStrategy                       string // "level" | "half" | "levelWithOffset" | "distance";
 	StopLossStrategy                         string // "level" | "half" | "levelWithOffset" | "distance";
 	OrderType                                string // refactor, use OrderType custom type (limit,stop,market)
