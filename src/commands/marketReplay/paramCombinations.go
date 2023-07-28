@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/thoas/go-funk"
 )
@@ -128,6 +129,8 @@ func candlesLoopWithCombinations(
 																		for _, TrendDiff := range c.TrendDiff {
 																			for _, MaxTradeExecutionPriceDifference := range c.MaxTradeExecutionPriceDifference {
 																				for _, MaxSecondsOpenTrade := range c.MaxSecondsOpenTrade {
+																					start := time.Now().UnixMilli()
+
 																					var params types.MarketStrategyParams
 
 																					params.RiskPercentage = RiskPercentage
@@ -189,8 +192,16 @@ func candlesLoopWithCombinations(
 
 																					i++
 
-																					progress := fmt.Sprintf("%.4f", float64(i)*100.0/float64(combinationsLength))
-																					fmt.Println(progress, "%")
+																					combinationTime := time.Now().UnixMilli() - start
+																					combinationsLeft := combinationsLength - i
+																					estimatedRemainingMilliseconds := combinationTime * int64(combinationsLeft)
+
+																					progress := fmt.Sprintf(""+
+																						"Progress: %.4f%% | Estimated remaining time: %s seconds",
+																						float64(i)*100.0/float64(combinationsLength),
+																						strconv.Itoa(int(estimatedRemainingMilliseconds)/1000),
+																					)
+																					fmt.Println(progress)
 																				}
 																			}
 																		}
