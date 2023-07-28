@@ -9,6 +9,7 @@ import (
 	"TradingBot/src/services/logger/nullLogger"
 	"TradingBot/src/services/positionSize"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
+	"TradingBot/src/services/technicalAnalysis/ranges"
 	"TradingBot/src/services/technicalAnalysis/trends"
 )
 
@@ -21,6 +22,7 @@ type Container struct {
 	HttpClient              httpclient.Interface
 	TrendsService           trends.Interface
 	HorizontalLevelsService horizontalLevels.Interface
+	RangesService           ranges.Interface
 	IndicatorsService       indicators.MainInterface
 	PositionSizeService     positionSize.Interface
 }
@@ -37,6 +39,7 @@ func (c *Container) Initialize(logging bool) {
 	c.HttpClient = httpclient.GetInstance(c.Logger)
 	c.TrendsService = trends.GetServiceInstance()
 	c.HorizontalLevelsService = horizontalLevels.GetServiceInstance()
+	c.RangesService = ranges.GetServiceInstance()
 	c.IndicatorsService = indicators.GetInstance()
 	c.PositionSizeService = positionSize.GetInstance()
 }

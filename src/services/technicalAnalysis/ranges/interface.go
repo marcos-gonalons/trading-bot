@@ -8,7 +8,6 @@ import (
 // Interface ...
 type Interface interface {
 	GetRange(params GetRangeParams) ([]*horizontalLevels.Level, error)
-	GetSupport(params GetRangeParams) ([]*horizontalLevels.Level, error)
 }
 
 type GetRangeParams struct {

@@ -67,8 +67,8 @@ type EmaCrossover struct {
 
 type Ranges struct {
 	CandlesToCheck                           int
-	MaxPriceDifferenceForSameHorizontalLevel int
-	MinPriceDifferenceBetweenRangePoints     int
+	MaxPriceDifferenceForSameHorizontalLevel float64
+	MinPriceDifferenceBetweenRangePoints     float64
 	MinCandlesBetweenRangePoints             int
 	MaxCandlesBetweenRangePoints             int
 	RangePoints                              int

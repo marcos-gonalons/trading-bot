@@ -13,6 +13,7 @@ func (s *Service) GetPositionSize(p GetPositionSizeParams) float64 {
 		}
 		return size
 	case BASED_ON_MULTIPLIER:
+		// todo: this should be a param
 		var equityThresold = float64(3000)
 
 		size := math.Ceil(p.MinPositionSize * math.Floor(p.CurrentBalance/equityThresold) * float64(p.Multiplier))
