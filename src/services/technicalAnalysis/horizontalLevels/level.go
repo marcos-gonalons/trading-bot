@@ -8,11 +8,14 @@ type Level struct {
 	Type        types.LevelType
 }
 
-func IsResistance(t types.LevelType) bool {
-	return t == types.RESISTANCE_TYPE
-}
-func IsSupport(t types.LevelType) bool {
-	return t == types.SUPPORT_TYPE
+func GetOpposite(t types.LevelType) types.LevelType {
+	if t == types.RESISTANCE_TYPE {
+		return types.SUPPORT_TYPE
+	}
+	if t == types.SUPPORT_TYPE {
+		return types.RESISTANCE_TYPE
+	}
+	panic("Invalid level type")
 }
 func (l *Level) IsSupport() bool {
 	return l.Type == types.SUPPORT_TYPE

@@ -10,14 +10,13 @@ type Service struct {
 }
 
 func (s *Service) GetRange(params GetRangeParams) []*horizontalLevels.Level {
-	currentRangePoint := 1
 	levelToGet := params.StrategyParams.Ranges.StartWith
 	index := params.CurrentDataIndex
 	candlesToCheck := params.StrategyParams.Ranges.CandlesToCheck
 	r := []*horizontalLevels.Level{}
 	previousPotentialLevels := []*horizontalLevels.Level{}
 
-	for currentRangePoint <= params.StrategyParams.Ranges.RangePoints {
+	for len(r) < params.StrategyParams.Ranges.RangePoints {
 		level := &horizontalLevels.Level{}
 		level, previousPotentialLevels, r = s.getPreviousValidRangeLevel(
 			1,
@@ -34,20 +33,14 @@ func (s *Service) GetRange(params GetRangeParams) []*horizontalLevels.Level {
 		if level == nil {
 			break
 		}
+		r = append(r, level)
 
 		index = level.CandleIndex - params.StrategyParams.Ranges.MinCandlesBetweenRangePoints
 		candlesToCheck = params.StrategyParams.Ranges.MaxCandlesBetweenRangePoints
-		currentRangePoint++
-		if levelToGet == types.RESISTANCE_TYPE {
-			levelToGet = types.SUPPORT_TYPE
-		}
-		if levelToGet == types.SUPPORT_TYPE {
-			levelToGet = types.RESISTANCE_TYPE
-		}
-
-		r = append(r, level)
+		levelToGet = horizontalLevels.GetOpposite(levelToGet)
 	}
-	if currentRangePoint <= params.StrategyParams.Ranges.RangePoints {
+
+	if len(r) < params.StrategyParams.Ranges.RangePoints {
 		return nil
 	}
 
@@ -90,16 +83,9 @@ func (s *Service) getPreviousValidRangeLevel(
 ) (*horizontalLevels.Level, []*horizontalLevels.Level, []*horizontalLevels.Level) {
 	indexToUse := startAt
 	potentialLevels := []*horizontalLevels.Level{}
-	getLevelFunc := func(horizontalLevels.GetLevelParams) *horizontalLevels.Level { return nil }
 
 	for i := 0; i < 10; i++ {
-		if horizontalLevels.IsResistance(levelType) {
-			getLevelFunc = s.horizontalLevelsService.GetResistance
-		}
-		if horizontalLevels.IsSupport(levelType) {
-			getLevelFunc = s.horizontalLevelsService.GetSupport
-		}
-		potentialLevel := getLevelFunc(horizontalLevels.GetLevelParams{
+		potentialLevel := s.horizontalLevelsService.GetLevel(levelType, horizontalLevels.GetLevelParams{
 			StartAt: indexToUse,
 			CandlesAmountToBeConsideredHorizontalLevel: strategyParams.CandlesAmountForHorizontalLevel,
 			Candles:        candles,
@@ -144,13 +130,11 @@ func (s *Service) getPreviousValidRangeLevel(
 }
 
 func (s *Service) validateRangeLevel(
-
 	level *horizontalLevels.Level,
 	r []*horizontalLevels.Level,
 	candles []*types.Candle,
 	currentCandle *types.Candle,
 	validationParams *types.Ranges,
-
 ) bool {
 	if len(r) == 0 {
 		return true

@@ -4,6 +4,7 @@ import "TradingBot/src/types"
 
 // Interface ...
 type Interface interface {
+	GetLevel(levelType types.LevelType, params GetLevelParams) *Level
 	GetResistance(params GetLevelParams) *Level
 	GetSupport(params GetLevelParams) *Level
 }

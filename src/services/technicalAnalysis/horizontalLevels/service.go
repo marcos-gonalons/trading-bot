@@ -4,6 +4,16 @@ import "TradingBot/src/types"
 
 type Service struct{}
 
+func (s *Service) GetLevel(levelType types.LevelType, params GetLevelParams) *Level {
+	if levelType == types.RESISTANCE_TYPE {
+		return s.GetResistance(params)
+	}
+	if levelType == types.SUPPORT_TYPE {
+		return s.GetSupport(params)
+	}
+	panic("Invalid level type")
+}
+
 func (s *Service) GetResistance(params GetLevelParams) *Level {
 	return s.getLevel(types.RESISTANCE_TYPE, params)
 }
