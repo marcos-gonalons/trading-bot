@@ -8,6 +8,7 @@ import (
 	"TradingBot/src/services/logger"
 	"TradingBot/src/services/logger/nullLogger"
 	"TradingBot/src/services/positionSize"
+	"TradingBot/src/services/technicalAnalysis/ema"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/services/technicalAnalysis/ranges"
 	"TradingBot/src/services/technicalAnalysis/trends"
@@ -21,6 +22,7 @@ type Container struct {
 	Logger                  logger.Interface
 	HttpClient              httpclient.Interface
 	TrendsService           trends.Interface
+	EmaService              ema.Interface
 	HorizontalLevelsService horizontalLevels.Interface
 	RangesService           ranges.Interface
 	IndicatorsService       indicators.MainInterface
@@ -38,6 +40,7 @@ func (c *Container) Initialize(logging bool) {
 
 	c.HttpClient = httpclient.GetInstance(c.Logger)
 	c.TrendsService = trends.GetServiceInstance()
+	c.EmaService = ema.GetServiceInstance()
 	c.HorizontalLevelsService = horizontalLevels.GetServiceInstance()
 	c.RangesService = ranges.GetServiceInstance(c.HorizontalLevelsService)
 	c.IndicatorsService = indicators.GetInstance()

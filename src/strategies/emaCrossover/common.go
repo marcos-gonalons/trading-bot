@@ -3,17 +3,13 @@ package emaCrossover
 import (
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/retryFacade"
+	"TradingBot/src/services/candlesHandler/indicators/movingAverage"
+	"TradingBot/src/services/technicalAnalysis/ema"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"time"
-
-	"github.com/thoas/go-funk"
 )
-
-const BASE_EMA = 200
-const SMALL_EMA = 9
-const BIG_EMA = 21
 
 func closePositionOnReversal(
 	position *api.Position,
@@ -23,12 +19,13 @@ func closePositionOnReversal(
 	APIRetryFacade retryFacade.Interface,
 	marketData *types.MarketData,
 	log func(m string),
+	emaService ema.Interface,
 ) {
 
 	log("Checking if the position must be closed on trend reversal ...")
 	if API.IsLongPosition(position) &&
 		lastCandle.Close-position.AvgPrice > minProfit &&
-		getEma(lastCandle, SMALL_EMA).Value < getEma(lastCandle, BIG_EMA).Value {
+		emaService.GetEma(lastCandle, movingAverage.SMALL_EMA).Value < emaService.GetEma(lastCandle, movingAverage.BIG_EMA).Value {
 
 		log("Small EMA crossed below the big EMA, and the price is above the min profit. Closing the long position ...")
 		APIRetryFacade.ClosePosition(position.Instrument, retryFacade.RetryParams{
@@ -50,7 +47,7 @@ func closePositionOnReversal(
 
 	if API.IsShortPosition(position) &&
 		position.AvgPrice-lastCandle.Close > minProfit &&
-		getEma(lastCandle, SMALL_EMA).Value > getEma(lastCandle, BIG_EMA).Value {
+		emaService.GetEma(lastCandle, movingAverage.SMALL_EMA).Value > emaService.GetEma(lastCandle, movingAverage.BIG_EMA).Value {
 
 		log("Small EMA crossed above the big EMA, and the price is above the min profit. Closing the short position ...")
 		APIRetryFacade.ClosePosition(position.Instrument, retryFacade.RetryParams{
@@ -155,10 +152,4 @@ func getStopLoss(params GetStopLossParams) float64 {
 		return params.PositionPrice + params.MaxStopLossDistance
 	}
 
-}
-
-func getEma(candle *types.Candle, candlesAmount int64) types.MovingAverage {
-	return funk.Find(candle.Indicators.MovingAverages, func(ma types.MovingAverage) bool {
-		return ma.CandlesAmount == candlesAmount
-	}).(types.MovingAverage)
 }

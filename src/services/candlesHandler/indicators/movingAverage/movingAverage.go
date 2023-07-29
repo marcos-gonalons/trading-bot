@@ -9,9 +9,12 @@ import (
 type MovingAverage struct{}
 
 const EMA_SMOOTHING_FACTOR = 2
+const BASE_EMA = 200
+const BIG_EMA = 21
+const SMALL_EMA = 9
 
 func (s *MovingAverage) AddData(candles []*types.Candle, lastCandleOnly bool) {
-	emaLengths := []int64{9, 21, 200}
+	emaLengths := []int64{SMALL_EMA, BIG_EMA, BASE_EMA}
 
 	start := 0
 	if lastCandleOnly {

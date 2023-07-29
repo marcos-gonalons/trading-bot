@@ -3,6 +3,7 @@ package emaCrossover
 import (
 	"TradingBot/src/services"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
+	"TradingBot/src/services/candlesHandler/indicators/movingAverage"
 
 	"TradingBot/src/markets"
 	"TradingBot/src/strategies"
@@ -41,13 +42,14 @@ func EmaCrossoverShorts(params strategies.Params) {
 			container.APIRetryFacade,
 			params.MarketData,
 			params.Market.Log,
+			container.EmaService,
 		)
 
 		log("There is an open position - doing nothing ...")
 		return
 	}
 
-	if lastCompletedCandle.Close >= getEma(lastCompletedCandle, BASE_EMA).Value {
+	if container.EmaService.IsPriceAboveEMA(lastCompletedCandle, movingAverage.BASE_EMA) {
 		log("Price is above huge EMA, not opening any shorts just yet ...")
 		return
 	}
@@ -59,13 +61,13 @@ func EmaCrossoverShorts(params strategies.Params) {
 			return
 		}
 
-		if getEma(candles[i], SMALL_EMA).Value <= getEma(candles[i], BIG_EMA).Value {
+		if container.EmaService.GetEma(candles[i], movingAverage.SMALL_EMA).Value <= container.EmaService.GetEma(candles[i], movingAverage.BIG_EMA).Value {
 			log("Small EMA was below the big EMA very recently - doing nothing - " + utils.GetStringRepresentation(lastCompletedCandle))
 			return
 		}
 	}
 
-	if getEma(lastCompletedCandle, SMALL_EMA).Value > getEma(lastCompletedCandle, BIG_EMA).Value {
+	if container.EmaService.GetEma(lastCompletedCandle, movingAverage.SMALL_EMA).Value > container.EmaService.GetEma(lastCompletedCandle, movingAverage.BIG_EMA).Value {
 		log("Small EMA is still above the big EMA - doing nothing - " + utils.GetStringRepresentation(lastCompletedCandle))
 		return
 	}
