@@ -6,10 +6,10 @@ import (
 )
 
 type GetRangeParams struct {
-	Candles          []*types.Candle
-	CurrentCandle    *types.Candle
-	CurrentDataIndex int64
-	StrategyParams   types.MarketStrategyParams
+	Candles             []*types.Candle
+	LastCompletedCandle *types.Candle
+	CurrentDataIndex    int64
+	StrategyParams      types.MarketStrategyParams
 }
 
 // Interface ...

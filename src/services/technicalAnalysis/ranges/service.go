@@ -27,7 +27,7 @@ func (s *Service) GetRange(params GetRangeParams) []*horizontalLevels.Level {
 			r,
 			params.StrategyParams,
 			params.Candles,
-			params.CurrentCandle,
+			params.LastCompletedCandle,
 		)
 
 		if level == nil {
@@ -79,7 +79,7 @@ func (s *Service) getPreviousValidRangeLevel(
 	r []*horizontalLevels.Level,
 	strategyParams types.MarketStrategyParams,
 	candles []*types.Candle,
-	currentCandle *types.Candle,
+	lastCompletedCandle *types.Candle,
 ) (*horizontalLevels.Level, []*horizontalLevels.Level, []*horizontalLevels.Level) {
 	indexToUse := startAt
 	potentialLevels := []*horizontalLevels.Level{}
@@ -101,7 +101,7 @@ func (s *Service) getPreviousValidRangeLevel(
 	}
 
 	for _, potentialLevel := range potentialLevels {
-		if !s.validateRangeLevel(potentialLevel, r, candles, currentCandle, &strategyParams.Ranges) {
+		if !s.validateRangeLevel(potentialLevel, r, candles, lastCompletedCandle, &strategyParams.Ranges) {
 			continue
 		}
 
@@ -125,7 +125,7 @@ func (s *Service) getPreviousValidRangeLevel(
 		r,
 		strategyParams,
 		candles,
-		currentCandle,
+		lastCompletedCandle,
 	)
 }
 
@@ -133,7 +133,7 @@ func (s *Service) validateRangeLevel(
 	level *horizontalLevels.Level,
 	r []*horizontalLevels.Level,
 	candles []*types.Candle,
-	currentCandle *types.Candle,
+	lastCompletedCandle *types.Candle,
 	validationParams *types.Ranges,
 ) bool {
 	if len(r) == 0 {
@@ -144,10 +144,10 @@ func (s *Service) validateRangeLevel(
 	toValidate = append(toValidate, level)
 
 	return IsRangeValid(&IsRangeValidParams{
-		Range:            toValidate,
-		ValidationParams: validationParams,
-		Candles:          candles,
-		CurrentCandle:    currentCandle,
+		Range:               toValidate,
+		ValidationParams:    validationParams,
+		Candles:             candles,
+		LastCompletedCandle: lastCompletedCandle,
 	})
 }
 

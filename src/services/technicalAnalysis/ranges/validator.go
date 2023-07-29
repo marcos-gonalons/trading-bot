@@ -9,10 +9,10 @@ import (
 )
 
 type IsRangeValidParams struct {
-	Range            []*horizontalLevels.Level
-	ValidationParams *types.Ranges
-	Candles          []*types.Candle
-	CurrentCandle    *types.Candle
+	Range               []*horizontalLevels.Level
+	ValidationParams    *types.Ranges
+	Candles             []*types.Candle
+	LastCompletedCandle *types.Candle
 }
 
 func IsRangeValid(params *IsRangeValidParams) bool {
@@ -22,7 +22,7 @@ func IsRangeValid(params *IsRangeValidParams) bool {
 		isPriceDifferenceBetweenLevelsHighEnough(params.Range, params.ValidationParams.MinPriceDifferenceBetweenRangePoints) &&
 		areAllCandlesBoundedBetweenLevels(params.Range, params.Candles) &&
 		hasAppropiateAmountOfCandlesBetweenLevels(params.Range, params.ValidationParams.MinCandlesBetweenRangePoints, params.ValidationParams.MaxCandlesBetweenRangePoints) &&
-		isCandleInsideTheRange(params.Range, params.CurrentCandle))
+		isCandleInsideTheRange(params.Range, params.LastCompletedCandle))
 }
 
 func hasEnoughLevels(r []*horizontalLevels.Level) bool {
