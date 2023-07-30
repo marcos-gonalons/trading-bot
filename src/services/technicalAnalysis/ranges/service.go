@@ -11,7 +11,7 @@ type Service struct {
 
 func (s *Service) GetRange(params GetRangeParams) []*horizontalLevels.Level {
 	levelToGet := params.StrategyParams.Ranges.StartWith
-	index := params.CurrentDataIndex
+	index := int64(len(params.Candles) - 1)
 	candlesToCheck := params.StrategyParams.Ranges.CandlesToCheck
 	r := []*horizontalLevels.Level{}
 	previousPotentialLevels := []*horizontalLevels.Level{}
@@ -108,7 +108,7 @@ func (s *Service) getPreviousValidRangeLevel(
 		return potentialLevel, potentialLevels, r
 	}
 
-	if attempt == len(previousPotentialLevels) {
+	if len(previousPotentialLevels) == 0 || attempt == len(previousPotentialLevels) {
 		return nil, nil, r
 	}
 	previousPotentialLevel := previousPotentialLevels[attempt]

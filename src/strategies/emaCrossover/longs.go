@@ -75,6 +75,7 @@ func EmaCrossoverLongs(params strategies.Params) {
 
 	price := lastCompletedCandle.Close
 
+	// todo: less params, send params.MarketStrategyParams whole object
 	stopLoss := getStopLoss(GetStopLossParams{
 		LongOrShort:                     "long",
 		PositionPrice:                   price,

@@ -21,13 +21,13 @@ func OnNewCandle(market markets.MarketInterface) {
 		market.Log("Calling RangesLongs strategy")
 		params.Type = ibroker.LongSide
 		params.MarketStrategyParams = market.GetMarketData().RangesSetup.LongSetupParams
-		// EmaCrossoverLongs(params)
+		RangesLongs(params)
 	}
 
 	if market.GetMarketData().RangesSetup.ShortSetupParams != nil {
 		market.Log("Calling RangesShorts strategy")
 		params.Type = ibroker.ShortSide
 		params.MarketStrategyParams = market.GetMarketData().RangesSetup.ShortSetupParams
-		// EmaCrossoverShorts(params)
+		RangesShorts(params)
 	}
 }

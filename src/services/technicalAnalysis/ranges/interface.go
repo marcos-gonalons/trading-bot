@@ -8,7 +8,6 @@ import (
 type GetRangeParams struct {
 	Candles             []*types.Candle
 	LastCompletedCandle *types.Candle
-	CurrentDataIndex    int64
 	StrategyParams      types.MarketStrategyParams
 }
 

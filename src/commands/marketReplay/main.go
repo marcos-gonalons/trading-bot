@@ -57,8 +57,12 @@ func main() {
 		Equity:       initialBalance,
 	})
 
+	////////////////////////////////////////////////////
+	strategyParamsFunc := market.SetRangesStrategyParams
+	////////////////////////////////////////////////////
+
 	if replayType == SINGLE_TYPE {
-		setStrategyData(side, market)
+		setStrategyData(side, market, strategyParamsFunc)
 
 		candlesLoop(csvLines, market, container, simulatorAPI, false)
 		PrintTrades(simulatorAPI.GetTrades())
@@ -66,7 +70,7 @@ func main() {
 		fmt.Println("Profits -> ", state.Balance-initialBalance)
 	} else {
 		combinations, combinationsLength := GetCombinations(market.GetMarketData().MinPositionSize)
-		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength, side)
+		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength, side, strategyParamsFunc)
 	}
 
 }
@@ -165,11 +169,15 @@ func getSide() Side {
 	panic("Invalid side. Only allowed longs or shorts.")
 }
 
-func setStrategyData(side Side, market markets.MarketInterface) {
+func setStrategyData(
+	side Side,
+	market markets.MarketInterface,
+	strategyParamsFunc func(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams),
+) {
 	if side == LONGS_SIDE {
-		market.SetStrategyParams(market.GetMarketData().EmaCrossoverSetup.LongSetupParams, nil)
+		strategyParamsFunc(market.GetMarketData().RangesSetup.LongSetupParams, nil)
 	} else if side == SHORTS_SIDE {
-		market.SetStrategyParams(nil, market.GetMarketData().EmaCrossoverSetup.ShortSetupParams)
+		strategyParamsFunc(nil, market.GetMarketData().RangesSetup.ShortSetupParams)
 	}
 }
 
@@ -207,6 +215,13 @@ func SetPositionSizeStrategy(market markets.MarketInterface) {
 	}
 	if market.GetMarketData().EmaCrossoverSetup.ShortSetupParams != nil {
 		market.GetMarketData().EmaCrossoverSetup.ShortSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+	}
+
+	if market.GetMarketData().RangesSetup.LongSetupParams != nil {
+		market.GetMarketData().RangesSetup.LongSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+	}
+	if market.GetMarketData().RangesSetup.ShortSetupParams != nil {
+		market.GetMarketData().RangesSetup.ShortSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
 	}
 }
 

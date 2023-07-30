@@ -25,7 +25,8 @@ type MarketInterface interface {
 	CheckOpenPositionTTL(params *types.MarketStrategyParams, position *api.Position)
 	OnValidTradeSetup(params OnValidTradeSetupParams)
 
-	SetStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams)
+	SetEmaCrossoverStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams)
+	SetRangesStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams)
 
 	SetContainer(*services.Container)
 	SetCandlesHandler(candlesHandler.Interface)

@@ -103,7 +103,7 @@ func areAllCandlesBoundedBetweenLevels(r []*horizontalLevels.Level, candles []*t
 				if candles[j].Low < r[i].Candle.Low {
 					return false
 				}
-				if candles[j].High < r[i+1].Candle.High {
+				if candles[j].High > r[i+1].Candle.High {
 					return false
 				}
 			}

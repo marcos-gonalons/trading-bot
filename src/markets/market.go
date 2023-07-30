@@ -465,7 +465,11 @@ func (s *BaseMarketClass) CheckOpenPositionTTL(params *types.MarketStrategyParam
 	}
 }
 
-func (s *BaseMarketClass) SetStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams) {
+func (s *BaseMarketClass) SetEmaCrossoverStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams) {
 	s.MarketData.EmaCrossoverSetup.LongSetupParams = longs
 	s.MarketData.EmaCrossoverSetup.ShortSetupParams = shorts
+}
+func (s *BaseMarketClass) SetRangesStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams) {
+	s.MarketData.RangesSetup.LongSetupParams = longs
+	s.MarketData.RangesSetup.ShortSetupParams = shorts
 }
