@@ -9,6 +9,7 @@ import (
 	"TradingBot/src/services/positionSize"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
+	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -365,6 +366,9 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		},
 	)
 
+	stopLoss = s.round(stopLoss)
+	takeProfit = s.round(takeProfit)
+
 	order := &api.Order{
 		CurrentAsk: nil,
 		CurrentBid: nil,
@@ -376,7 +380,7 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		Type:       params.OrderType,
 	}
 
-	price := params.Price
+	price := s.round(params.Price)
 	if s.Container.API.IsStopOrder(order) {
 		order.StopPrice = &price
 	}
@@ -471,4 +475,10 @@ func (s *BaseMarketClass) SetEmaCrossoverStrategyParams(longs *types.MarketStrat
 func (s *BaseMarketClass) SetRangesStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams) {
 	s.MarketData.RangesSetup.LongSetupParams = longs
 	s.MarketData.RangesSetup.ShortSetupParams = shorts
+}
+
+func (s *BaseMarketClass) round(n float64) float64 {
+	p := math.Pow(10, float64(s.MarketData.PriceDecimals))
+	r := math.Round(n*p) / p
+	return r
 }
