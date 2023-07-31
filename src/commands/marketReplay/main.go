@@ -226,7 +226,8 @@ func SetPositionSizeStrategy(market markets.MarketInterface) {
 }
 
 func PrintTrades(trades []*api.Trade) {
-	for _, trade := range trades {
+	csvString := "Trade Number,Start Date,End Date,Start Price,End Price,Result\n"
+	for index, trade := range trades {
 		fmt.Println(
 			trade.Side,
 			" | ",
@@ -242,6 +243,15 @@ func PrintTrades(trades []*api.Trade) {
 			" | ",
 			trade.ClosedAt.Format("02/01/2006 15:04:05"),
 		)
+
+		csvString = csvString +
+			strconv.Itoa(index+1) + "," +
+			trade.OpenedAt.Format("02/01/2006 15:04") + "," +
+			trade.ClosedAt.Format("02/01/2006 15:04") + "," +
+			utils.FloatToString(trade.InitialPrice, 5) + "," +
+			utils.FloatToString(trade.FinalPrice, 5) + "," +
+			utils.FloatToString(trade.Result, 2) + "\n"
 	}
 	fmt.Println("Total trades -> ", len(trades))
+	fmt.Println("\n\n", csvString)
 }

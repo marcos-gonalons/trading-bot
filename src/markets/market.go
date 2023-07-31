@@ -342,7 +342,6 @@ type OnValidTradeSetupParams struct {
 }
 
 func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
-
 	var stopLoss float64
 	var takeProfit float64
 

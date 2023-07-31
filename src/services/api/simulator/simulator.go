@@ -181,7 +181,7 @@ func (s *API) AddTrade(
 	}
 
 	tradeResult = adjustResultWithRollover(tradeResult, position, lastCandle, marketData)
-	tradeResult = adjustResultWithCommissions(tradeResult, float64(35/100/10000), position.AvgPrice, finalPrice, position.Qty)
+	tradeResult = adjustResultWithCommissions(tradeResult, float64(35)/float64(100)/float64(10000), position.AvgPrice, finalPrice, position.Qty)
 
 	tradeResult = tradeResult * eurExchangeRate
 
@@ -433,10 +433,13 @@ func adjustResultWithRollover(
 	marketData *types.MarketData,
 ) float64 {
 	days := int64((lastCandle.Timestamp - *position.CreatedAt) / 60 / 60 / 24)
+	if days > 0 {
+		days--
+	}
 	rollover := (marketData.Rollover * position.Qty) / math.Pow(10, float64(marketData.PriceDecimals)-1)
 	return tradeResult - float64(days)*rollover
 }
 
 func adjustResultWithCommissions(tradeResult float64, commissions, startPrice, finalPrice, size float64) float64 {
-	return tradeResult - commissions*startPrice*size + commissions*finalPrice*size
+	return tradeResult - (commissions*startPrice*size + commissions*finalPrice*size)
 }
