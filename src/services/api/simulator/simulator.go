@@ -58,19 +58,6 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 	} else if s.IsShortOrder(order) {
 		bracketOrdersSide = apiConstants.LongSide
 	}
-	if order.TakeProfit != nil {
-		takeProfit := api.Order{}
-		takeProfit.Qty = order.Qty
-		takeProfit.ID = utils.GetRandomString(6)
-		takeProfit.Type = apiConstants.LimitType
-		takeProfit.LimitPrice = order.TakeProfit
-		takeProfit.ParentID = &order.ID
-		takeProfit.Instrument = order.Instrument
-		takeProfit.Side = bracketOrdersSide
-
-		s.orders = append(s.orders, &takeProfit)
-	}
-
 	if order.StopLoss != nil {
 		stopLoss := api.Order{}
 		stopLoss.Qty = order.Qty
@@ -82,6 +69,18 @@ func (s *API) CreateOrder(order *api.Order) (err error) {
 		stopLoss.Side = bracketOrdersSide
 
 		s.orders = append(s.orders, &stopLoss)
+	}
+	if order.TakeProfit != nil {
+		takeProfit := api.Order{}
+		takeProfit.Qty = order.Qty
+		takeProfit.ID = utils.GetRandomString(6)
+		takeProfit.Type = apiConstants.LimitType
+		takeProfit.LimitPrice = order.TakeProfit
+		takeProfit.ParentID = &order.ID
+		takeProfit.Instrument = order.Instrument
+		takeProfit.Side = bracketOrdersSide
+
+		s.orders = append(s.orders, &takeProfit)
 	}
 
 	return nil

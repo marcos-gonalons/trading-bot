@@ -36,7 +36,7 @@ func closePositionOnReversal(
 			nil,
 			position,
 			func(price float64, order *api.Order) float64 {
-				return price
+				return price - marketData.SimulatorData.Spread/2
 			},
 			marketData.EurExchangeRate,
 			lastCandle,
@@ -58,7 +58,7 @@ func closePositionOnReversal(
 			nil,
 			position,
 			func(price float64, order *api.Order) float64 {
-				return price
+				return price + marketData.SimulatorData.Spread/2
 			},
 			marketData.EurExchangeRate,
 			lastCandle,
