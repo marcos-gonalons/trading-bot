@@ -6,6 +6,8 @@ import (
 	"TradingBot/src/strategies"
 )
 
+var NAME = "ranges"
+
 func OnNewCandle(market markets.MarketInterface) {
 	if market.GetMarketData().RangesSetup == nil {
 		return

@@ -97,7 +97,8 @@ func candlesLoopWithCombinations(
 	c *ParamCombinations,
 	combinationsLength int,
 	side Side,
-	strategyParamsFunc func(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams),
+	longsParamsFunc func(p *types.MarketStrategyParams),
+	shortsParamsFunc func(p *types.MarketStrategyParams),
 ) {
 	// todo: refactor
 	state, _ := simulatorAPI.GetState()
@@ -173,9 +174,9 @@ func candlesLoopWithCombinations(
 																					})
 
 																					if side == LONGS_SIDE {
-																						strategyParamsFunc(&params, nil)
+																						longsParamsFunc(&params)
 																					} else {
-																						strategyParamsFunc(nil, &params)
+																						shortsParamsFunc(&params)
 																					}
 																					candlesLoop(csvLines, market, container, simulatorAPI, false)
 

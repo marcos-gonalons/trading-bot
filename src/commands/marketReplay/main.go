@@ -4,6 +4,8 @@ import (
 	"TradingBot/src/commands/marketReplay/brokerSim"
 	"TradingBot/src/markets"
 	"TradingBot/src/services"
+	"TradingBot/src/strategies/emaCrossover"
+	"TradingBot/src/strategies/ranges"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"encoding/csv"
@@ -16,6 +18,8 @@ import (
 	"TradingBot/src/services/positionSize"
 
 	"TradingBot/src/manager"
+
+	"github.com/thoas/go-funk"
 )
 
 const initialBalance = float64(5000)
@@ -26,6 +30,7 @@ func main() {
 
 	marketName := getMarketName()
 	replayType := getReplayType()
+	strategy := getStrategy()
 	side := getSide()
 
 	market := getMarketInstance(
@@ -34,7 +39,7 @@ func main() {
 		},
 		marketName,
 	)
-	SetPositionSizeStrategy(market)
+	SetPositionSizeStrategy(market, strategy)
 
 	candlesFile := getCSVFile(market)
 
@@ -57,12 +62,10 @@ func main() {
 		Equity:       initialBalance,
 	})
 
-	////////////////////////////////////////////////////
-	strategyParamsFunc := market.SetRangesStrategyParams
-	////////////////////////////////////////////////////
+	longsStrategyParamsFunc, shortsStrategyParamsFunc := getSetStrategyParamsFuncs(strategy, market)
 
 	if replayType == SINGLE_TYPE {
-		setStrategyData(side, market, strategyParamsFunc)
+		setStrategyData(side, market, strategy, longsStrategyParamsFunc, shortsStrategyParamsFunc)
 
 		candlesLoop(csvLines, market, container, simulatorAPI, false)
 		PrintTrades(simulatorAPI.GetTrades())
@@ -70,7 +73,7 @@ func main() {
 		fmt.Println("Profits -> ", state.Balance-initialBalance)
 	} else {
 		combinations, combinationsLength := GetCombinations(market.GetMarketData().MinPositionSize)
-		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength, side, strategyParamsFunc)
+		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength, side, longsStrategyParamsFunc, shortsStrategyParamsFunc)
 	}
 
 }
@@ -157,8 +160,24 @@ func getReplayType() ReplayType {
 	panic("Invalid replay type. Only allowed single or combo.")
 }
 
-func getSide() Side {
+func getStrategy() string {
 	var s = os.Args[3]
+
+	var validNames = []string{emaCrossover.NAME, ranges.NAME}
+
+	found := funk.Find(validNames, func(n string) bool {
+		return n == s
+	})
+
+	if found == nil {
+		panic("Invalid strategy. Only allowed values are " + utils.GetStringRepresentation(validNames))
+	}
+
+	return s
+}
+
+func getSide() Side {
+	var s = os.Args[4]
 	switch s {
 	case "longs":
 		return LONGS_SIDE
@@ -172,12 +191,26 @@ func getSide() Side {
 func setStrategyData(
 	side Side,
 	market markets.MarketInterface,
-	strategyParamsFunc func(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams),
+	strategy string,
+	longsParamsFunc func(p *types.MarketStrategyParams),
+	shorsParamsFunc func(p *types.MarketStrategyParams),
 ) {
+	var longsParams *types.MarketStrategyParams
+	var shortsParams *types.MarketStrategyParams
+
+	if strategy == emaCrossover.NAME {
+		longsParams = market.GetMarketData().EmaCrossoverSetup.LongSetupParams
+		shortsParams = market.GetMarketData().EmaCrossoverSetup.ShortSetupParams
+	}
+	if strategy == ranges.NAME {
+		longsParams = market.GetMarketData().RangesSetup.LongSetupParams
+		shortsParams = market.GetMarketData().RangesSetup.ShortSetupParams
+	}
+
 	if side == LONGS_SIDE {
-		strategyParamsFunc(market.GetMarketData().RangesSetup.LongSetupParams, nil)
+		longsParamsFunc(longsParams)
 	} else if side == SHORTS_SIDE {
-		strategyParamsFunc(nil, market.GetMarketData().RangesSetup.ShortSetupParams)
+		shorsParamsFunc(shortsParams)
 	}
 }
 
@@ -209,20 +242,48 @@ func candlesLoop(
 	}
 }
 
-func SetPositionSizeStrategy(market markets.MarketInterface) {
-	if market.GetMarketData().EmaCrossoverSetup.LongSetupParams != nil {
-		market.GetMarketData().EmaCrossoverSetup.LongSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
-	}
-	if market.GetMarketData().EmaCrossoverSetup.ShortSetupParams != nil {
-		market.GetMarketData().EmaCrossoverSetup.ShortSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+func SetPositionSizeStrategy(market markets.MarketInterface, strategy string) {
+	if strategy == emaCrossover.NAME {
+		if market.GetMarketData().EmaCrossoverSetup.LongSetupParams != nil {
+			market.GetMarketData().EmaCrossoverSetup.LongSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+		}
+		if market.GetMarketData().EmaCrossoverSetup.ShortSetupParams != nil {
+			market.GetMarketData().EmaCrossoverSetup.ShortSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+		}
+		return
 	}
 
-	if market.GetMarketData().RangesSetup.LongSetupParams != nil {
-		market.GetMarketData().RangesSetup.LongSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+	if strategy == ranges.NAME {
+		if market.GetMarketData().RangesSetup.LongSetupParams != nil {
+			market.GetMarketData().RangesSetup.LongSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+		}
+		if market.GetMarketData().RangesSetup.ShortSetupParams != nil {
+			market.GetMarketData().RangesSetup.ShortSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+		}
 	}
-	if market.GetMarketData().RangesSetup.ShortSetupParams != nil {
-		market.GetMarketData().RangesSetup.ShortSetupParams.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+}
+
+func getSetStrategyParamsFuncs(strategy string, market markets.MarketInterface) (
+	longs func(p *types.MarketStrategyParams),
+	shorts func(p *types.MarketStrategyParams),
+) {
+	var strategyParamsFunc func(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams)
+	if strategy == emaCrossover.NAME {
+		strategyParamsFunc = market.SetEmaCrossoverStrategyParams
 	}
+	if strategy == ranges.NAME {
+		strategyParamsFunc = market.SetRangesStrategyParams
+	}
+
+	longs = func(longs *types.MarketStrategyParams) {
+		strategyParamsFunc(longs, nil)
+	}
+
+	shorts = func(shorts *types.MarketStrategyParams) {
+		strategyParamsFunc(nil, shorts)
+	}
+
+	return
 }
 
 func PrintTrades(trades []*api.Trade) {

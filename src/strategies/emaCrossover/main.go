@@ -6,6 +6,8 @@ import (
 	"TradingBot/src/strategies"
 )
 
+var NAME = "emaCrossover"
+
 func OnNewCandle(market markets.MarketInterface) {
 	if market.GetMarketData().EmaCrossoverSetup == nil {
 		return
