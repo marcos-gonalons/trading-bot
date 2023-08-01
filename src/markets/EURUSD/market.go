@@ -53,7 +53,7 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		// ranges.OnNewCandle(s)
+		//ranges.OnNewCandle(s)
 		emaCrossover.OnNewCandle(s)
 	}
 }

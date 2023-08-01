@@ -18,17 +18,18 @@ func OnNewCandle(
 	candles := market.GetCandlesHandler().GetCompletedCandles()
 	orderIDsToRemove := []string{}
 	for _, order := range orders {
-		lastCandle := market.GetCandlesHandler().GetLastCompletedCandle()
+		lastCandle := candles[len(candles)-1]
+		previousToLastCandle := candles[len(candles)-2]
 
 		if simulatorAPI.IsMarketOrder(order) {
 			position := findPosition(positions, order.Instrument)
 			if position != nil {
 				panic("the strategies must never create a market order if there is already an open position")
 			}
-			positions = append(positions, createNewPosition(lastCandle.Open, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle, simulatorAPI))
+			positions = append(positions, createNewPosition(lastCandle.Open, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, previousToLastCandle.Timestamp, simulatorAPI))
 			simulatorAPI.SetPositions(positions)
 
-			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
+			market.SetCurrentPositionExecutedAt(previousToLastCandle.Timestamp)
 			orderIDsToRemove = append(orderIDsToRemove, order.ID)
 			continue
 		}
@@ -55,7 +56,7 @@ func OnNewCandle(
 
 			// Here it means that we triggered a limit or a stop order, and there wasn't any open position
 			// So we need to create the position
-			positions = append(positions, createNewPosition(price, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle, simulatorAPI))
+			positions = append(positions, createNewPosition(price, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, lastCandle.Timestamp, simulatorAPI))
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(lastCandle.Timestamp)
@@ -85,7 +86,7 @@ func OnNewCandle(
 					if order.Qty > position.Qty {
 						simulatorAPI.ClosePosition(position.Instrument)
 						p, _ := simulatorAPI.GetPositions()
-						positions = append(p, createNewPosition(price, order, order.Qty-position.Qty, market.GetMarketData().SimulatorData.Slippage, lastCandle, simulatorAPI))
+						positions = append(p, createNewPosition(price, order, order.Qty-position.Qty, market.GetMarketData().SimulatorData.Slippage, lastCandle.Timestamp, simulatorAPI))
 						simulatorAPI.SetPositions(positions)
 						break
 					} else {
@@ -168,7 +169,7 @@ func createNewPosition(
 	order *api.Order,
 	size float64,
 	slippage float64,
-	lastCandle *types.Candle,
+	createdAt int64,
 	simulatorAPI api.Interface,
 ) *api.Position {
 	price := addSlippage(positionPrice, order, slippage, simulatorAPI)
@@ -179,7 +180,7 @@ func createNewPosition(
 		Side:         order.Side,
 		AvgPrice:     price,
 		UnrealizedPl: .0,
-		CreatedAt:    &lastCandle.Timestamp,
+		CreatedAt:    &createdAt,
 	}
 }
 
