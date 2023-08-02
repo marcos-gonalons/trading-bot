@@ -8,9 +8,7 @@ import (
 	"TradingBot/src/services/candlesHandler/indicators/movingAverage"
 	"TradingBot/src/services/technicalAnalysis/ranges"
 	"TradingBot/src/strategies"
-	"TradingBot/src/types"
 	"TradingBot/src/utils"
-	"errors"
 	"time"
 )
 
@@ -64,21 +62,39 @@ func RangesLongs(params strategies.Params) {
 	log("Resistances average" + utils.GetStringRepresentation(resistancesAverage))
 	log("Supports average" + utils.GetStringRepresentation(supportsAverage))
 
-	orderPrice, err := getOrderPrice(*params.MarketStrategyParams, resistancesAverage, supportsAverage, lastCompletedCandle)
+	orderPrice, err := getOrderPrice(
+		*params.MarketStrategyParams,
+		resistancesAverage,
+		supportsAverage,
+		lastCompletedCandle,
+		constants.LongSide,
+	)
 	log("Order price will be" + utils.GetStringRepresentation(orderPrice))
 	if err != nil {
 		log("An error occured while getting the order price " + err.Error())
 		return
 	}
 
-	stopLoss := getStopLoss(*params.MarketStrategyParams, resistancesAverage, supportsAverage, orderPrice)
+	stopLoss := getStopLoss(
+		*params.MarketStrategyParams,
+		resistancesAverage,
+		supportsAverage,
+		orderPrice,
+		constants.LongSide,
+	)
 	log("Stop loss will be" + utils.GetStringRepresentation(stopLoss))
 	if stopLoss >= orderPrice {
 		log("Stop loss is higher than the order price, doing nothing ...")
 		return
 	}
 
-	takeProfit := getTakeProfit(*params.MarketStrategyParams, resistancesAverage, supportsAverage, orderPrice)
+	takeProfit := getTakeProfit(
+		*params.MarketStrategyParams,
+		resistancesAverage,
+		supportsAverage,
+		orderPrice,
+		constants.LongSide,
+	)
 	log("Take profit will be" + utils.GetStringRepresentation(takeProfit))
 	if takeProfit <= orderPrice {
 		log("Take profit is lower than the order price, doing nothing ...")
@@ -121,88 +137,4 @@ func RangesLongs(params strategies.Params) {
 			},
 		},
 	)
-}
-
-func getOrderPrice(
-	params types.MarketStrategyParams,
-	resistancesAverage float64,
-	supportsAverage float64,
-	lastCompletedCandle *types.Candle,
-) (float64, error) {
-	switch params.Ranges.OrderType {
-	case constants.LimitType:
-		price := supportsAverage + float64(params.Ranges.PriceOffset)
-		if lastCompletedCandle.Close < price {
-			return price, errors.New("order is limit but last completed candle close is below the price")
-		}
-		return price, nil
-	case constants.StopType:
-		price := resistancesAverage + float64(params.Ranges.PriceOffset)
-		if price <= lastCompletedCandle.Close {
-			return price, errors.New("order is stop but the price is below the last completed candle close")
-		}
-		return price, nil
-	case constants.MarketType:
-		return lastCompletedCandle.Close, nil
-	}
-
-	return 0, nil
-}
-
-func getStopLoss(
-	params types.MarketStrategyParams,
-	resistancesAverage float64,
-	supportsAverage float64,
-	orderPrice float64,
-) (sl float64) {
-	switch params.Ranges.StopLossStrategy {
-	case "half":
-		sl = (resistancesAverage + supportsAverage) / 2
-		break
-	case "level":
-	case "level-with-offset":
-		if params.Ranges.OrderType == constants.StopType {
-			sl = supportsAverage
-		}
-		if params.Ranges.OrderType == constants.LimitType {
-			sl = resistancesAverage
-		}
-
-		if params.Ranges.StopLossStrategy == "level" {
-			break
-		}
-
-		sl = sl - params.StopLossDistance
-		break
-	case "distance":
-		sl = orderPrice - params.StopLossDistance
-		break
-	default:
-		panic("Invalid stop loss strategy -> " + params.Ranges.StopLossStrategy)
-	}
-
-	if orderPrice-sl > params.MaxStopLossDistance {
-		sl = orderPrice - params.MaxStopLossDistance
-	}
-
-	return
-}
-
-func getTakeProfit(
-	params types.MarketStrategyParams,
-	resistancesAverage float64,
-	supportsAverage float64,
-	orderPrice float64,
-) float64 {
-	switch params.Ranges.TakeProfitStrategy {
-	case "half":
-		return (resistancesAverage + supportsAverage) / 2
-	case "level":
-		return resistancesAverage
-	case "level-with-offset":
-		return resistancesAverage - params.TakeProfitDistance
-	case "distance":
-		return orderPrice + params.TakeProfitDistance
-	}
-	panic("Invalid take profit startegy -> " + utils.GetStringRepresentation(params.Ranges.TakeProfitStrategy))
 }

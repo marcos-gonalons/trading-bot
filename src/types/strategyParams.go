@@ -79,7 +79,7 @@ type Ranges struct {
 	MinCandlesBetweenRangePoints             int64
 	MaxCandlesBetweenRangePoints             int64
 	RangePoints                              int
-	PriceOffset                              int
+	PriceOffset                              float64
 	StartWith                                LevelType
 	TakeProfitStrategy                       string // "level" | "half" | "levelWithOffset" | "distance";
 	StopLossStrategy                         string // "level" | "half" | "levelWithOffset" | "distance";

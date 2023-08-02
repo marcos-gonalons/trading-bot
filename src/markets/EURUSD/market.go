@@ -4,7 +4,7 @@ import (
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
-	"TradingBot/src/strategies/emaCrossover"
+	"TradingBot/src/strategies/ranges"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 )
@@ -53,7 +53,7 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		//ranges.OnNewCandle(s)
-		emaCrossover.OnNewCandle(s)
+		ranges.OnNewCandle(s)
+		//emaCrossover.OnNewCandle(s)
 	}
 }
