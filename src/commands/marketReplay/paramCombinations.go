@@ -4,6 +4,7 @@ import (
 	"TradingBot/src/markets"
 	"TradingBot/src/services"
 	"TradingBot/src/services/api"
+	"TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"fmt"
@@ -50,6 +51,19 @@ type ParamCombinations struct {
 
 	WithPendingOrders     []bool
 	CloseOrdersOnBadTrend []bool
+
+	RangesCandlesToCheck                           []int64
+	RangesMaxPriceDifferenceForSameHorizontalLevel []float64
+	RangesMinPriceDifferenceBetweenRangePoints     []float64
+	RangesMinCandlesBetweenRangePoints             []int64
+	RangesMaxCandlesBetweenRangePoints             []int64
+	RangesPriceOffset                              []float64
+	RangesRangePoints                              []int
+	RangesStartWith                                []types.LevelType
+	RangesTakeProfitStrategy                       []string
+	RangesStopLossStrategy                         []string
+	RangesOrderType                                []string
+	RangesTrendyOnly                               []bool
 }
 
 const REPORT_FILE_PATH = "./.combinations-report.txt"
@@ -60,31 +74,52 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 	var priceAdjustment float64 = float64(1) / float64(minPositionSize)
 
 	c.RiskPercentage = []float64{1}
-	c.MaxSecondsOpenTrade = []int64{0}
+	/** not used for ranges */
+	c.MinStopLossDistance = []float64{0}
+	/** not used for ranges */
+	c.MinProfit = []float64{0}
+	/** not used for ranges */
+	c.CandlesAmountWithoutEMAsCrossing = []int{0}
+	/** not used for ranges */
+	c.LimitAndStopOrderPriceOffset = []float64{0}
+	/** not used for ranges */
+	c.StopLossPriceOffset = []float64{0}
+	/** not used for ranges */
+	c.MaxAttemptsToGetSL = []int{0}
+	/** not used for ranges */
 	c.TrendCandles = []int{0}
-	c.TrendDiff = funk.Map([]float64{1}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	/** not used for ranges */
+	c.TrendDiff = []float64{0}
+
+	c.MaxSecondsOpenTrade = []int64{0}
 	c.MaxTradeExecutionPriceDifference = funk.Map([]float64{999999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.LimitAndStopOrderPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.StopLossDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossPriceOffset = funk.Map([]float64{75}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxAttemptsToGetSL = []int{12}
+	c.TPDistanceShortForTighterSL = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceShortForTighterTP = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.MinStopLossDistance = funk.Map([]float64{10}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MaxStopLossDistance = funk.Map([]float64{600}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.FutureCandles = []int{3, 10}
+	c.PastCandles = []int{3, 10}
 
-	c.TakeProfitDistance = funk.Map([]float64{230}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.MinProfit = funk.Map([]float64{99999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{450}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TPDistanceShortForTighterSL = funk.Map([]float64{30}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{-90}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{50, 75, 100, 125, 150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.SLDistanceShortForTighterTP = funk.Map([]float64{100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{-20}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossDistance = funk.Map([]float64{-30, 0, 30, 60, 90}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70}
-	c.PastCandles = []int{5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70}
-	c.CandlesAmountWithoutEMAsCrossing = []int{12}
+	c.RangesCandlesToCheck = []int64{400}
+	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{75, 50, 25}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{25, 50, 75, 100, 140}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMinCandlesBetweenRangePoints = []int64{5}
+	c.RangesMaxCandlesBetweenRangePoints = []int64{150}
+	c.RangesPriceOffset = funk.Map([]float64{-150, -110, -80, -50, -20, 0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesRangePoints = []int{3}
+	c.RangesStartWith = []types.LevelType{"support"}
+	c.RangesTakeProfitStrategy = []string{"distance"}
+	c.RangesStopLossStrategy = []string{"level-with-offset"}
+	c.RangesOrderType = []string{constants.StopType}
+	c.RangesTrendyOnly = []bool{false}
 
 	return &c, getTotalLength(&c)
 }
@@ -131,79 +166,117 @@ func candlesLoopWithCombinations(
 																		for _, TrendDiff := range c.TrendDiff {
 																			for _, MaxTradeExecutionPriceDifference := range c.MaxTradeExecutionPriceDifference {
 																				for _, MaxSecondsOpenTrade := range c.MaxSecondsOpenTrade {
-																					start := time.Now().UnixMilli()
+																					for _, RangesCandlesToCheck := range c.RangesCandlesToCheck {
+																						for _, RangesMaxPriceDifferenceForSameHorizontalLevel := range c.RangesMaxPriceDifferenceForSameHorizontalLevel {
+																							for _, RangesMinPriceDifferenceBetweenRangePoints := range c.RangesMinPriceDifferenceBetweenRangePoints {
+																								for _, RangesMinCandlesBetweenRangePoints := range c.RangesMinCandlesBetweenRangePoints {
+																									for _, RangesMaxCandlesBetweenRangePoints := range c.RangesMaxCandlesBetweenRangePoints {
+																										for _, RangesPriceOffset := range c.RangesPriceOffset {
+																											for _, RangesRangePoints := range c.RangesRangePoints {
+																												for _, RangesStartWith := range c.RangesStartWith {
+																													for _, RangesTakeProfitStrategy := range c.RangesTakeProfitStrategy {
+																														for _, RangesStopLossStrategy := range c.RangesStopLossStrategy {
+																															for _, RangesOrderType := range c.RangesOrderType {
+																																for _, RangesTrendyOnly := range c.RangesTrendyOnly {
 
-																					var params types.MarketStrategyParams
+																																	start := time.Now().UnixMilli()
 
-																					params.RiskPercentage = RiskPercentage
-																					params.MinStopLossDistance = MinStopLossDistance
-																					params.MaxStopLossDistance = MaxStopLossDistance
-																					params.StopLossDistance = StopLossDistance
-																					params.TakeProfitDistance = TakeProfitDistance
-																					params.MinProfit = MinProfit
-																					params.TrailingStopLoss = &types.TrailingStopLoss{
-																						TPDistanceShortForTighterSL: TPDistanceShortForTighterSL,
-																						SLDistanceWhenTPIsVeryClose: SLDistanceWhenTPIsVeryClose,
+																																	var params types.MarketStrategyParams
+
+																																	params.RiskPercentage = RiskPercentage
+																																	params.MinStopLossDistance = MinStopLossDistance
+																																	params.MaxStopLossDistance = MaxStopLossDistance
+																																	params.StopLossDistance = StopLossDistance
+																																	params.TakeProfitDistance = TakeProfitDistance
+																																	params.MinProfit = MinProfit
+																																	params.TrailingStopLoss = &types.TrailingStopLoss{
+																																		TPDistanceShortForTighterSL: TPDistanceShortForTighterSL,
+																																		SLDistanceWhenTPIsVeryClose: SLDistanceWhenTPIsVeryClose,
+																																	}
+																																	params.TrailingTakeProfit = &types.TrailingTakeProfit{
+																																		SLDistanceShortForTighterTP: SLDistanceShortForTighterTP,
+																																		TPDistanceWhenSLIsVeryClose: TPDistanceWhenSLIsVeryClose,
+																																	}
+																																	params.CandlesAmountForHorizontalLevel = &types.CandlesAmountForHorizontalLevel{
+																																		Future: FutureCandles,
+																																		Past:   PastCandles,
+																																	}
+																																	params.EmaCrossover.CandlesAmountWithoutEMAsCrossing = CandlesAmountWithoutEMAsCrossing
+																																	params.LimitAndStopOrderPriceOffset = LimitAndStopOrderPriceOffset
+																																	params.EmaCrossover.StopLossPriceOffset = StopLossPriceOffset
+																																	params.EmaCrossover.MaxAttemptsToGetSL = MaxAttemptsToGetSL
+																																	params.TrendCandles = TrendCandles
+																																	params.TrendDiff = TrendDiff
+																																	params.MaxTradeExecutionPriceDifference = MaxTradeExecutionPriceDifference
+																																	params.MaxSecondsOpenTrade = MaxSecondsOpenTrade
+
+																																	params.Ranges.CandlesToCheck = RangesCandlesToCheck
+																																	params.Ranges.MaxPriceDifferenceForSameHorizontalLevel = RangesMaxPriceDifferenceForSameHorizontalLevel
+																																	params.Ranges.MinPriceDifferenceBetweenRangePoints = RangesMinPriceDifferenceBetweenRangePoints
+																																	params.Ranges.MinCandlesBetweenRangePoints = RangesMinCandlesBetweenRangePoints
+																																	params.Ranges.MaxCandlesBetweenRangePoints = RangesMaxCandlesBetweenRangePoints
+																																	params.Ranges.PriceOffset = RangesPriceOffset
+																																	params.Ranges.RangePoints = RangesRangePoints
+																																	params.Ranges.StartWith = RangesStartWith
+																																	params.Ranges.TakeProfitStrategy = RangesTakeProfitStrategy
+																																	params.Ranges.StopLossStrategy = RangesStopLossStrategy
+																																	params.Ranges.OrderType = RangesOrderType
+																																	params.Ranges.TrendyOnly = RangesTrendyOnly
+
+																																	market.GetCandlesHandler().SetCandles([]*types.Candle{})
+
+																																	simulatorAPI.CloseAllOrders()
+																																	simulatorAPI.CloseAllPositions()
+																																	simulatorAPI.SetTrades(nil)
+																																	simulatorAPI.SetState(&api.State{
+																																		Balance:      initialBalance,
+																																		UnrealizedPL: 0,
+																																		Equity:       initialBalance,
+																																	})
+
+																																	if side == LONGS_SIDE {
+																																		longsParamsFunc(&params)
+																																	} else {
+																																		shortsParamsFunc(&params)
+																																	}
+																																	candlesLoop(csvLines, market, container, simulatorAPI, false)
+
+																																	state, _ = simulatorAPI.GetState()
+																																	profits := state.Balance - initialBalance
+
+																																	if profits > bestProfits {
+																																		bestProfits = profits
+																																		bestCombination = &params
+
+																																		write("\n\nNew best combination " + utils.FloatToString(profits, 2))
+																																		write("\nTotal trades " + strconv.Itoa(len(simulatorAPI.GetTrades())))
+																																		write("\n" + utils.GetStringRepresentation(bestCombination))
+																																	}
+
+																																	i++
+
+																																	combinationTime := time.Now().UnixMilli() - start
+																																	combinationsLeft := combinationsLength - i
+																																	estimatedRemainingMilliseconds := combinationTime * int64(combinationsLeft)
+
+																																	progress := fmt.Sprintf(""+
+																																		"Progress: %.4f%% | Estimated remaining time: %s seconds",
+																																		float64(i)*100.0/float64(combinationsLength),
+																																		strconv.Itoa(int(estimatedRemainingMilliseconds)/1000),
+																																	)
+																																	fmt.Println(progress)
+																																}
+																															}
+																														}
+																													}
+																												}
+																											}
+																										}
+																									}
+																								}
+																							}
+																						}
 																					}
-																					params.TrailingTakeProfit = &types.TrailingTakeProfit{
-																						SLDistanceShortForTighterTP: SLDistanceShortForTighterTP,
-																						TPDistanceWhenSLIsVeryClose: TPDistanceWhenSLIsVeryClose,
-																					}
-																					params.CandlesAmountForHorizontalLevel = &types.CandlesAmountForHorizontalLevel{
-																						Future: FutureCandles,
-																						Past:   PastCandles,
-																					}
-																					params.EmaCrossover.CandlesAmountWithoutEMAsCrossing = CandlesAmountWithoutEMAsCrossing
-																					params.LimitAndStopOrderPriceOffset = LimitAndStopOrderPriceOffset
-																					params.EmaCrossover.StopLossPriceOffset = StopLossPriceOffset
-																					params.EmaCrossover.MaxAttemptsToGetSL = MaxAttemptsToGetSL
-																					params.TrendCandles = TrendCandles
-																					params.TrendDiff = TrendDiff
-																					params.MaxTradeExecutionPriceDifference = MaxTradeExecutionPriceDifference
-																					params.MaxSecondsOpenTrade = MaxSecondsOpenTrade
-
-																					market.GetCandlesHandler().SetCandles([]*types.Candle{})
-
-																					simulatorAPI.CloseAllOrders()
-																					simulatorAPI.CloseAllPositions()
-																					simulatorAPI.SetTrades(nil)
-																					simulatorAPI.SetState(&api.State{
-																						Balance:      initialBalance,
-																						UnrealizedPL: 0,
-																						Equity:       initialBalance,
-																					})
-
-																					if side == LONGS_SIDE {
-																						longsParamsFunc(&params)
-																					} else {
-																						shortsParamsFunc(&params)
-																					}
-																					candlesLoop(csvLines, market, container, simulatorAPI, false)
-
-																					state, _ = simulatorAPI.GetState()
-																					profits := state.Balance - initialBalance
-
-																					if profits > bestProfits {
-																						bestProfits = profits
-																						bestCombination = &params
-
-																						write("\n\nNew best combination " + utils.FloatToString(profits, 2))
-																						write("\nTotal trades " + strconv.Itoa(len(simulatorAPI.GetTrades())))
-																						write("\n" + utils.GetStringRepresentation(bestCombination))
-																					}
-
-																					i++
-
-																					combinationTime := time.Now().UnixMilli() - start
-																					combinationsLeft := combinationsLength - i
-																					estimatedRemainingMilliseconds := combinationTime * int64(combinationsLeft)
-
-																					progress := fmt.Sprintf(""+
-																						"Progress: %.4f%% | Estimated remaining time: %s seconds",
-																						float64(i)*100.0/float64(combinationsLength),
-																						strconv.Itoa(int(estimatedRemainingMilliseconds)/1000),
-																					)
-																					fmt.Println(progress)
 																				}
 																			}
 																		}
