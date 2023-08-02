@@ -22,7 +22,7 @@ func IsRangeValid(params *IsRangeValidParams) bool {
 		isPriceDifferenceBetweenLevelsHighEnough(params.Range, params.ValidationParams.MinPriceDifferenceBetweenRangePoints) &&
 		areAllCandlesBoundedBetweenLevels(params.Range, params.Candles) &&
 		hasAppropiateAmountOfCandlesBetweenLevels(params.Range, params.ValidationParams.MinCandlesBetweenRangePoints, params.ValidationParams.MaxCandlesBetweenRangePoints) &&
-		isCandleInsideTheRange(params.Range, params.LastCompletedCandle))
+		areAllFutureCandlesInsideTheRange(params.Range, params.LastCompletedCandle, params.Candles))
 }
 
 func hasEnoughLevels(r []*horizontalLevels.Level) bool {
@@ -125,8 +125,8 @@ func hasAppropiateAmountOfCandlesBetweenLevels(r []*horizontalLevels.Level, minC
 	return true
 }
 
-// candle.close must be between the lowest resistance price and the highest support price.
-func isCandleInsideTheRange(r []*horizontalLevels.Level, candle *types.Candle) bool {
+// All candles from currentCandle to first candle of the range must be between the lowest resistance price and the highest support price.
+func areAllFutureCandlesInsideTheRange(r []*horizontalLevels.Level, candle *types.Candle, candles []*types.Candle) bool {
 	lowestResistance := math.Inf(1)
 	highestSupport := math.Inf(-1)
 	for _, level := range r {
@@ -140,6 +140,15 @@ func isCandleInsideTheRange(r []*horizontalLevels.Level, candle *types.Candle) b
 	}
 	if candle.Close > lowestResistance || candle.Close < highestSupport {
 		return false
+	}
+
+	for i := r[0].CandleIndex + 1; i < int64(len(candles)-1); i++ {
+		if candles[i].Low < highestSupport {
+			return false
+		}
+		if candles[i].High > lowestResistance {
+			return false
+		}
 	}
 
 	return true

@@ -11,7 +11,7 @@ var RangesLongParams = types.MarketStrategyParams{
 
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
 		Future: 3,
-		Past:   3,
+		Past:   10,
 	},
 	MaxStopLossDistance: 300 * priceAdjustment,
 	TakeProfitDistance:  0 * priceAdjustment,
@@ -19,14 +19,14 @@ var RangesLongParams = types.MarketStrategyParams{
 
 	Ranges: types.Ranges{
 		CandlesToCheck:                           400,
-		MaxPriceDifferenceForSameHorizontalLevel: 75 * priceAdjustment,
-		MinPriceDifferenceBetweenRangePoints:     25 * priceAdjustment,
+		MaxPriceDifferenceForSameHorizontalLevel: 25 * priceAdjustment,
+		MinPriceDifferenceBetweenRangePoints:     75 * priceAdjustment,
 		MinCandlesBetweenRangePoints:             5,
 		MaxCandlesBetweenRangePoints:             300,
 		PriceOffset:                              0 * priceAdjustment,
 		RangePoints:                              3,
 		StartWith:                                types.RESISTANCE_TYPE,
-		TakeProfitStrategy:                       "half",
+		TakeProfitStrategy:                       "level",
 		StopLossStrategy:                         "distance",
 		OrderType:                                constants.LimitType,
 		TrendyOnly:                               true,

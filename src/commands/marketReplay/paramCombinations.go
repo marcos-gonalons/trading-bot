@@ -110,14 +110,14 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 	c.StopLossDistance = funk.Map([]float64{20, 50, 80, 120, 150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.RangesCandlesToCheck = []int64{400}
-	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{75, 50, 25}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{25, 50, 75}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{25, 50, 75, 100, 140}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinCandlesBetweenRangePoints = []int64{5}
 	c.RangesMaxCandlesBetweenRangePoints = []int64{300}
 	c.RangesPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesRangePoints = []int{3}
 	c.RangesStartWith = []types.LevelType{"resistance"}
-	c.RangesTakeProfitStrategy = []string{"half"}
+	c.RangesTakeProfitStrategy = []string{"level"}
 	c.RangesStopLossStrategy = []string{"distance"}
 	c.RangesOrderType = []string{constants.LimitType}
 	c.RangesTrendyOnly = []bool{true}
