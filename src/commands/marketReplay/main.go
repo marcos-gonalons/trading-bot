@@ -56,17 +56,10 @@ func main() {
 
 	container.SetAPI(simulatorAPI)
 
-	simulatorAPI.SetState(&api.State{
-		Balance:      initialBalance,
-		UnrealizedPL: 0,
-		Equity:       initialBalance,
-	})
-
 	longsStrategyParamsFunc, shortsStrategyParamsFunc := getSetStrategyParamsFuncs(strategy, market)
 
 	if replayType == SINGLE_TYPE {
 		setStrategyData(side, market, strategy, longsStrategyParamsFunc, shortsStrategyParamsFunc)
-
 		candlesLoop(csvLines, market, container, simulatorAPI, false)
 		PrintTrades(simulatorAPI.GetTrades())
 		state, _ := simulatorAPI.GetState()
@@ -221,6 +214,11 @@ func candlesLoop(
 	simulatorAPI api.Interface,
 	printProgress bool,
 ) {
+	simulatorAPI.SetState(&api.State{
+		Balance:      initialBalance,
+		UnrealizedPL: 0,
+		Equity:       initialBalance,
+	})
 	for i, line := range csvLines {
 		candle := getCandleObject(line)
 		market.GetCandlesHandler().AddNewCandle(candle)

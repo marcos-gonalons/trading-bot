@@ -5,6 +5,7 @@ import (
 	"TradingBot/src/services"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker/constants"
+	"TradingBot/src/services/positionSize"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
 	"fmt"
@@ -99,27 +100,27 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 	c.SLDistanceShortForTighterTP = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{3, 10}
-	c.PastCandles = []int{3, 10}
+	c.FutureCandles = []int{3, 10, 20}
+	c.PastCandles = []int{3, 10, 20}
 
-	c.MaxStopLossDistance = funk.Map([]float64{450}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{50, 75, 100, 125, 150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossDistance = funk.Map([]float64{-30, 0, 30, 60, 90}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossDistance = funk.Map([]float64{20, 50, 80, 120, 150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.RangesCandlesToCheck = []int64{400}
 	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{75, 50, 25}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{25, 50, 75, 100, 140}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinCandlesBetweenRangePoints = []int64{5}
-	c.RangesMaxCandlesBetweenRangePoints = []int64{150}
-	c.RangesPriceOffset = funk.Map([]float64{-150, -110, -80, -50, -20, 0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMaxCandlesBetweenRangePoints = []int64{300}
+	c.RangesPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesRangePoints = []int{3}
-	c.RangesStartWith = []types.LevelType{"support"}
-	c.RangesTakeProfitStrategy = []string{"distance"}
-	c.RangesStopLossStrategy = []string{"level-with-offset"}
-	c.RangesOrderType = []string{constants.StopType}
-	c.RangesTrendyOnly = []bool{false}
+	c.RangesStartWith = []types.LevelType{"resistance"}
+	c.RangesTakeProfitStrategy = []string{"half"}
+	c.RangesStopLossStrategy = []string{"distance"}
+	c.RangesOrderType = []string{constants.LimitType}
+	c.RangesTrendyOnly = []bool{true}
 
 	return &c, getTotalLength(&c)
 }
@@ -135,10 +136,6 @@ func candlesLoopWithCombinations(
 	longsParamsFunc func(p *types.MarketStrategyParams),
 	shortsParamsFunc func(p *types.MarketStrategyParams),
 ) {
-	// todo: refactor
-	state, _ := simulatorAPI.GetState()
-
-	var initialBalance = state.Balance
 	var bestProfits float64 = -999999
 	var bestCombination *types.MarketStrategyParams
 
@@ -223,16 +220,13 @@ func candlesLoopWithCombinations(
 																																	params.Ranges.OrderType = RangesOrderType
 																																	params.Ranges.TrendyOnly = RangesTrendyOnly
 
+																																	params.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+
 																																	market.GetCandlesHandler().SetCandles([]*types.Candle{})
 
 																																	simulatorAPI.CloseAllOrders()
 																																	simulatorAPI.CloseAllPositions()
 																																	simulatorAPI.SetTrades(nil)
-																																	simulatorAPI.SetState(&api.State{
-																																		Balance:      initialBalance,
-																																		UnrealizedPL: 0,
-																																		Equity:       initialBalance,
-																																	})
 
 																																	if side == LONGS_SIDE {
 																																		longsParamsFunc(&params)
@@ -241,7 +235,7 @@ func candlesLoopWithCombinations(
 																																	}
 																																	candlesLoop(csvLines, market, container, simulatorAPI, false)
 
-																																	state, _ = simulatorAPI.GetState()
+																																	state, _ := simulatorAPI.GetState()
 																																	profits := state.Balance - initialBalance
 
 																																	if profits > bestProfits {

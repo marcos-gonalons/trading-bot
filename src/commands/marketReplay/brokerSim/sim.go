@@ -38,7 +38,11 @@ func OnNewCandle(
 		price := float64(0)
 
 		if isPriceWithinCandle(orderExecutionPrice, lastCandle) {
-			price = orderExecutionPrice
+			if simulatorAPI.IsLimitOrder(order) {
+				price = *order.LimitPrice
+			} else {
+				price = *order.StopPrice
+			}
 		}
 		if hasCandleGapOvercameExecutionPrice(orderExecutionPrice, lastCandle, candles[len(candles)-2]) {
 			price = lastCandle.Open
