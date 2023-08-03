@@ -100,27 +100,27 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 	c.SLDistanceShortForTighterTP = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{3, 10, 20}
-	c.PastCandles = []int{3, 10, 20}
+	c.FutureCandles = []int{3}
+	c.PastCandles = []int{3}
 
 	c.MaxStopLossDistance = funk.Map([]float64{300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{-40, -20, 0, 20, 40, 60, 80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossDistance = funk.Map([]float64{20, 50, 80, 120, 150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossDistance = funk.Map([]float64{70}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.RangesCandlesToCheck = []int64{400}
-	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{25, 50, 75}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{25, 50, 75, 100, 140}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{25, 50}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{100, 120, 140}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinCandlesBetweenRangePoints = []int64{5}
 	c.RangesMaxCandlesBetweenRangePoints = []int64{300}
 	c.RangesPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesRangePoints = []int{3}
-	c.RangesStartWith = []types.LevelType{"resistance"}
-	c.RangesTakeProfitStrategy = []string{"level"}
+	c.RangesStartWith = []types.LevelType{"support"}
+	c.RangesTakeProfitStrategy = []string{"level-with-offset"}
 	c.RangesStopLossStrategy = []string{"distance"}
 	c.RangesOrderType = []string{constants.LimitType}
-	c.RangesTrendyOnly = []bool{true}
+	c.RangesTrendyOnly = []bool{false}
 
 	return &c, getTotalLength(&c)
 }
