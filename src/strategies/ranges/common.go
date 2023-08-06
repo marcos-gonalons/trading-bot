@@ -63,19 +63,10 @@ func getStopLoss(
 		break
 	case "level":
 	case "level-with-offset":
-		if params.Ranges.OrderType == constants.StopType {
-			if longOrShort == constants.LongSide {
-				sl = supportsAverage
-			} else {
-				sl = resistancesAverage
-			}
-		}
-		if params.Ranges.OrderType == constants.LimitType {
-			if longOrShort == constants.LongSide {
-				sl = resistancesAverage
-			} else {
-				sl = supportsAverage
-			}
+		if longOrShort == constants.LongSide {
+			sl = supportsAverage
+		} else {
+			sl = resistancesAverage
 		}
 
 		if params.Ranges.StopLossStrategy == "level" {
