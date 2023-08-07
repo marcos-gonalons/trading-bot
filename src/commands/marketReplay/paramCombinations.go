@@ -76,7 +76,10 @@ type BestCombination struct {
 
 const REPORT_FILE_PATH = "./.combinations-report.txt"
 
+var parallelRoutines = 10
+
 var mutex *sync.Mutex = &sync.Mutex{}
+var completed int64 = 0
 
 func GetCombinations(minPositionSize int64) (*ParamCombinations, int64) {
 	var c ParamCombinations
@@ -114,9 +117,9 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int64) {
 
 	c.MaxStopLossDistance = funk.Map([]float64{300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{200, 100, 80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{200, 150, 100, 20, 80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossDistance = funk.Map([]float64{70}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossDistance = funk.Map([]float64{40, 30, 80, 90, 70, 60, 50}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.RangesCandlesToCheck = []int64{400}
 	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{25}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
@@ -129,7 +132,7 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int64) {
 	c.RangesTakeProfitStrategy = []string{"level-with-offset"}
 	c.RangesStopLossStrategy = []string{"distance"}
 	c.RangesOrderType = []string{constants.LimitType}
-	c.RangesTrendyOnly = []bool{false}
+	c.RangesTrendyOnly = []bool{false, true}
 
 	return &c, getTotalLength(&c)
 }
@@ -151,8 +154,6 @@ func candlesLoopWithCombinations(
 	createReportFile()
 
 	fmt.Println("Combinations length -> " + strconv.FormatInt(combinationsLength, 10))
-
-	parallelRoutines := 3
 
 	var waitingGroup sync.WaitGroup
 	waitingGroup.Add(parallelRoutines)
@@ -235,10 +236,9 @@ func candlesLoopWithCombinations(
 
 																																	params.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
 
-																																	go func(i int64, p types.MarketStrategyParams) {
+																																	go func(p types.MarketStrategyParams) {
 																																		executeCombination(
 																																			params,
-																																			i,
 																																			bestCombination,
 																																			marketName,
 																																			side,
@@ -247,7 +247,7 @@ func candlesLoopWithCombinations(
 																																			&waitingGroup,
 																																			strategy,
 																																		)
-																																	}(iteration, params)
+																																	}(params)
 
 																																	if iteration%int64(parallelRoutines) == 0 {
 																																		waitingGroup.Wait()
@@ -351,7 +351,6 @@ func write(v string) {
 
 func executeCombination(
 	params types.MarketStrategyParams,
-	iteration int64,
 	bestCombination *BestCombination,
 	marketName string,
 	side Side,
@@ -361,7 +360,6 @@ func executeCombination(
 	strategy string,
 ) {
 	defer waitingGroup.Done()
-	fmt.Println("Iteration " + strconv.FormatInt(iteration, 10) + " started")
 
 	start := time.Now().UnixMilli()
 
@@ -409,16 +407,18 @@ func executeCombination(
 		mutex.Unlock()
 	}
 
-	combinationTime := time.Now().UnixMilli() - start
-	combinationsLeft := combinationsLength - iteration
+	mutex.Lock()
+	completed++
+	mutex.Unlock()
+
+	combinationTime := (time.Now().UnixMilli() - start) / int64(parallelRoutines)
+	combinationsLeft := combinationsLength - completed
 	estimatedRemainingMilliseconds := combinationTime * int64(combinationsLeft)
 
 	progress := fmt.Sprintf(""+
 		"Progress: %.4f%% | Estimated remaining time: %s seconds",
-		float64(iteration)*100.0/float64(combinationsLength),
+		float64(completed)*100.0/float64(combinationsLength),
 		strconv.Itoa(int(estimatedRemainingMilliseconds)/1000),
 	)
 	fmt.Println(progress)
-
-	fmt.Println("Iteration " + strconv.FormatInt(iteration, 10) + " completed")
 }
