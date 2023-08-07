@@ -31,3 +31,12 @@ ssh:
 test: 
 	docker-compose run --rm trading-bot go test -coverprofile .tests-coverage/raw.txt ./src/... || true
 	docker-compose run --rm trading-bot go tool cover -html=.tests-coverage/raw.txt -o .tests-coverage/report.html
+
+######
+
+single:
+	docker-compose run --rm trading-bot go run ./src/commands/marketReplay/. EUR/USD single ranges longs
+	
+combo:
+	docker-compose run --rm trading-bot go run ./src/commands/marketReplay/. EUR/USD combo ranges longs
+

@@ -18,7 +18,7 @@ var RangesLongParams = types.MarketStrategyParams{
 	StopLossDistance:    70 * priceAdjustment,
 
 	TrailingStopLoss: &types.TrailingStopLoss{
-		TPDistanceShortForTighterSL: 0 * priceAdjustment,
+		TPDistanceShortForTighterSL: 40 * priceAdjustment,
 		SLDistanceWhenTPIsVeryClose: 0 * priceAdjustment,
 	},
 

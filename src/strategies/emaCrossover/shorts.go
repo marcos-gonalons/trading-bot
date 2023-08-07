@@ -1,7 +1,6 @@
 package emaCrossover
 
 import (
-	"TradingBot/src/services"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/candlesHandler/indicators/movingAverage"
 
@@ -15,7 +14,7 @@ func EmaCrossoverShorts(params strategies.Params) {
 	var log = func(m string) {
 		params.Market.Log("EmaCrossoverShorts | " + m)
 	}
-	container := services.GetServicesContainer()
+	container := params.Market.GetContainer()
 
 	log("EmaCrossoverShorts started")
 	defer func() {

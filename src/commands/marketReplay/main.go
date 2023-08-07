@@ -28,17 +28,16 @@ func main() {
 	container := services.GetServicesContainer()
 	container.Initialize(false)
 
+	manager := &manager.Manager{
+		ServicesContainer: container,
+	}
+
 	marketName := getMarketName()
 	replayType := getReplayType()
 	strategy := getStrategy()
 	side := getSide()
 
-	market := getMarketInstance(
-		&manager.Manager{
-			ServicesContainer: container,
-		},
-		marketName,
-	)
+	market := getMarketInstance(manager, marketName)
 	SetPositionSizeStrategy(market, strategy)
 
 	candlesFile := getCSVFile(market)

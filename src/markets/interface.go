@@ -29,6 +29,7 @@ type MarketInterface interface {
 	SetRangesStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams)
 
 	SetContainer(*services.Container)
+	GetContainer() *services.Container
 	SetCandlesHandler(candlesHandler.Interface)
 	GetCandlesHandler() candlesHandler.Interface
 }

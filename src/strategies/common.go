@@ -48,7 +48,7 @@ func OnBegin(params Params) (err error) {
 		}
 	}
 
-	p := utils.FindPositionByMarket(services.GetServicesContainer().APIData.GetPositions(), params.MarketData.BrokerAPIName)
+	p := utils.FindPositionByMarket(params.Market.GetContainer().APIData.GetPositions(), params.MarketData.BrokerAPIName)
 	if p != nil && p.Side == params.Type {
 		params.Market.Log("There is an open position. Calling HandleTrailingSLAndTP and CheckOpenPositionTTL ...")
 		params.Market.Log("Position is -> " + utils.GetStringRepresentation(p))
@@ -58,7 +58,7 @@ func OnBegin(params Params) (err error) {
 			Position:   p,
 			LastCandle: params.CandlesHandler.GetLastCompletedCandle(),
 			MarketData: params.MarketData,
-			Container:  services.GetServicesContainer(),
+			Container:  params.Market.GetContainer(),
 		}, params.Market.Log)
 		params.Market.CheckOpenPositionTTL(params.MarketStrategyParams, p)
 	}
@@ -82,7 +82,7 @@ func HandleTrailingSLAndTP(
 	handleTrailingSL := func() {
 		log("Checking if the position needs to have the SL adjusted with this params ... " + utils.GetStringRepresentation(params))
 
-		_, tpOrder := services.GetServicesContainer().API.GetBracketOrders(params.Position.Instrument)
+		_, tpOrder := params.Container.API.GetBracketOrders(params.Position.Instrument)
 
 		if tpOrder == nil {
 			log("Take Profit order not found ...")
@@ -91,7 +91,7 @@ func HandleTrailingSLAndTP(
 
 		shouldBeAdjusted := false
 		var newSL float64
-		if services.GetServicesContainer().API.IsLongPosition(params.Position) {
+		if params.Container.API.IsLongPosition(params.Position) {
 			shouldBeAdjusted = *tpOrder.LimitPrice-params.LastCandle.High < params.TrailingSL.TPDistanceShortForTighterSL
 			newSL = params.Position.AvgPrice + params.TrailingSL.SLDistanceWhenTPIsVeryClose
 
@@ -118,7 +118,7 @@ func HandleTrailingSLAndTP(
 
 		log("The price is very close to the TP. Adjusting SL...")
 		log("New SL -> " + utils.FloatToString(newSL, params.MarketData.PriceDecimals))
-		services.GetServicesContainer().APIRetryFacade.ModifyPosition(
+		params.Container.APIRetryFacade.ModifyPosition(
 			params.MarketData.BrokerAPIName,
 			utils.FloatToString(*tpOrder.LimitPrice, params.MarketData.PriceDecimals),
 			utils.FloatToString(newSL, params.MarketData.PriceDecimals),
@@ -132,7 +132,7 @@ func HandleTrailingSLAndTP(
 	handleTrailingTP := func() {
 		log("Checking if the position needs to have the TP adjusted with this params ... " + utils.GetStringRepresentation(params))
 
-		slOrder, _ := services.GetServicesContainer().API.GetBracketOrders(params.Position.Instrument)
+		slOrder, _ := params.Container.API.GetBracketOrders(params.Position.Instrument)
 
 		if slOrder == nil {
 			log("Stop Loss order not found ...")
@@ -141,7 +141,7 @@ func HandleTrailingSLAndTP(
 
 		shouldBeAdjusted := false
 		var newTP float64
-		if services.GetServicesContainer().API.IsLongPosition(params.Position) {
+		if params.Container.API.IsLongPosition(params.Position) {
 			shouldBeAdjusted = params.LastCandle.Low-*slOrder.StopPrice < params.TrailingTP.SLDistanceShortForTighterTP
 			newTP = params.Position.AvgPrice - params.TrailingTP.TPDistanceWhenSLIsVeryClose
 			if shouldBeAdjusted && newTP <= params.LastCandle.Close {
@@ -167,7 +167,7 @@ func HandleTrailingSLAndTP(
 
 		log("The price is very close to the SL. Adjusting TP...")
 		log("New TP -> " + utils.FloatToString(newTP, params.MarketData.PriceDecimals))
-		services.GetServicesContainer().APIRetryFacade.ModifyPosition(
+		params.Container.APIRetryFacade.ModifyPosition(
 			params.MarketData.BrokerAPIName,
 			utils.FloatToString(newTP, params.MarketData.PriceDecimals),
 			utils.FloatToString(*slOrder.StopPrice, params.MarketData.PriceDecimals),

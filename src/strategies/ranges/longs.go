@@ -2,7 +2,6 @@ package ranges
 
 import (
 	"TradingBot/src/markets"
-	"TradingBot/src/services"
 	"TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/candlesHandler/indicators/movingAverage"
@@ -31,7 +30,7 @@ func RangesLongs(params strategies.Params) {
 	lastCompletedCandleIndex := len(candles) - 1
 	lastCompletedCandle := candles[lastCompletedCandleIndex]
 
-	container := services.GetServicesContainer()
+	container := params.Market.GetContainer()
 
 	openPosition := utils.FindPositionByMarket(container.APIData.GetPositions(), params.MarketData.BrokerAPIName)
 	if openPosition != nil && container.API.IsLongPosition(openPosition) {

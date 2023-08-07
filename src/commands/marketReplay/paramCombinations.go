@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/thoas/go-funk"
@@ -67,9 +68,16 @@ type ParamCombinations struct {
 	RangesTrendyOnly                               []bool
 }
 
+type BestCombination struct {
+	BestProfits     float64
+	BestCombination *types.MarketStrategyParams
+}
+
 const REPORT_FILE_PATH = "./.combinations-report.txt"
 
-func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
+var mutex *sync.Mutex = &sync.Mutex{}
+
+func GetCombinations(minPositionSize int64) (*ParamCombinations, int64) {
 	var c ParamCombinations
 
 	var priceAdjustment float64 = float64(1) / float64(minPositionSize)
@@ -105,22 +113,22 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int) {
 
 	c.MaxStopLossDistance = funk.Map([]float64{300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{-40, -20, 0, 20, 40, 60, 80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{180}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossDistance = funk.Map([]float64{70}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossDistance = funk.Map([]float64{10}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.RangesCandlesToCheck = []int64{400}
-	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{25, 50}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{100, 120, 140}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{5, 15, 25, 35}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinCandlesBetweenRangePoints = []int64{5}
 	c.RangesMaxCandlesBetweenRangePoints = []int64{300}
 	c.RangesPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesRangePoints = []int{3}
-	c.RangesStartWith = []types.LevelType{"support"}
-	c.RangesTakeProfitStrategy = []string{"level-with-offset"}
-	c.RangesStopLossStrategy = []string{"distance"}
-	c.RangesOrderType = []string{constants.LimitType}
-	c.RangesTrendyOnly = []bool{false}
+	c.RangesStartWith = []types.LevelType{"resistance"}
+	c.RangesTakeProfitStrategy = []string{"distance"}
+	c.RangesStopLossStrategy = []string{"level-with-offset"}
+	c.RangesOrderType = []string{constants.StopType}
+	c.RangesTrendyOnly = []bool{true, false}
 
 	return &c, getTotalLength(&c)
 }
@@ -131,17 +139,23 @@ func candlesLoopWithCombinations(
 	container *services.Container,
 	simulatorAPI api.Interface,
 	c *ParamCombinations,
-	combinationsLength int,
+	combinationsLength int64,
 	side Side,
 	longsParamsFunc func(p *types.MarketStrategyParams),
 	shortsParamsFunc func(p *types.MarketStrategyParams),
 ) {
-	var bestProfits float64 = -999999
-	var bestCombination *types.MarketStrategyParams
-
-	i := 0
+	bestCombination := &BestCombination{
+		BestProfits:     -999999,
+		BestCombination: nil,
+	}
+	iteration := int64(0)
 
 	createReportFile()
+
+	parallelRoutines := 2
+
+	var waitingGroup sync.WaitGroup
+	waitingGroup.Add(parallelRoutines)
 
 	for _, RiskPercentage := range c.RiskPercentage {
 		for _, MinStopLossDistance := range c.MinStopLossDistance {
@@ -175,8 +189,7 @@ func candlesLoopWithCombinations(
 																														for _, RangesStopLossStrategy := range c.RangesStopLossStrategy {
 																															for _, RangesOrderType := range c.RangesOrderType {
 																																for _, RangesTrendyOnly := range c.RangesTrendyOnly {
-
-																																	start := time.Now().UnixMilli()
+																																	iteration++
 
 																																	var params types.MarketStrategyParams
 
@@ -222,43 +235,33 @@ func candlesLoopWithCombinations(
 
 																																	params.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
 
-																																	market.GetCandlesHandler().SetCandles([]*types.Candle{})
-
-																																	simulatorAPI.CloseAllOrders()
-																																	simulatorAPI.CloseAllPositions()
-																																	simulatorAPI.SetTrades(nil)
-
-																																	if side == LONGS_SIDE {
-																																		longsParamsFunc(&params)
-																																	} else {
-																																		shortsParamsFunc(&params)
-																																	}
-																																	candlesLoop(csvLines, market, container, simulatorAPI, false)
-
-																																	state, _ := simulatorAPI.GetState()
-																																	profits := state.Balance - initialBalance
-
-																																	if profits > bestProfits {
-																																		bestProfits = profits
-																																		bestCombination = &params
-
-																																		write("\n\nNew best combination " + utils.FloatToString(profits, 2))
-																																		write("\nTotal trades " + strconv.Itoa(len(simulatorAPI.GetTrades())))
-																																		write("\n" + utils.GetStringRepresentation(bestCombination))
-																																	}
-
-																																	i++
-
-																																	combinationTime := time.Now().UnixMilli() - start
-																																	combinationsLeft := combinationsLength - i
-																																	estimatedRemainingMilliseconds := combinationTime * int64(combinationsLeft)
-
-																																	progress := fmt.Sprintf(""+
-																																		"Progress: %.4f%% | Estimated remaining time: %s seconds",
-																																		float64(i)*100.0/float64(combinationsLength),
-																																		strconv.Itoa(int(estimatedRemainingMilliseconds)/1000),
+																																	go executeCombination(
+																																		params,
+																																		iteration,
+																																		bestCombination,
+																																		market,
+																																		simulatorAPI,
+																																		side,
+																																		csvLines,
+																																		container,
+																																		combinationsLength,
+																																		longsParamsFunc,
+																																		shortsParamsFunc,
+																																		&waitingGroup,
 																																	)
-																																	fmt.Println(progress)
+
+																																	if iteration%int64(parallelRoutines) == 0 {
+																																		waitingGroup.Wait()
+
+																																		waitingGroup = sync.WaitGroup{}
+
+																																		if combinationsLength-iteration-1 < int64(parallelRoutines) {
+																																			waitingGroup.Add(int(combinationsLength - iteration - 1))
+																																		} else {
+																																			waitingGroup.Add(parallelRoutines)
+																																		}
+																																	}
+
 																																}
 																															}
 																														}
@@ -292,22 +295,22 @@ func candlesLoopWithCombinations(
 		}
 	}
 
-	write("\n\n\nDone! Best combination -> " + utils.FloatToString(bestProfits, 2))
+	write("\n\n\nDone! Best combination -> " + utils.FloatToString(bestCombination.BestProfits, 2))
 	write(utils.GetStringRepresentation(bestCombination))
 }
 
-func getTotalLength(c *ParamCombinations) int {
+func getTotalLength(c *ParamCombinations) (length int64) {
 	v := reflect.ValueOf(*c)
 
-	length := 1
+	length = int64(1)
 	for i := 0; i < v.NumField(); i++ {
 		l := v.Field(i).Len()
 		if l > 0 {
-			length *= l
+			length *= int64(l)
 		}
 	}
 
-	return length
+	return
 }
 
 func createReportFile() {
@@ -339,4 +342,64 @@ func write(v string) {
 	v = strings.Replace(v, ",", "\n", -1)
 
 	file.Write([]byte(v))
+}
+
+// todo: probably csvLines must be copied
+// also other stuff should be copied instead of a reference.
+// review!
+func executeCombination(
+	params types.MarketStrategyParams,
+	iteration int64,
+	bestCombination *BestCombination,
+	market markets.MarketInterface,
+	simulatorAPI api.Interface,
+	side Side,
+	csvLines [][]string,
+	container *services.Container,
+	combinationsLength int64,
+	longsParamsFunc func(p *types.MarketStrategyParams),
+	shortsParamsFunc func(p *types.MarketStrategyParams),
+	waitingGroup *sync.WaitGroup,
+) {
+	start := time.Now().UnixMilli()
+
+	market.GetCandlesHandler().SetCandles([]*types.Candle{})
+
+	simulatorAPI.CloseAllOrders()
+	simulatorAPI.CloseAllPositions()
+	simulatorAPI.SetTrades(nil)
+
+	if side == LONGS_SIDE {
+		longsParamsFunc(&params)
+	} else {
+		shortsParamsFunc(&params)
+	}
+	candlesLoop(csvLines, market, container, simulatorAPI, false)
+
+	state, _ := simulatorAPI.GetState()
+	profits := state.Balance - initialBalance
+
+	if profits > bestCombination.BestProfits {
+		mutex.Lock()
+		bestCombination.BestProfits = profits
+		bestCombination.BestCombination = &params
+
+		write("\n\nNew best combination " + utils.FloatToString(profits, 2))
+		write("\nTotal trades " + strconv.Itoa(len(simulatorAPI.GetTrades())))
+		write("\n" + utils.GetStringRepresentation(bestCombination))
+		mutex.Unlock()
+	}
+
+	combinationTime := time.Now().UnixMilli() - start
+	combinationsLeft := combinationsLength - iteration
+	estimatedRemainingMilliseconds := combinationTime * int64(combinationsLeft)
+
+	progress := fmt.Sprintf(""+
+		"Progress: %.4f%% | Estimated remaining time: %s seconds",
+		float64(iteration)*100.0/float64(combinationsLength),
+		strconv.Itoa(int(estimatedRemainingMilliseconds)/1000),
+	)
+	fmt.Println(progress)
+
+	waitingGroup.Done()
 }

@@ -2,7 +2,6 @@ package horizontalLevelBounce
 
 import (
 	"TradingBot/src/markets"
-	"TradingBot/src/services"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	"TradingBot/src/services/api/retryFacade"
 	"TradingBot/src/services/technicalAnalysis/horizontalLevels"
@@ -16,7 +15,7 @@ func SupportBounce(params strategies.Params) {
 	defer func() {
 		params.Market.Log("supportBounce ended")
 	}()
-	container := services.GetServicesContainer()
+	container := params.Market.GetContainer()
 
 	err := strategies.OnBegin(params)
 	if err != nil {

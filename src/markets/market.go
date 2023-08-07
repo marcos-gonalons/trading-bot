@@ -39,6 +39,9 @@ type BaseMarketClass struct {
 func (s *BaseMarketClass) SetContainer(c *services.Container) {
 	s.Container = c
 }
+func (s *BaseMarketClass) GetContainer() *services.Container {
+	return s.Container
+}
 
 func (s *BaseMarketClass) SetCandlesHandler(c candlesHandler.Interface) {
 	s.CandlesHandler = c
