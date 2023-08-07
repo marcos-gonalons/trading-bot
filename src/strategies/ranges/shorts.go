@@ -124,16 +124,21 @@ func RangesShorts(params strategies.Params) {
 		PositionSizeStrategy: params.MarketStrategyParams.PositionSizeStrategy,
 	}
 
-	log("We have a valid setup, closing existing orders first ...")
-	container.APIRetryFacade.CloseOrders(
-		container.API.GetWorkingOrders(utils.FilterOrdersByMarket(container.APIData.GetOrders(), params.MarketData.BrokerAPIName)),
-		retryFacade.RetryParams{
-			DelayBetweenRetries: 5 * time.Second,
-			MaxRetries:          30,
-			SuccessCallback: func() {
-				log("Orders closed, calling OnValidTradeSetup ...")
-				params.Market.OnValidTradeSetup(onValidTradeSetupParams)
+	if params.MarketStrategyParams.Ranges.OrderType == constants.MarketType {
+		log("We have a valid setup, creating the market order ...")
+		params.Market.OnValidTradeSetup(onValidTradeSetupParams)
+	} else {
+		log("We have a valid setup, closing existing orders first ...")
+		container.APIRetryFacade.CloseOrders(
+			container.API.GetWorkingOrders(utils.FilterOrdersByMarket(container.APIData.GetOrders(), params.MarketData.BrokerAPIName)),
+			retryFacade.RetryParams{
+				DelayBetweenRetries: 5 * time.Second,
+				MaxRetries:          30,
+				SuccessCallback: func() {
+					log("Orders closed, calling OnValidTradeSetup ...")
+					params.Market.OnValidTradeSetup(onValidTradeSetupParams)
+				},
 			},
-		},
-	)
+		)
+	}
 }
