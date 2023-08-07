@@ -1,10 +1,11 @@
 package main
 
 import (
-	"TradingBot/src/markets"
+	"TradingBot/src/manager"
 	"TradingBot/src/services"
 	"TradingBot/src/services/api"
 	"TradingBot/src/services/api/ibroker/constants"
+	"TradingBot/src/services/api/simulator"
 	"TradingBot/src/services/positionSize"
 	"TradingBot/src/types"
 	"TradingBot/src/utils"
@@ -103,7 +104,7 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int64) {
 	c.MaxSecondsOpenTrade = []int64{0}
 	c.MaxTradeExecutionPriceDifference = funk.Map([]float64{999999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TPDistanceShortForTighterSL = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceShortForTighterSL = funk.Map([]float64{40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.SLDistanceShortForTighterTP = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
@@ -113,36 +114,33 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int64) {
 
 	c.MaxStopLossDistance = funk.Map([]float64{300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{180}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{200, 100, 80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossDistance = funk.Map([]float64{10}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossDistance = funk.Map([]float64{70}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.RangesCandlesToCheck = []int64{400}
-	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{5, 15, 25, 35}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{25}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{120}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinCandlesBetweenRangePoints = []int64{5}
 	c.RangesMaxCandlesBetweenRangePoints = []int64{300}
 	c.RangesPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesRangePoints = []int{3}
-	c.RangesStartWith = []types.LevelType{"resistance"}
-	c.RangesTakeProfitStrategy = []string{"distance"}
-	c.RangesStopLossStrategy = []string{"level-with-offset"}
-	c.RangesOrderType = []string{constants.StopType}
-	c.RangesTrendyOnly = []bool{true, false}
+	c.RangesStartWith = []types.LevelType{types.SUPPORT_TYPE}
+	c.RangesTakeProfitStrategy = []string{"level-with-offset"}
+	c.RangesStopLossStrategy = []string{"distance"}
+	c.RangesOrderType = []string{constants.LimitType}
+	c.RangesTrendyOnly = []bool{false}
 
 	return &c, getTotalLength(&c)
 }
 
 func candlesLoopWithCombinations(
 	csvLines [][]string,
-	market markets.MarketInterface,
-	container *services.Container,
-	simulatorAPI api.Interface,
+	marketName string,
 	c *ParamCombinations,
 	combinationsLength int64,
 	side Side,
-	longsParamsFunc func(p *types.MarketStrategyParams),
-	shortsParamsFunc func(p *types.MarketStrategyParams),
+	strategy string,
 ) {
 	bestCombination := &BestCombination{
 		BestProfits:     -999999,
@@ -152,7 +150,9 @@ func candlesLoopWithCombinations(
 
 	createReportFile()
 
-	parallelRoutines := 2
+	fmt.Println("Combinations length -> " + strconv.FormatInt(combinationsLength, 10))
+
+	parallelRoutines := 3
 
 	var waitingGroup sync.WaitGroup
 	waitingGroup.Add(parallelRoutines)
@@ -235,28 +235,31 @@ func candlesLoopWithCombinations(
 
 																																	params.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
 
-																																	go executeCombination(
-																																		params,
-																																		iteration,
-																																		bestCombination,
-																																		market,
-																																		simulatorAPI,
-																																		side,
-																																		csvLines,
-																																		container,
-																																		combinationsLength,
-																																		longsParamsFunc,
-																																		shortsParamsFunc,
-																																		&waitingGroup,
-																																	)
+																																	go func(i int64, p types.MarketStrategyParams) {
+																																		executeCombination(
+																																			params,
+																																			i,
+																																			bestCombination,
+																																			marketName,
+																																			side,
+																																			csvLines,
+																																			combinationsLength,
+																																			&waitingGroup,
+																																			strategy,
+																																		)
+																																	}(iteration, params)
 
 																																	if iteration%int64(parallelRoutines) == 0 {
 																																		waitingGroup.Wait()
 
+																																		if iteration == combinationsLength {
+																																			break
+																																		}
+
 																																		waitingGroup = sync.WaitGroup{}
 
-																																		if combinationsLength-iteration-1 < int64(parallelRoutines) {
-																																			waitingGroup.Add(int(combinationsLength - iteration - 1))
+																																		if combinationsLength-iteration < int64(parallelRoutines) {
+																																			waitingGroup.Add(int(combinationsLength - iteration))
 																																		} else {
 																																			waitingGroup.Add(parallelRoutines)
 																																		}
@@ -294,6 +297,8 @@ func candlesLoopWithCombinations(
 			}
 		}
 	}
+
+	waitingGroup.Wait()
 
 	write("\n\n\nDone! Best combination -> " + utils.FloatToString(bestCombination.BestProfits, 2))
 	write(utils.GetStringRepresentation(bestCombination))
@@ -344,37 +349,51 @@ func write(v string) {
 	file.Write([]byte(v))
 }
 
-// todo: probably csvLines must be copied
-// also other stuff should be copied instead of a reference.
-// review!
 func executeCombination(
 	params types.MarketStrategyParams,
 	iteration int64,
 	bestCombination *BestCombination,
-	market markets.MarketInterface,
-	simulatorAPI api.Interface,
+	marketName string,
 	side Side,
 	csvLines [][]string,
-	container *services.Container,
 	combinationsLength int64,
-	longsParamsFunc func(p *types.MarketStrategyParams),
-	shortsParamsFunc func(p *types.MarketStrategyParams),
 	waitingGroup *sync.WaitGroup,
+	strategy string,
 ) {
+	defer waitingGroup.Done()
+	fmt.Println("Iteration " + strconv.FormatInt(iteration, 10) + " started")
+
 	start := time.Now().UnixMilli()
 
-	market.GetCandlesHandler().SetCandles([]*types.Candle{})
+	container := services.Container{}
+	container.Initialize(false)
+
+	simulatorAPI := simulator.CreateAPIServiceInstance(
+		&api.Credentials{},
+		container.HttpClient,
+		container.Logger,
+	)
+
+	container.SetAPI(simulatorAPI)
+
+	manager := &manager.Manager{
+		ServicesContainer: &container,
+	}
+
+	market := getMarketInstance(manager, marketName)
 
 	simulatorAPI.CloseAllOrders()
 	simulatorAPI.CloseAllPositions()
 	simulatorAPI.SetTrades(nil)
+
+	longsParamsFunc, shortsParamsFunc := getSetStrategyParamsFuncs(strategy, market)
 
 	if side == LONGS_SIDE {
 		longsParamsFunc(&params)
 	} else {
 		shortsParamsFunc(&params)
 	}
-	candlesLoop(csvLines, market, container, simulatorAPI, false)
+	candlesLoop(csvLines, market, simulatorAPI, false)
 
 	state, _ := simulatorAPI.GetState()
 	profits := state.Balance - initialBalance
@@ -401,5 +420,5 @@ func executeCombination(
 	)
 	fmt.Println(progress)
 
-	waitingGroup.Done()
+	fmt.Println("Iteration " + strconv.FormatInt(iteration, 10) + " completed")
 }

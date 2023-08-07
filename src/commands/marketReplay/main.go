@@ -59,13 +59,13 @@ func main() {
 
 	if replayType == SINGLE_TYPE {
 		setStrategyData(side, market, strategy, longsStrategyParamsFunc, shortsStrategyParamsFunc)
-		candlesLoop(csvLines, market, container, simulatorAPI, false)
+		candlesLoop(csvLines, market, simulatorAPI, false)
 		PrintTrades(simulatorAPI.GetTrades())
 		state, _ := simulatorAPI.GetState()
 		fmt.Println("Profits -> ", state.Balance-initialBalance)
 	} else {
 		combinations, combinationsLength := GetCombinations(market.GetMarketData().MinPositionSize)
-		candlesLoopWithCombinations(csvLines, market, container, simulatorAPI, combinations, combinationsLength, side, longsStrategyParamsFunc, shortsStrategyParamsFunc)
+		candlesLoopWithCombinations(csvLines, marketName, combinations, combinationsLength, side, strategy)
 	}
 
 }
@@ -209,7 +209,6 @@ func setStrategyData(
 func candlesLoop(
 	csvLines [][]string,
 	market markets.MarketInterface,
-	container *services.Container,
 	simulatorAPI api.Interface,
 	printProgress bool,
 ) {
@@ -222,11 +221,11 @@ func candlesLoop(
 		candle := getCandleObject(line)
 		market.GetCandlesHandler().AddNewCandle(candle)
 
-		container.IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCompletedCandles(), true)
+		market.GetContainer().IndicatorsService.AddIndicators(market.GetCandlesHandler().GetCompletedCandles(), true)
 
 		brokerSim.OnNewCandle(
-			container.APIData,
-			container.API,
+			market.GetContainer().APIData,
+			market.GetContainer().API,
 			market,
 		)
 
