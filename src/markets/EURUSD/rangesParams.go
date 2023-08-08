@@ -10,15 +10,15 @@ var RangesLongParams = types.MarketStrategyParams{
 	RiskPercentage: 1,
 
 	CandlesAmountForHorizontalLevel: &types.CandlesAmountForHorizontalLevel{
-		Future: 3,
-		Past:   3,
+		Future: 5,
+		Past:   5,
 	},
 	MaxStopLossDistance: 300 * priceAdjustment,
-	TakeProfitDistance:  80 * priceAdjustment,
+	TakeProfitDistance:  40 * priceAdjustment,
 	StopLossDistance:    70 * priceAdjustment,
 
 	TrailingStopLoss: &types.TrailingStopLoss{
-		TPDistanceShortForTighterSL: 40 * priceAdjustment,
+		TPDistanceShortForTighterSL: 0 * priceAdjustment,
 		SLDistanceWhenTPIsVeryClose: 0 * priceAdjustment,
 	},
 
@@ -28,13 +28,14 @@ var RangesLongParams = types.MarketStrategyParams{
 		MinPriceDifferenceBetweenRangePoints:     120 * priceAdjustment,
 		MinCandlesBetweenRangePoints:             5,
 		MaxCandlesBetweenRangePoints:             300,
+		MinimumDistanceToLevel:                   30 * priceAdjustment,
 		PriceOffset:                              0 * priceAdjustment,
 		RangePoints:                              3,
-		StartWith:                                types.SUPPORT_TYPE,
+		StartWith:                                types.RESISTANCE_TYPE,
 		TakeProfitStrategy:                       "level-with-offset",
-		StopLossStrategy:                         "distance",
-		OrderType:                                constants.LimitType,
-		TrendyOnly:                               false,
+		StopLossStrategy:                         "level-with-offset",
+		OrderType:                                constants.MarketType,
+		TrendyOnly:                               true,
 	},
 
 	MaxTradeExecutionPriceDifference: 9999,
@@ -58,6 +59,7 @@ var RangesShortParams = types.MarketStrategyParams{
 		MinPriceDifferenceBetweenRangePoints:     20 * priceAdjustment,
 		MinCandlesBetweenRangePoints:             4,
 		MaxCandlesBetweenRangePoints:             100,
+		MinimumDistanceToLevel:                   80 * priceAdjustment,
 		PriceOffset:                              0 * priceAdjustment,
 		RangePoints:                              3,
 		StartWith:                                types.SUPPORT_TYPE,

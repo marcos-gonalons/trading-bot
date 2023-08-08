@@ -60,6 +60,7 @@ type ParamCombinations struct {
 	RangesMinPriceDifferenceBetweenRangePoints     []float64
 	RangesMinCandlesBetweenRangePoints             []int64
 	RangesMaxCandlesBetweenRangePoints             []int64
+	RangesMinimumDistanceToLevel                   []float64
 	RangesPriceOffset                              []float64
 	RangesRangePoints                              []int
 	RangesStartWith                                []types.LevelType
@@ -76,7 +77,7 @@ type BestCombination struct {
 
 const REPORT_FILE_PATH = "./.combinations-report.txt"
 
-var parallelRoutines = 10
+var parallelRoutines = 20
 
 var mutex *sync.Mutex = &sync.Mutex{}
 var completed int64 = 0
@@ -107,32 +108,33 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int64) {
 	c.MaxSecondsOpenTrade = []int64{0}
 	c.MaxTradeExecutionPriceDifference = funk.Map([]float64{999999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TPDistanceShortForTighterSL = funk.Map([]float64{40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceShortForTighterSL = funk.Map([]float64{0, 10, 30, 50, 70}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{-100, -70, -40, -10, 0, 10, 30, 50}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.SLDistanceShortForTighterTP = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{3}
-	c.PastCandles = []int{3}
+	c.FutureCandles = []int{10, 20}
+	c.PastCandles = []int{10, 20}
 
 	c.MaxStopLossDistance = funk.Map([]float64{300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{200, 150, 100, 20, 80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{30, 60, 90, 120, 150, 180}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossDistance = funk.Map([]float64{40, 30, 80, 90, 70, 60, 50}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossDistance = funk.Map([]float64{-10, 20, 50, 80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.RangesCandlesToCheck = []int64{400}
 	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{25}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{120}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinCandlesBetweenRangePoints = []int64{5}
 	c.RangesMaxCandlesBetweenRangePoints = []int64{300}
+	c.RangesMinimumDistanceToLevel = funk.Map([]float64{30, 70}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesRangePoints = []int{3}
-	c.RangesStartWith = []types.LevelType{types.SUPPORT_TYPE}
+	c.RangesStartWith = []types.LevelType{types.RESISTANCE_TYPE}
 	c.RangesTakeProfitStrategy = []string{"level-with-offset"}
-	c.RangesStopLossStrategy = []string{"distance"}
-	c.RangesOrderType = []string{constants.LimitType}
-	c.RangesTrendyOnly = []bool{false, true}
+	c.RangesStopLossStrategy = []string{"level-with-offset"}
+	c.RangesOrderType = []string{constants.MarketType}
+	c.RangesTrendyOnly = []bool{true}
 
 	return &c, getTotalLength(&c)
 }
@@ -183,88 +185,91 @@ func candlesLoopWithCombinations(
 																							for _, RangesMinPriceDifferenceBetweenRangePoints := range c.RangesMinPriceDifferenceBetweenRangePoints {
 																								for _, RangesMinCandlesBetweenRangePoints := range c.RangesMinCandlesBetweenRangePoints {
 																									for _, RangesMaxCandlesBetweenRangePoints := range c.RangesMaxCandlesBetweenRangePoints {
-																										for _, RangesPriceOffset := range c.RangesPriceOffset {
-																											for _, RangesRangePoints := range c.RangesRangePoints {
-																												for _, RangesStartWith := range c.RangesStartWith {
-																													for _, RangesTakeProfitStrategy := range c.RangesTakeProfitStrategy {
-																														for _, RangesStopLossStrategy := range c.RangesStopLossStrategy {
-																															for _, RangesOrderType := range c.RangesOrderType {
-																																for _, RangesTrendyOnly := range c.RangesTrendyOnly {
-																																	iteration++
+																										for _, RangesMinimumDistanceToLevel := range c.RangesMinimumDistanceToLevel {
+																											for _, RangesPriceOffset := range c.RangesPriceOffset {
+																												for _, RangesRangePoints := range c.RangesRangePoints {
+																													for _, RangesStartWith := range c.RangesStartWith {
+																														for _, RangesTakeProfitStrategy := range c.RangesTakeProfitStrategy {
+																															for _, RangesStopLossStrategy := range c.RangesStopLossStrategy {
+																																for _, RangesOrderType := range c.RangesOrderType {
+																																	for _, RangesTrendyOnly := range c.RangesTrendyOnly {
+																																		iteration++
 
-																																	var params types.MarketStrategyParams
+																																		var params types.MarketStrategyParams
 
-																																	params.RiskPercentage = RiskPercentage
-																																	params.MinStopLossDistance = MinStopLossDistance
-																																	params.MaxStopLossDistance = MaxStopLossDistance
-																																	params.StopLossDistance = StopLossDistance
-																																	params.TakeProfitDistance = TakeProfitDistance
-																																	params.MinProfit = MinProfit
-																																	params.TrailingStopLoss = &types.TrailingStopLoss{
-																																		TPDistanceShortForTighterSL: TPDistanceShortForTighterSL,
-																																		SLDistanceWhenTPIsVeryClose: SLDistanceWhenTPIsVeryClose,
-																																	}
-																																	params.TrailingTakeProfit = &types.TrailingTakeProfit{
-																																		SLDistanceShortForTighterTP: SLDistanceShortForTighterTP,
-																																		TPDistanceWhenSLIsVeryClose: TPDistanceWhenSLIsVeryClose,
-																																	}
-																																	params.CandlesAmountForHorizontalLevel = &types.CandlesAmountForHorizontalLevel{
-																																		Future: FutureCandles,
-																																		Past:   PastCandles,
-																																	}
-																																	params.EmaCrossover.CandlesAmountWithoutEMAsCrossing = CandlesAmountWithoutEMAsCrossing
-																																	params.LimitAndStopOrderPriceOffset = LimitAndStopOrderPriceOffset
-																																	params.EmaCrossover.StopLossPriceOffset = StopLossPriceOffset
-																																	params.EmaCrossover.MaxAttemptsToGetSL = MaxAttemptsToGetSL
-																																	params.TrendCandles = TrendCandles
-																																	params.TrendDiff = TrendDiff
-																																	params.MaxTradeExecutionPriceDifference = MaxTradeExecutionPriceDifference
-																																	params.MaxSecondsOpenTrade = MaxSecondsOpenTrade
+																																		params.RiskPercentage = RiskPercentage
+																																		params.MinStopLossDistance = MinStopLossDistance
+																																		params.MaxStopLossDistance = MaxStopLossDistance
+																																		params.StopLossDistance = StopLossDistance
+																																		params.TakeProfitDistance = TakeProfitDistance
+																																		params.MinProfit = MinProfit
+																																		params.TrailingStopLoss = &types.TrailingStopLoss{
+																																			TPDistanceShortForTighterSL: TPDistanceShortForTighterSL,
+																																			SLDistanceWhenTPIsVeryClose: SLDistanceWhenTPIsVeryClose,
+																																		}
+																																		params.TrailingTakeProfit = &types.TrailingTakeProfit{
+																																			SLDistanceShortForTighterTP: SLDistanceShortForTighterTP,
+																																			TPDistanceWhenSLIsVeryClose: TPDistanceWhenSLIsVeryClose,
+																																		}
+																																		params.CandlesAmountForHorizontalLevel = &types.CandlesAmountForHorizontalLevel{
+																																			Future: FutureCandles,
+																																			Past:   PastCandles,
+																																		}
+																																		params.EmaCrossover.CandlesAmountWithoutEMAsCrossing = CandlesAmountWithoutEMAsCrossing
+																																		params.LimitAndStopOrderPriceOffset = LimitAndStopOrderPriceOffset
+																																		params.EmaCrossover.StopLossPriceOffset = StopLossPriceOffset
+																																		params.EmaCrossover.MaxAttemptsToGetSL = MaxAttemptsToGetSL
+																																		params.TrendCandles = TrendCandles
+																																		params.TrendDiff = TrendDiff
+																																		params.MaxTradeExecutionPriceDifference = MaxTradeExecutionPriceDifference
+																																		params.MaxSecondsOpenTrade = MaxSecondsOpenTrade
 
-																																	params.Ranges.CandlesToCheck = RangesCandlesToCheck
-																																	params.Ranges.MaxPriceDifferenceForSameHorizontalLevel = RangesMaxPriceDifferenceForSameHorizontalLevel
-																																	params.Ranges.MinPriceDifferenceBetweenRangePoints = RangesMinPriceDifferenceBetweenRangePoints
-																																	params.Ranges.MinCandlesBetweenRangePoints = RangesMinCandlesBetweenRangePoints
-																																	params.Ranges.MaxCandlesBetweenRangePoints = RangesMaxCandlesBetweenRangePoints
-																																	params.Ranges.PriceOffset = RangesPriceOffset
-																																	params.Ranges.RangePoints = RangesRangePoints
-																																	params.Ranges.StartWith = RangesStartWith
-																																	params.Ranges.TakeProfitStrategy = RangesTakeProfitStrategy
-																																	params.Ranges.StopLossStrategy = RangesStopLossStrategy
-																																	params.Ranges.OrderType = RangesOrderType
-																																	params.Ranges.TrendyOnly = RangesTrendyOnly
+																																		params.Ranges.CandlesToCheck = RangesCandlesToCheck
+																																		params.Ranges.MaxPriceDifferenceForSameHorizontalLevel = RangesMaxPriceDifferenceForSameHorizontalLevel
+																																		params.Ranges.MinPriceDifferenceBetweenRangePoints = RangesMinPriceDifferenceBetweenRangePoints
+																																		params.Ranges.MinCandlesBetweenRangePoints = RangesMinCandlesBetweenRangePoints
+																																		params.Ranges.MaxCandlesBetweenRangePoints = RangesMaxCandlesBetweenRangePoints
+																																		params.Ranges.MinimumDistanceToLevel = RangesMinimumDistanceToLevel
+																																		params.Ranges.PriceOffset = RangesPriceOffset
+																																		params.Ranges.RangePoints = RangesRangePoints
+																																		params.Ranges.StartWith = RangesStartWith
+																																		params.Ranges.TakeProfitStrategy = RangesTakeProfitStrategy
+																																		params.Ranges.StopLossStrategy = RangesStopLossStrategy
+																																		params.Ranges.OrderType = RangesOrderType
+																																		params.Ranges.TrendyOnly = RangesTrendyOnly
 
-																																	params.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
+																																		params.PositionSizeStrategy = positionSize.BASED_ON_MIN_SIZE
 
-																																	go func(p types.MarketStrategyParams) {
-																																		executeCombination(
-																																			params,
-																																			bestCombination,
-																																			marketName,
-																																			side,
-																																			csvLines,
-																																			combinationsLength,
-																																			&waitingGroup,
-																																			strategy,
-																																		)
-																																	}(params)
+																																		go func(p types.MarketStrategyParams) {
+																																			executeCombination(
+																																				params,
+																																				bestCombination,
+																																				marketName,
+																																				side,
+																																				csvLines,
+																																				combinationsLength,
+																																				&waitingGroup,
+																																				strategy,
+																																			)
+																																		}(params)
 
-																																	if iteration%int64(parallelRoutines) == 0 {
-																																		waitingGroup.Wait()
+																																		if iteration%int64(parallelRoutines) == 0 {
+																																			waitingGroup.Wait()
 
-																																		if iteration == combinationsLength {
-																																			break
+																																			if iteration == combinationsLength {
+																																				break
+																																			}
+
+																																			waitingGroup = sync.WaitGroup{}
+
+																																			if combinationsLength-iteration < int64(parallelRoutines) {
+																																				waitingGroup.Add(int(combinationsLength - iteration))
+																																			} else {
+																																				waitingGroup.Add(parallelRoutines)
+																																			}
 																																		}
 
-																																		waitingGroup = sync.WaitGroup{}
-
-																																		if combinationsLength-iteration < int64(parallelRoutines) {
-																																			waitingGroup.Add(int(combinationsLength - iteration))
-																																		} else {
-																																			waitingGroup.Add(parallelRoutines)
-																																		}
 																																	}
-
 																																}
 																															}
 																														}

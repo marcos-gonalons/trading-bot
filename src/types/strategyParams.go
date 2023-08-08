@@ -78,6 +78,7 @@ type Ranges struct {
 	MinPriceDifferenceBetweenRangePoints     float64
 	MinCandlesBetweenRangePoints             int64
 	MaxCandlesBetweenRangePoints             int64
+	MinimumDistanceToLevel                   float64
 	RangePoints                              int
 	PriceOffset                              float64
 	StartWith                                LevelType

@@ -61,6 +61,11 @@ func RangesShorts(params strategies.Params) {
 	log("Resistances average" + utils.GetStringRepresentation(resistancesAverage))
 	log("Supports average" + utils.GetStringRepresentation(supportsAverage))
 
+	if lastCompletedCandle.Close-supportsAverage < params.MarketStrategyParams.Ranges.MinimumDistanceToLevel {
+		log("The distance to the support level is too small, doing nothing...")
+		return
+	}
+
 	orderPrice, err := getOrderPrice(
 		*params.MarketStrategyParams,
 		resistancesAverage,
