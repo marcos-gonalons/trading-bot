@@ -61,8 +61,13 @@ func RangesLongs(params strategies.Params) {
 	log("Resistances average" + utils.GetStringRepresentation(resistancesAverage))
 	log("Supports average" + utils.GetStringRepresentation(supportsAverage))
 
-	if resistancesAverage-lastCompletedCandle.Close < params.MarketStrategyParams.Ranges.MinimumDistanceToLevel {
-		log("The distance to the resistance level is too small, doing nothing...")
+	if !isPriceAtEnoughDistanceFromLevels(
+		resistancesAverage,
+		supportsAverage,
+		lastCompletedCandle.Close,
+		params.MarketStrategyParams.Ranges.MinimumDistanceToLevel,
+	) {
+		log("The distance to the range level is too small, doing nothing...")
 		return
 	}
 

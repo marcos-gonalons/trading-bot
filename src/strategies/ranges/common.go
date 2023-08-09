@@ -134,3 +134,19 @@ func getTakeProfit(
 	}
 	panic("Invalid take profit startegy -> " + utils.GetStringRepresentation(params.Ranges.TakeProfitStrategy))
 }
+
+func isPriceAtEnoughDistanceFromLevels(
+	resistancesAverage float64,
+	supportsAverage float64,
+	price float64,
+	minDistanceToLevels float64,
+) bool {
+	if resistancesAverage-price < minDistanceToLevels {
+		return false
+	}
+	if price-supportsAverage < minDistanceToLevels {
+		return false
+	}
+
+	return true
+}
