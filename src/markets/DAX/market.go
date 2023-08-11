@@ -44,7 +44,7 @@ func GetMarketInstance() markets.MarketInterface {
 			Value: 4,
 			Unit:  "h",
 		},
-		CandlesFileName:        "DAX-4H.csv",
+		CandlesFileName:        "DAX-15M.csv",
 		EurExchangeRate:        1,
 		PositionSizeMultiplier: .5,
 		MinPositionSize:        1,

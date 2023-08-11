@@ -24,6 +24,7 @@ type MarketInterface interface {
 	SetPendingOrder(order *api.Order)
 	CheckOpenPositionTTL(params *types.MarketStrategyParams, position *api.Position)
 	OnValidTradeSetup(params OnValidTradeSetupParams)
+	Round(p float64) float64
 
 	SetEmaCrossoverStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams)
 	SetRangesStrategyParams(longs *types.MarketStrategyParams, shorts *types.MarketStrategyParams)

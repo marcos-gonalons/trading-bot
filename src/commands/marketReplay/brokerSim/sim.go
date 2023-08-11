@@ -26,7 +26,8 @@ func OnNewCandle(
 			if position != nil {
 				panic("the strategies must never create a market order if there is already an open position")
 			}
-			positions = append(positions, createNewPosition(previousToLastCandle.Close, order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, previousToLastCandle.Timestamp, simulatorAPI))
+			// round price mf
+			positions = append(positions, createNewPosition(market.Round(previousToLastCandle.Close), order, order.Qty, market.GetMarketData().SimulatorData.Spread/2, previousToLastCandle.Timestamp, simulatorAPI))
 			simulatorAPI.SetPositions(positions)
 
 			market.SetCurrentPositionExecutedAt(previousToLastCandle.Timestamp)

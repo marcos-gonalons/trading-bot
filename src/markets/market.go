@@ -369,8 +369,8 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		},
 	)
 
-	stopLoss = s.round(stopLoss)
-	takeProfit = s.round(takeProfit)
+	stopLoss = s.Round(stopLoss)
+	takeProfit = s.Round(takeProfit)
 
 	order := &api.Order{
 		CurrentAsk: nil,
@@ -383,7 +383,7 @@ func (s *BaseMarketClass) OnValidTradeSetup(params OnValidTradeSetupParams) {
 		Type:       params.OrderType,
 	}
 
-	price := s.round(params.Price)
+	price := s.Round(params.Price)
 	if s.Container.API.IsStopOrder(order) {
 		order.StopPrice = &price
 	}
@@ -480,7 +480,7 @@ func (s *BaseMarketClass) SetRangesStrategyParams(longs *types.MarketStrategyPar
 	s.MarketData.RangesSetup.ShortSetupParams = shorts
 }
 
-func (s *BaseMarketClass) round(n float64) float64 {
+func (s *BaseMarketClass) Round(n float64) float64 {
 	p := math.Pow(10, float64(s.MarketData.PriceDecimals))
 	r := math.Round(n*p) / p
 	return r
