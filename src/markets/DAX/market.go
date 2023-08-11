@@ -4,7 +4,7 @@ import (
 	"TradingBot/src/markets"
 	ibroker "TradingBot/src/services/api/ibroker/constants"
 	loggerTypes "TradingBot/src/services/logger/types"
-	"TradingBot/src/strategies/emaCrossover"
+	"TradingBot/src/strategies/ranges"
 	"TradingBot/src/types"
 )
 
@@ -51,6 +51,10 @@ func GetMarketInstance() markets.MarketInterface {
 		EmaCrossoverSetup: &types.SetupParams{
 			LongSetupParams: &EMACrossoverLongParams,
 		},
+		RangesSetup: &types.SetupParams{
+			LongSetupParams:  &RangesLongParams,
+			ShortSetupParams: &RangesShortParams,
+		},
 		SimulatorData: &types.SimulatorData{
 			Spread:   2,
 			Slippage: 2,
@@ -64,6 +68,7 @@ func GetMarketInstance() markets.MarketInterface {
 
 func (s *Market) GetFuncToExecuteOnNewCandle() func() {
 	return func() {
-		emaCrossover.OnNewCandle(s)
+		ranges.OnNewCandle(s)
+		// emaCrossover.OnNewCandle(s)
 	}
 }

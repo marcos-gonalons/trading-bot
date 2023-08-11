@@ -108,33 +108,33 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int64) {
 	c.MaxSecondsOpenTrade = []int64{0}
 	c.MaxTradeExecutionPriceDifference = funk.Map([]float64{999999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TPDistanceShortForTighterSL = funk.Map([]float64{60, 70, 90, 110}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{-40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceShortForTighterSL = funk.Map([]float64{0, 20, 40, 60, 80, 100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0, 20, 40, 60, 80, -10, -30, -50}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.SLDistanceShortForTighterTP = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{10}
-	c.PastCandles = []int{20, 30, 40}
+	c.FutureCandles = []int{15}
+	c.PastCandles = []int{15}
 
 	c.MaxStopLossDistance = funk.Map([]float64{300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{40, 50, 60, 70, 80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{90, 120, 150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossDistance = funk.Map([]float64{-40, -30, -20, -10, 0, 10}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossDistance = funk.Map([]float64{140, 170, 200}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.RangesCandlesToCheck = []int64{400}
-	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{10, 25, 40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{50, 80, 120, 150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{10, 20}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{150, 200, 250, 300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinCandlesBetweenRangePoints = []int64{5}
 	c.RangesMaxCandlesBetweenRangePoints = []int64{300}
-	c.RangesMinimumDistanceToLevel = funk.Map([]float64{15, 30, 50}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMinimumDistanceToLevel = funk.Map([]float64{40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesRangePoints = []int{3}
 	c.RangesStartWith = []types.LevelType{types.RESISTANCE_TYPE}
 	c.RangesTakeProfitStrategy = []string{"level-with-offset"}
-	c.RangesStopLossStrategy = []string{"level-with-offset"}
-	c.RangesOrderType = []string{constants.MarketType}
-	c.RangesTrendyOnly = []bool{true}
+	c.RangesStopLossStrategy = []string{"distance"}
+	c.RangesOrderType = []string{constants.LimitType}
+	c.RangesTrendyOnly = []bool{false}
 
 	return &c, getTotalLength(&c)
 }

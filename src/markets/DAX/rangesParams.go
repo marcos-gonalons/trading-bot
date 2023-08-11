@@ -1,4 +1,4 @@
-package EURUSD
+package DAX
 
 import (
 	"TradingBot/src/services/api/ibroker/constants"
