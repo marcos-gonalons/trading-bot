@@ -77,6 +77,7 @@ type BestCombination struct {
 
 const REPORT_FILE_PATH = "./.combinations-report.txt"
 
+var successRateThreshold float64 = float64(40) / float64(100)
 var parallelRoutines = 20
 
 var mutex *sync.Mutex = &sync.Mutex{}
@@ -108,32 +109,32 @@ func GetCombinations(minPositionSize int64) (*ParamCombinations, int64) {
 	c.MaxSecondsOpenTrade = []int64{0}
 	c.MaxTradeExecutionPriceDifference = funk.Map([]float64{999999}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TPDistanceShortForTighterSL = funk.Map([]float64{0, 20, 40, 60, 80, 100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0, 20, 40, 60, 80, -10, -30, -50}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TPDistanceShortForTighterSL = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.SLDistanceWhenTPIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.SLDistanceShortForTighterTP = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.TPDistanceWhenSLIsVeryClose = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.FutureCandles = []int{15}
-	c.PastCandles = []int{15}
+	c.FutureCandles = []int{35}
+	c.PastCandles = []int{35}
 
-	c.MaxStopLossDistance = funk.Map([]float64{300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.MaxStopLossDistance = funk.Map([]float64{100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.TakeProfitDistance = funk.Map([]float64{90, 120, 150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.TakeProfitDistance = funk.Map([]float64{0, 20, 40, 60, 80, 100}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
-	c.StopLossDistance = funk.Map([]float64{140, 170, 200}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.StopLossDistance = funk.Map([]float64{-80, -50, -20, 0, 20, 40, 60, 80}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 
 	c.RangesCandlesToCheck = []int64{400}
-	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{10, 20}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
-	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{150, 200, 250, 300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMaxPriceDifferenceForSameHorizontalLevel = funk.Map([]float64{400}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMinPriceDifferenceBetweenRangePoints = funk.Map([]float64{300}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesMinCandlesBetweenRangePoints = []int64{5}
-	c.RangesMaxCandlesBetweenRangePoints = []int64{300}
-	c.RangesMinimumDistanceToLevel = funk.Map([]float64{40}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
+	c.RangesMaxCandlesBetweenRangePoints = []int64{500}
+	c.RangesMinimumDistanceToLevel = funk.Map([]float64{150}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesPriceOffset = funk.Map([]float64{0}, func(r float64) float64 { return r * priceAdjustment }).([]float64)
 	c.RangesRangePoints = []int{3}
-	c.RangesStartWith = []types.LevelType{types.RESISTANCE_TYPE}
+	c.RangesStartWith = []types.LevelType{types.SUPPORT_TYPE}
 	c.RangesTakeProfitStrategy = []string{"level-with-offset"}
-	c.RangesStopLossStrategy = []string{"distance"}
-	c.RangesOrderType = []string{constants.LimitType}
+	c.RangesStopLossStrategy = []string{"level-with-offset"}
+	c.RangesOrderType = []string{constants.MarketType}
 	c.RangesTrendyOnly = []bool{false}
 
 	return &c, getTotalLength(&c)
@@ -401,13 +402,24 @@ func executeCombination(
 	state, _ := simulatorAPI.GetState()
 	profits := state.Balance - initialBalance
 
-	if profits > bestCombination.BestProfits {
+	trades := simulatorAPI.GetTrades()
+	profitableTrades := float64(0)
+	for _, trade := range trades {
+		if trade.Result > 0 {
+			profitableTrades++
+		}
+	}
+	successRate := profitableTrades / float64(len(trades))
+
+	if profits > bestCombination.BestProfits && successRate >= float64(successRateThreshold) {
 		mutex.Lock()
 		bestCombination.BestProfits = profits
 		bestCombination.BestCombination = &params
 
 		write("\n\nNew best combination " + utils.FloatToString(profits, 2))
-		write("\nTotal trades " + strconv.Itoa(len(simulatorAPI.GetTrades())))
+		write("\nTotal trades " + strconv.Itoa(len(trades)))
+		write("\nProfitable trades " + utils.FloatToString(float64(profitableTrades), 0))
+		write("\nSuccess rate " + utils.FloatToString(float64(successRate*100), 2))
 		write("\n" + utils.GetStringRepresentation(bestCombination))
 		mutex.Unlock()
 	}
